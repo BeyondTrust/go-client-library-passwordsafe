@@ -1,1 +1,99 @@
 name: Release
+
+env:
+  JFROG_CLI_BUILD_NAME: ${{ github.repository }}
+  JFROG_SERVER: https://beyondtrust.jfrog.io/artifactory/api/pypi/eng-pypi-scratch-local
+  SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+  push:
+    tags:
+      - 'v*'
+    branches:
+    - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Save unit tests coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.xml
+
+  sonarqube:
+  # Sonar scan is not required for dependabot PRs
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+      
+      - name: Download coverage
+        uses: actions/download-artifact@v3
+        with:
+          name: coverage
+
+      - name: SonarQube Scan on PR
+        if: ${{ github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' }} 
+        uses: sonarsource/sonarqube-scan-action@master
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.pullrequest.key=${{ github.event.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.exclusions=tests/**,*/*_client.py
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
+          
+      - name: SonarQube Scan on branch
+        if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }} 
+        uses: sonarsource/sonarqube-scan-action@master
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.exclusions=tests/**,*/*_client.py,**/utils.py,**/exceptions.py
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
+
+      - name: SonarQube Quality Gate check
+        if: ${{ github.actor != 'dependabot[bot]' && inputs.quality_gate_check }} 
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          
+  x-ray:
+    needs: [build, sonarqube]
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Publish Build Information
+        run: |
+          jfrog rt build-add-git
+          jfrog rt build-collect-env
+          jfrog rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
+
+      - name: Scan Build
+        run: jfrog rt build-scan ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
