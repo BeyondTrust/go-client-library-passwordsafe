@@ -2,7 +2,7 @@ name: Release
 
 env:
   JFROG_CLI_BUILD_NAME: ${{ github.repository }}
-  JFROG_SERVER: https://beyondtrust.jfrog.io/artifactory/api/pypi/eng-pypi-scratch-local
+#  JFROG_SERVER: 
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
 on:
@@ -58,8 +58,8 @@ jobs:
             -Dsonar.pullrequest.key=${{ github.event.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
-            -Dsonar.exclusions=tests/**,*/*_client.py
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+#            -Dsonar.exclusions=
+#            -Dsonar.go.coverage.reportPaths=
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
@@ -71,8 +71,8 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
-            -Dsonar.exclusions=tests/**,*/*_client.py,**/utils.py,**/exceptions.py
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+#            -Dsonar.exclusions=
+#            -Dsonar.go.coverage.reportPaths=
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
