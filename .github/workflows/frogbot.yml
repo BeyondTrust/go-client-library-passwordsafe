@@ -1,0 +1,30 @@
+name: Frogbot
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      
+      - name: Set up JFrog
+        uses: jfrog/setup-jfrog-cli@v3
+        env:
+          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+          
+      - name: Run XRay scan
+        uses: jfrog/frogbot@v2
+        env:
+          JF_URL: https://beyondtrust.jfrog.io
+          JF_ACCESS_TOKEN: ${{ secrets.ARTIFACTORY_FROGBOT_TOKEN }}
+          JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
