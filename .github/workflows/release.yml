@@ -9,8 +9,6 @@ on:
   pull_request_target:
     types: [opened, synchronize]
   push:
-    tags:
-      - 'v*'
     branches:
     - main
   workflow_dispatch:
