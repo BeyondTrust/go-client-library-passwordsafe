@@ -24,6 +24,11 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
+      
+      - name: Go Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54
 
       - name: Save unit tests coverage
         uses: actions/upload-artifact@v3
