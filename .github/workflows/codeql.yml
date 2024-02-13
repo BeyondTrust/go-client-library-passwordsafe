@@ -10,8 +10,36 @@ permissions:
   actions: read
 
 jobs:
-  analyze:
-    name: Analyze
+  analyze_on_PR:
+    name: Analyze on PR
+    if: ${{ github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["go"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          config-file: codeql-config.yml
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+    
+  analyze_on_branch:
+    name: Analyze on PR
+    if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
