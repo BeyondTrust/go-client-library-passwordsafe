@@ -31,6 +31,7 @@ jobs:
           version: v1.54
 
       - name: Save unit tests coverage
+        if: false
         uses: actions/upload-artifact@v3
         with:
           name: coverage
@@ -47,6 +48,7 @@ jobs:
           fetch-depth: 0
       
       - name: Download coverage
+        if: false
         uses: actions/download-artifact@v3
         with:
           name: coverage
