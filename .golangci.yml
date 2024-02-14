@@ -1,6 +1,7 @@
 issues:
   exclude-rules:
-    - linters:
+    - path: api/*
+      linters:
         errcheck
         govet
 
