@@ -9,9 +9,8 @@ import (
 	"fmt"
 	"go-client-library-passwordsafe/api/authentication"
 	"go-client-library-passwordsafe/api/entities"
-	"go-client-library-passwordsafe/api/utils"
+	"go-client-library-passwordsafe/api/logging"
 	"io"
-	"log"
 	"net/url"
 	"strings"
 
@@ -19,14 +18,14 @@ import (
 )
 
 type SecretObj struct {
-	secretLogger      log.Logger
+	log               logging.Logger
 	authenticationObj authentication.AuthenticationObj
 }
 
 // NewSecretObj creates secret obj
-func NewSecretObj(authentication authentication.AuthenticationObj, logger log.Logger) (*SecretObj, error) {
+func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger) (*SecretObj, error) {
 	secretObj := &SecretObj{
-		secretLogger:      logger,
+		log:               logger,
 		authenticationObj: authentication,
 	}
 	return secretObj, nil
@@ -66,7 +65,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		if strings.ToUpper(secret.SecretType) == "FILE" {
 			fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
 			if err != nil {
-				utils.Logging("ERROR", err.Error(), secretObj.secretLogger)
+				secretObj.log.Error(err.Error())
 				return nil, err
 			}
 
@@ -82,7 +81,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 // SecretGetSecretByPath returns secret object for a specific path, title.
 func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle string, separator string, endpointPath string) (entities.Secret, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	utils.Logging("DEBUG", messageLog, secretObj.secretLogger)
+	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error
@@ -134,7 +133,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 // and returns file secret value.
 func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	utils.Logging("DEBUG", messageLog, secretObj.secretLogger)
+	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error

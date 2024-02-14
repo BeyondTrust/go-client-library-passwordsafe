@@ -7,10 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-client-library-passwordsafe/api/entities"
-	"go-client-library-passwordsafe/api/utils"
+	"go-client-library-passwordsafe/api/logging"
 	"io"
 
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -19,17 +18,17 @@ import (
 )
 
 type AuthenticationObj struct {
-	ApiUrl              string
-	clientId            string
-	clientSecret        string
-	httpClient          *http.Client
-	ExponentialBackOff  *backoff.ExponentialBackOff
-	signApinResponse    entities.SignApinResponse
-	autenticationLogger log.Logger
+	ApiUrl             string
+	clientId           string
+	clientSecret       string
+	httpClient         *http.Client
+	ExponentialBackOff *backoff.ExponentialBackOff
+	signApinResponse   entities.SignApinResponse
+	log                logging.Logger
 }
 
 // Authenticate in PS API
-func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, clientSecret string, logger *log.Logger, maxElapsedTime int) (*AuthenticationObj, error) {
+func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, maxElapsedTime int) (*AuthenticationObj, error) {
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -40,12 +39,12 @@ func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, 
 	var client = httpClient
 
 	authenticationObj := &AuthenticationObj{
-		ApiUrl:              endpointUrl,
-		httpClient:          client,
-		clientId:            clientId,
-		clientSecret:        clientSecret,
-		ExponentialBackOff:  backoffDefinition,
-		autenticationLogger: *logger,
+		ApiUrl:             endpointUrl,
+		httpClient:         client,
+		clientId:           clientId,
+		clientSecret:       clientSecret,
+		ExponentialBackOff: backoffDefinition,
+		log:                logger,
 	}
 
 	return authenticationObj, nil
@@ -104,7 +103,7 @@ func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, client
 
 	err = json.Unmarshal([]byte(responseString), &data)
 	if err != nil {
-		utils.Logging("ERROR", err.Error(), c.autenticationLogger)
+		c.log.Error(err.Error())
 		return "", err
 	}
 
@@ -150,7 +149,7 @@ func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (e
 	err = json.Unmarshal(bodyBytes, &userObject)
 
 	if err != nil {
-		utils.Logging("ERROR", err.Error(), c.autenticationLogger)
+		c.log.Error(err.Error())
 		return entities.SignApinResponse{}, err
 	}
 
@@ -160,8 +159,7 @@ func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (e
 // SignOut signs out Secret Safe API.
 // Warn: should only be called one time for all data sources.
 func (c *AuthenticationObj) SignOut(url string) error {
-
-	utils.Logging("DEBUG", url, c.autenticationLogger)
+	c.log.Debug(url)
 
 	var technicalError error
 	var businessError error
@@ -172,7 +170,7 @@ func (c *AuthenticationObj) SignOut(url string) error {
 	}, c.ExponentialBackOff)
 
 	if businessError != nil {
-		utils.Logging("ERROR", businessError.Error(), c.autenticationLogger)
+		c.log.Error(businessError.Error())
 		return businessError
 	}
 
@@ -184,12 +182,12 @@ func (c *AuthenticationObj) CallSecretSafeAPI(url string, httpMethod string, bod
 	response, technicalError, businessError, scode := c.HttpRequest(url, httpMethod, body, accesToken)
 	if technicalError != nil {
 		messageLog := fmt.Sprintf("Error in %v %v \n", method, technicalError)
-		utils.Logging("ERROR", messageLog, c.autenticationLogger)
+		c.log.Error(messageLog)
 	}
 
 	if businessError != nil {
 		messageLog := fmt.Sprintf("Error in %v: %v \n", method, businessError)
-		utils.Logging("ERROR", messageLog, c.autenticationLogger)
+		c.log.Error(messageLog)
 	}
 	return response, technicalError, businessError, scode
 }
@@ -211,13 +209,13 @@ func (c *AuthenticationObj) HttpRequest(url string, method string, body bytes.Bu
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		utils.Logging("ERROR", err.Error(), c.autenticationLogger)
+		c.log.Error(err.Error())
 		return nil, err, nil, 0
 	}
 
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
 		err = fmt.Errorf("Error %v: StatusCode: %v, %v, %v", method, scode, err, body)
-		utils.Logging("ERROR", err.Error(), c.autenticationLogger)
+		c.log.Error(err.Error())
 		return nil, err, nil, resp.StatusCode
 	}
 

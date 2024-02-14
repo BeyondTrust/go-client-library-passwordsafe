@@ -4,7 +4,7 @@ package utils
 
 import (
 	"errors"
-	"log"
+	logging "go-client-library-passwordsafe/api/logging"
 
 	validator "github.com/go-playground/validator/v10"
 )
@@ -21,7 +21,7 @@ type UserInputValidaton struct {
 var validate *validator.Validate
 
 // ValidateInputs validate inputs
-func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator string, verifyCa bool, logger *log.Logger, certificate string, certificate_key string) error {
+func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string) error {
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
@@ -36,7 +36,8 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	err := validate.Struct(userInput)
 	if err != nil {
-		Logging("ERROR", err.Error(), *logger)
+		logger.Error(err.Error())
+		//Logging("ERROR", err.Error(), *logger)
 		return err
 	}
 
@@ -52,6 +53,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		}
 	}
 
-	Logging("DEBUG", "Validation passed!", *logger)
+	logger.Debug("Validation passed!")
+	//Logging("DEBUG", "Validation passed!", *logger)
 	return nil
 }
