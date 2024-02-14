@@ -38,7 +38,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
     
   analyze_on_branch:
-    name: Analyze on PR
+    name: Analyze on branch 
     if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     strategy:
