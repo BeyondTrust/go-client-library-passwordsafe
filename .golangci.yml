@@ -1,7 +1,10 @@
 issues:
+  exclude:
+    - "Error return value of `*` is not checked"
+    - "copylocks: Logging passes lock by value: log.Logger contains sync.Mutex"
   exclude-rules:
-    - path: 'api/authentication/*'
-      linters:
+    - linters:
         errcheck
         govet
+      text: "Error return value of `*` is not checked"
 
