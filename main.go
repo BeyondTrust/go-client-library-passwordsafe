@@ -63,13 +63,13 @@ func main() {
 	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger)
 
 	// getting secrets
-	secretList := strings.Split("oauthgrp/text2,oauthgrp/text1", ",")
+	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	gotSecrets, _ := secretObj.GetSecrets(secretList, separator)
 	zapLogger.Info(fmt.Sprintf("%v", gotSecrets))
 	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotSecrets), zapLogger)
 
 	// getting secrets
-	secretList = strings.Split("oauthgrp/text2", ",")
+	secretList = strings.Split("oauthgrp_nocert/client_id", ",")
 	gotSecret, _ := secretObj.GetSecret(secretList, separator)
 	zapLogger.Info(fmt.Sprintf("%v", gotSecret))
 	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotSecret), *logger)

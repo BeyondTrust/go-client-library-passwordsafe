@@ -23,16 +23,15 @@ type AuthenticationObj struct {
 	clientSecret       string
 	httpClient         *http.Client
 	ExponentialBackOff *backoff.ExponentialBackOff
-	signApinResponse   entities.SignApinResponse
 	log                logging.Logger
 }
 
 // Authenticate in PS API
-func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, maxElapsedTime int) (*AuthenticationObj, error) {
+func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
-	backoffDefinition.MaxElapsedTime = time.Duration(maxElapsedTime) * time.Second
+	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeSeconds) * time.Second
 	backoffDefinition.RandomizationFactor = 0.5
 
 	// Client
@@ -214,14 +213,19 @@ func (c *AuthenticationObj) HttpRequest(url string, method string, body bytes.Bu
 	}
 
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
-		err = fmt.Errorf("Error %v: StatusCode: %v, %v, %v", method, scode, err, body)
+		err = fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, scode, err, body)
 		c.log.Error(err.Error())
 		return nil, err, nil, resp.StatusCode
 	}
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		respBody := new(bytes.Buffer)
-		respBody.ReadFrom(resp.Body)
+		_, err = respBody.ReadFrom(resp.Body)
+		if err != nil {
+			c.log.Error(err.Error())
+			return nil, err, nil, 0
+		}
+
 		err = fmt.Errorf("got a non 200 status code: %v - %v", resp.StatusCode, respBody)
 		return nil, nil, err, resp.StatusCode
 	}

@@ -5,6 +5,7 @@ package authentication
 
 import (
 	"go-client-library-passwordsafe/api/entities"
+	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
 	"log"
 	"os"
@@ -34,8 +35,9 @@ type GetPasswordSafeAuthenticationConfig struct {
 }
 
 var logger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime)
+var logLogger = logging.NewLogLogger(logger)
 var httpClient, _ = utils.GetHttpClient(5, true, "", "")
-var authenticate, _ = Authenticate(httpClient, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", *logger)
+var authenticate, _ = Authenticate(httpClient, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", logLogger, 300)
 
 func TestSignOut(t *testing.T) {
 
