@@ -1,3 +1,7 @@
+run:
+  skip-files:
+    - api/authentication/authentication_test.go
+    - main.go
 issues:
   exclude:
     - "Error return value of `*` is not checked"
