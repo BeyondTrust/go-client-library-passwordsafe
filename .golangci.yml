@@ -1,6 +1,6 @@
 issues:
   exclude-rules:
-    - path: 'api/authentication/(.+)_test\.go'
+    - path: '(.+)_test\.go'
       linters:
         errcheck
         govet
