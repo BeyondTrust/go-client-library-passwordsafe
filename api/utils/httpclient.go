@@ -40,5 +40,7 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 		Timeout:   time.Second * time.Duration(clientTimeOut),
 	}
 
+	defer tr.CloseIdleConnections()
+
 	return client, nil
 }
