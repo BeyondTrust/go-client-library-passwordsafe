@@ -55,6 +55,10 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
+      - name: test event name
+        run: |
+          echo ${{ github.event_name }}
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
