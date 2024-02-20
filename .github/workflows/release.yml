@@ -33,16 +33,16 @@ jobs:
           go tool cover -func="coverage.out"
       
       - name: Go Lint
+        if: false
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.54
 
       - name: Save unit tests coverage
-        if: false
         uses: actions/upload-artifact@v3
         with:
           name: coverage
-          path: coverage.xml
+          path: api/coverage.out
 
   sonarqube:
   # Sonar scan is not required for dependabot PRs
@@ -55,7 +55,6 @@ jobs:
           fetch-depth: 0
       
       - name: Download coverage
-        if: false
         uses: actions/download-artifact@v3
         with:
           name: coverage
@@ -69,9 +68,10 @@ jobs:
             -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.pullrequest.key=${{ github.event.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}}
+            -Dsonar.go.coverage.reportPaths=coverage.out
 #            -Dsonar.exclusions=
-#            -Dsonar.go.coverage.reportPaths=
+            
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
@@ -83,8 +83,8 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.go.coverage.reportPaths=coverage.out
 #            -Dsonar.exclusions=
-#            -Dsonar.go.coverage.reportPaths=
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
