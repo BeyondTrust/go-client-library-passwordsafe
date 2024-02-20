@@ -19,12 +19,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: false
     steps:
       - name: Checkout code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
+        
+      - name: Run unit tests
+        run: |
+          cd api
+          go test -race -coverprofile=coverage.out -v
+          ls -alt
+          go tool cover -func="coverage.out"
       
       - name: Go Lint
         uses: golangci/golangci-lint-action@v3
@@ -40,7 +46,7 @@ jobs:
 
   sonarqube:
   # Sonar scan is not required for dependabot PRs
-  #  needs: build
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
