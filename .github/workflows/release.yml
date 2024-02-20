@@ -40,7 +40,7 @@ jobs:
 
   sonarqube:
   # Sonar scan is not required for dependabot PRs
-    needs: build
+  #  needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
