@@ -1,0 +1,11 @@
+-  params:
+    git:
+      repoName: go-client-library-passwordsafe
+      branches:
+        - main
+    scan:
+      includeAllVulnerabilities: true
+      failOnSecurityIssues: false
+      projects:
+        - workingDirs:
+            - "."

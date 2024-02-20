@@ -19,15 +19,15 @@ import (
 )
 
 type ManagedAccountstObj struct {
-	managedAccocuntsLogger logging.Logger
-	authenticationObj      authentication.AuthenticationObj
+	log               logging.Logger
+	authenticationObj authentication.AuthenticationObj
 }
 
 // NewManagedAccountObj creates managed account obj
 func NewManagedAccountObj(authentication authentication.AuthenticationObj, logger logging.Logger) (*ManagedAccountstObj, error) {
 	managedAccounObj := &ManagedAccountstObj{
-		managedAccocuntsLogger: logger,
-		authenticationObj:      authentication,
+		log:               logger,
+		authenticationObj: authentication,
 	}
 	return managedAccounObj, nil
 }
@@ -73,39 +73,34 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 
 		if systemName == "" {
 			err = errors.New("Please use a valid system_name value")
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
 		if accountName == "" {
 			err = errors.New("Please use a valid system_name value")
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
 		ManagedAccountGetUrl := managedAccounObj.RequestPath(paths["ManagedAccountGetPath"])
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
 		ManagedAccountCreateRequestUrl := managedAccounObj.RequestPath(paths["ManagedAccountCreateRequestPath"])
 		requestId, err := managedAccounObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
 		CredentialByRequestIdUrl := managedAccounObj.RequestPath(fmt.Sprintf(paths["CredentialByRequestIdPath"], requestId))
 		secret, err := managedAccounObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
 		if err != nil {
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
@@ -114,8 +109,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		_, err = managedAccounObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
 
 		if err != nil {
-			managedAccounObj.managedAccocuntsLogger.Error(err.Error())
-			//utils.Logging("ERROR", err.Error(), managedAccounObj.managedAccocuntsLogger)
+			managedAccounObj.log.Error(err.Error())
 			return nil, err
 		}
 
@@ -128,8 +122,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 
 func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string, accountName string, url string) (entities.ManagedAccount, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
-	managedAccounObj.managedAccocuntsLogger.Debug(messageLog)
-	//utils.Logging("DEBUG", messageLog, managedAccounObj.managedAccocuntsLogger)
+	managedAccounObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error
@@ -159,7 +152,11 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 	}
 
 	var managedAccountObject entities.ManagedAccount
-	json.Unmarshal(bodyBytes, &managedAccountObject)
+	err = json.Unmarshal(bodyBytes, &managedAccountObject)
+	if err != nil {
+		managedAccounObj.log.Error(err.Error())
+		return entities.ManagedAccount{}, err
+	}
 
 	return managedAccountObject, nil
 
@@ -168,8 +165,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 // ManagedAccountCreateRequest calls Secret Safe API Requests enpoint and returns a request Id as string.
 func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemName int, accountName int, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "POST", url)
-	managedAccounObj.managedAccocuntsLogger.Debug(messageLog)
-	//utils.Logging("DEBUG", messageLog, managedAccounObj.managedAccocuntsLogger)
+	managedAccounObj.log.Debug(messageLog)
 
 	data := fmt.Sprintf(`{"SystemID":%v, "AccountID":%v, "DurationMinutes":5, "Reason":"Tesr", "ConflictOption": "reuse"}`, systemName, accountName)
 	b := bytes.NewBufferString(data)
@@ -207,8 +203,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 // enpoint and returns secret value by request Id.
 func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
-	managedAccounObj.managedAccocuntsLogger.Debug(messageLog)
-	//utils.Logging("DEBUG", messageLog, managedAccounObj.managedAccocuntsLogger)
+	managedAccounObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error
@@ -228,6 +223,10 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 	}
 
 	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		managedAccounObj.log.Error(err.Error())
+		return "", err
+	}
 
 	if err != nil {
 		return "", err
@@ -242,8 +241,7 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
 func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "PUT", url)
-	managedAccounObj.managedAccocuntsLogger.Debug(messageLog)
-	//utils.Logging("DEBUG", messageLog, managedAccounObj.managedAccocuntsLogger)
+	managedAccounObj.log.Debug(messageLog)
 
 	data := "{}"
 	b := bytes.NewBufferString(data)
