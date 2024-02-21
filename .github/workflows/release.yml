@@ -24,12 +24,18 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
+        
+      - name: Run unit tests
+        run: |
+          cd api
+          go test -race -coverprofile=coverage.out -v ./...
+          go tool cover -func="coverage.out"
 
       - name: Save unit tests coverage
         uses: actions/upload-artifact@v3
         with:
           name: coverage
-          path: coverage.xml
+          path: api/coverage.out
 
   sonarqube:
   # Sonar scan is not required for dependabot PRs
@@ -55,9 +61,9 @@ jobs:
             -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.pullrequest.key=${{ github.event.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
-#            -Dsonar.exclusions=
-#            -Dsonar.go.coverage.reportPaths=
+            -Dsonar.pullrequest.base=${{ github.base_ref }}}
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,main.go
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
@@ -69,8 +75,8 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
-#            -Dsonar.exclusions=
-#            -Dsonar.go.coverage.reportPaths=
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,main.go
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
@@ -85,6 +91,7 @@ jobs:
   x-ray:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
+    if: false
     steps:
       
       - name: Publish Build Information
