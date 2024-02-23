@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
+	"go-client-library-passwordsafe/api/utils"
 	"io"
 
-	"net/http"
 	"net/url"
 	"time"
 
@@ -21,13 +21,13 @@ type AuthenticationObj struct {
 	ApiUrl             string
 	clientId           string
 	clientSecret       string
-	httpClient         *http.Client
+	HttpClient         utils.HttpClientObj
 	ExponentialBackOff *backoff.ExponentialBackOff
 	log                logging.Logger
 }
 
 // Authenticate in PS API
-func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
+func Authenticate(httpClient utils.HttpClientObj, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -39,7 +39,7 @@ func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, 
 
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             endpointUrl,
-		httpClient:         client,
+		HttpClient:         client,
 		clientId:           clientId,
 		clientSecret:       clientSecret,
 		ExponentialBackOff: backoffDefinition,
@@ -50,12 +50,12 @@ func Authenticate(httpClient *http.Client, endpointUrl string, clientId string, 
 }
 
 // GetPasswordSafeAuthentication call get token and sign app endpoint
-func (c *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinResponse, error) {
-	accessToken, err := c.GetToken(fmt.Sprintf("%v%v", c.ApiUrl, "Auth/connect/token"), c.clientId, c.clientSecret)
+func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinResponse, error) {
+	accessToken, err := authenticationObj.GetToken(fmt.Sprintf("%v%v", authenticationObj.ApiUrl, "Auth/connect/token"), authenticationObj.clientId, authenticationObj.clientSecret)
 	if err != nil {
 		return entities.SignApinResponse{}, err
 	}
-	signApinResponse, err := c.SignAppin(fmt.Sprintf("%v%v", c.ApiUrl, "Auth/SignAppIn"), accessToken)
+	signApinResponse, err := authenticationObj.SignAppin(fmt.Sprintf("%v%v", authenticationObj.ApiUrl, "Auth/SignAppIn"), accessToken)
 	if err != nil {
 		return entities.SignApinResponse{}, err
 	}
@@ -63,7 +63,7 @@ func (c *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinRe
 }
 
 // GetToken get token from PS API
-func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
+func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
 
 	params := url.Values{}
 	params.Add("client_id", clientId)
@@ -78,9 +78,9 @@ func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, client
 	buffer.WriteString(params.Encode())
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = c.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "")
+		body, technicalError, businessError, _ = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "")
 		return technicalError
-	}, c.ExponentialBackOff)
+	}, authenticationObj.ExponentialBackOff)
 
 	if technicalError != nil {
 		return "", technicalError
@@ -90,6 +90,7 @@ func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, client
 		return "", businessError
 	}
 
+	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -102,7 +103,7 @@ func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, client
 
 	err = json.Unmarshal([]byte(responseString), &data)
 	if err != nil {
-		c.log.Error(err.Error())
+		authenticationObj.log.Error(err.Error())
 		return "", err
 	}
 
@@ -111,7 +112,7 @@ func (c *AuthenticationObj) GetToken(endpointUrl string, clientId string, client
 }
 
 // SignAppin Signs app in  PS API
-func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (entities.SignApinResponse, error) {
+func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (entities.SignApinResponse, error) {
 
 	var userObject entities.SignApinResponse
 	var body io.ReadCloser
@@ -120,12 +121,12 @@ func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (e
 	var scode int
 
 	err := backoff.Retry(func() error {
-		body, technicalError, businessError, scode = c.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken)
+		body, technicalError, businessError, scode = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken)
 		if scode == 0 {
 			return nil
 		}
 		return technicalError
-	}, c.ExponentialBackOff)
+	}, authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return entities.SignApinResponse{}, err
@@ -148,7 +149,7 @@ func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (e
 	err = json.Unmarshal(bodyBytes, &userObject)
 
 	if err != nil {
-		c.log.Error(err.Error())
+		authenticationObj.log.Error(err.Error())
 		return entities.SignApinResponse{}, err
 	}
 
@@ -157,78 +158,25 @@ func (c *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (e
 
 // SignOut signs out Secret Safe API.
 // Warn: should only be called one time for all data sources.
-func (c *AuthenticationObj) SignOut(url string) error {
-	c.log.Debug(url)
+func (authenticationObj *AuthenticationObj) SignOut(url string) error {
+	authenticationObj.log.Debug(url)
 
 	var technicalError error
 	var businessError error
+	var body io.ReadCloser
 
 	technicalError = backoff.Retry(func() error {
-		_, technicalError, businessError, _ = c.CallSecretSafeAPI(url, "POST", bytes.Buffer{}, "SignOut", "")
+		body, technicalError, businessError, _ = authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", bytes.Buffer{}, "SignOut", "")
 		return technicalError
-	}, c.ExponentialBackOff)
+	}, authenticationObj.ExponentialBackOff)
 
+	defer body.Close()
 	if businessError != nil {
-		c.log.Error(businessError.Error())
+		authenticationObj.log.Error(businessError.Error())
 		return businessError
 	}
 
+	defer authenticationObj.HttpClient.HttpClient.CloseIdleConnections()
+
 	return nil
-}
-
-// CallSecretSafeAPI prepares http call
-func (c *AuthenticationObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string) (io.ReadCloser, error, error, int) {
-	response, technicalError, businessError, scode := c.HttpRequest(url, httpMethod, body, accesToken)
-	if technicalError != nil {
-		messageLog := fmt.Sprintf("Error in %v %v \n", method, technicalError)
-		c.log.Error(messageLog)
-	}
-
-	if businessError != nil {
-		messageLog := fmt.Sprintf("Error in %v: %v \n", method, businessError)
-		c.log.Error(messageLog)
-	}
-	return response, technicalError, businessError, scode
-}
-
-// HttpRequest makes http request to he server
-func (c *AuthenticationObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string) (closer io.ReadCloser, technicalError error, businessError error, scode int) {
-
-	req, err := http.NewRequest(method, url, &body)
-	if err != nil {
-		return nil, err, nil, 0
-	}
-	req.Header = http.Header{
-		"Content-Type": {"application/json"},
-	}
-
-	if accesToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accesToken)
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		c.log.Error(err.Error())
-		return nil, err, nil, 0
-	}
-
-	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
-		err = fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, scode, err, body)
-		c.log.Error(err.Error())
-		return nil, err, nil, resp.StatusCode
-	}
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-		respBody := new(bytes.Buffer)
-		_, err = respBody.ReadFrom(resp.Body)
-		if err != nil {
-			c.log.Error(err.Error())
-			return nil, err, nil, 0
-		}
-
-		err = fmt.Errorf("got a non 200 status code: %v - %v", resp.StatusCode, respBody)
-		return nil, nil, err, resp.StatusCode
-	}
-
-	return resp.Body, nil, nil, resp.StatusCode
 }

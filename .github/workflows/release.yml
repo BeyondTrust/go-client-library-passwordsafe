@@ -29,14 +29,7 @@ jobs:
         run: |
           cd api
           go test -race -coverprofile=coverage.out -v ./...
-          ls -alt
           go tool cover -func="coverage.out"
-      
-      - name: Go Lint
-        if: false
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.54
 
       - name: Save unit tests coverage
         uses: actions/upload-artifact@v3

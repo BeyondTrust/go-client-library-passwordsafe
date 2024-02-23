@@ -7,13 +7,13 @@ import (
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
-	"log"
-	"os"
 	"reflect"
 
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 type UserTestConfig struct {
@@ -34,17 +34,23 @@ type GetPasswordSafeAuthenticationConfig struct {
 	response *entities.SignApinResponse
 }
 
-var logger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime)
-var logLogger = logging.NewLogLogger(logger)
-var httpClient, _ = utils.GetHttpClient(5, true, "", "")
-var authenticate, _ = Authenticate(httpClient, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", logLogger, 300)
-
 func TestSignOut(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := UserTestConfig{
 		name: "TestSignOut",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(``))
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
 		})),
 		response: nil,
 	}
@@ -56,11 +62,21 @@ func TestSignOut(t *testing.T) {
 }
 
 func TestSignAppin(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := UserTestConfig{
 		name: "TestSignAppin",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
 		})),
 		response: &entities.SignApinResponse{
 			UserId:       1,
@@ -80,7 +96,14 @@ func TestSignAppin(t *testing.T) {
 }
 
 func TestGetToken(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := GetTokenConfig{
 		name: "TestGetToken",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +111,10 @@ func TestGetToken(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/connect/token":
-				w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+				_, err := w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			default:
 				http.NotFound(w, r)
@@ -109,7 +135,14 @@ func TestGetToken(t *testing.T) {
 }
 
 func TestGetPasswordSafeAuthentication(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := GetPasswordSafeAuthenticationConfig{
 		name: "TestGetPasswordSafeAuthentication",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -117,10 +150,17 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/connect/token":
-				w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+				_, err := w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Auth/SignAppIn":
-				w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			default:
 				http.NotFound(w, r)

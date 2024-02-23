@@ -129,7 +129,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "")
+		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "")
 		if technicalError != nil {
 			return technicalError
 		}
@@ -145,6 +145,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 		return entities.ManagedAccount{}, businessError
 	}
 
+	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -175,7 +176,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "")
+		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -187,6 +188,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 		return "", businessError
 	}
 
+	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -203,14 +205,14 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 // enpoint and returns secret value by request Id.
 func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
-	managedAccounObj.log.Debug(messageLog)
+	managedAccounObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
 
 	var body io.ReadCloser
 	var technicalError error
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "")
+		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -222,6 +224,7 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 		return "", businessError
 	}
 
+	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
 		managedAccounObj.log.Error(err.Error())
@@ -241,7 +244,7 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
 func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "PUT", url)
-	managedAccounObj.log.Debug(messageLog)
+	managedAccounObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
 
 	data := "{}"
 	b := bytes.NewBufferString(data)
@@ -250,7 +253,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reques
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		_, technicalError, businessError, _ = managedAccounObj.authenticationObj.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "")
+		_, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 

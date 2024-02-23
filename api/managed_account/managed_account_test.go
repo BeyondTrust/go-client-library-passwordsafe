@@ -9,13 +9,12 @@ import (
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
-	"log"
-	"os"
-	"strings"
-
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 type ManagedAccountTestConfig struct {
@@ -30,18 +29,26 @@ type ManagedAccountTestConfigStringResponse struct {
 	response string
 }
 
-var logger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime)
-var logLogger = logging.NewLogLogger(logger)
-var httpClient, _ = utils.GetHttpClient(5, true, "", "")
-var authenticate, _ = authentication.Authenticate(httpClient, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", logLogger, 300)
-
 func TestManagedAccountGet(t *testing.T) {
+
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 
 	testConfig := ManagedAccountTestConfig{
 		name: "TestManagedAccountGet",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response
-			w.Write([]byte(`{"SystemId": 1,"AccountId": 10}`))
+			_, err := w.Write([]byte(`{"SystemId": 1,"AccountId": 10}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
 		})),
 		response: &entities.ManagedAccount{
 			SystemId:  1,
@@ -49,7 +56,7 @@ func TestManagedAccountGet(t *testing.T) {
 		},
 	}
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountGet("fake_system_name", "fake_account_name", testConfig.server.URL)
 
 	if response != *testConfig.response {
@@ -62,18 +69,28 @@ func TestManagedAccountGet(t *testing.T) {
 }
 
 func TestManagedAccountCreateRequest(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountCreateRequest",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response
-			w.Write([]byte(`124`))
+			_, err := w.Write([]byte(`124`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
 		})),
 		response: "124",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountCreateRequest(1, 10, testConfig.server.URL)
 
 	if response != testConfig.response {
@@ -86,18 +103,28 @@ func TestManagedAccountCreateRequest(t *testing.T) {
 }
 
 func TestCredentialByRequestId(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestCredentialByRequestId",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response
-			w.Write([]byte(`fake_credential`))
+			_, err := w.Write([]byte(`fake_credential`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
 		})),
 		response: "fake_credential",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.CredentialByRequestId("124", testConfig.server.URL)
 
 	if response != testConfig.response {
@@ -110,18 +137,28 @@ func TestCredentialByRequestId(t *testing.T) {
 }
 
 func TestManagedAccountRequestCheckIn(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountRequestCheckIn",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response
-			w.Write([]byte(``))
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
 		})),
 		response: "",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountRequestCheckIn("124", testConfig.server.URL)
 
 	if response != testConfig.response {
@@ -134,7 +171,14 @@ func TestManagedAccountRequestCheckIn(t *testing.T) {
 }
 
 func TestManageAccountFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,22 +186,40 @@ func TestManageAccountFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Auth/Signout":
-				w.Write([]byte(``))
+				_, err := w.Write([]byte(``))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
-			case fmt.Sprintf("/ManagedAccounts"):
-				w.Write([]byte(`{"SystemId":1,"AccountId":10}`))
+			case "/ManagedAccounts":
+				_, err := w.Write([]byte(`{"SystemId":1,"AccountId":10}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Requests":
-				w.Write([]byte(`124`))
+				_, err := w.Write([]byte(`124`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Credentials/124":
-				w.Write([]byte(`"fake_credential"`))
+				_, err := w.Write([]byte(`"fake_credential"`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Requests/124/checkin":
-				w.Write([]byte(``))
+				_, err := w.Write([]byte(``))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			default:
 				http.NotFound(w, r)
@@ -167,7 +229,7 @@ func TestManageAccountFlow(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 
 	secretDictionary := make(map[string]string)
 	managedAccounList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
@@ -184,7 +246,15 @@ func TestManageAccountFlow(t *testing.T) {
 }
 
 func TestManageAccountFlowNotFound(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlowFailedManagedAccounts",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -218,7 +288,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL
-	managedAccountObj, _ := NewManagedAccountObj(*authenticate, logLogger)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 
 	secretDictionary := make(map[string]string)
 	managedAccounList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")

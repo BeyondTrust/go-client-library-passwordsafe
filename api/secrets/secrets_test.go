@@ -8,13 +8,13 @@ import (
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
-	"log"
-	"os"
 	"strings"
 
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 type SecretTestConfig struct {
@@ -29,18 +29,23 @@ type SecretTestConfigStringResponse struct {
 	response string
 }
 
-var logger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime)
-var logLogger = logging.NewLogLogger(logger)
-var httpClient, _ = utils.GetHttpClient(5, true, "", "")
-var authenticate, _ = authentication.Authenticate(httpClient, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", logLogger, 300)
-
 func TestSecretGetSecretByPath(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
 
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := SecretTestConfig{
 		name: "TestSecretGetSecretByPath",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response
-			w.Write([]byte(`[{"Password": "credential_in_sub_3_password","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "credential_in_sub_3"}]`))
+			_, err := w.Write([]byte(`[{"Password": "credential_in_sub_3_password","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "credential_in_sub_3"}]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
 		})),
 		response: &entities.Secret{
 			Id:       "9152f5b6-07d6-4955-175a-08db047219ce",
@@ -50,11 +55,10 @@ func TestSecretGetSecretByPath(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
+<<<<<<< HEAD
 	secretObj, _ := NewSecretObj(*authenticate, logLogger)
-
-	response, err := secretObj.SecretGetSecretByPath("path1/path2", "fake_title", "/", "secrets-safe/secrets")
-
-	if response != *testConfig.response {
+=======
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
 		t.Errorf("Test case Failed %v, %v", response, *testConfig.response)
 	}
 
@@ -64,16 +68,38 @@ func TestSecretGetSecretByPath(t *testing.T) {
 }
 
 func TestSecretGetFileSecret(t *testing.T) {
+<<<<<<< HEAD
 
 	testConfig := SecretTestConfig{
 		name: "TestSecretGetFileSecret",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`fake_password`))
+=======
+	logger, _ := zap.NewDevelopment()
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfig{
+		name: "TestSecretGetFileSecret",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, err := w.Write([]byte(`fake_password`))
+
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+>>>>>>> origin/BIPS-16472
 		})),
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
+<<<<<<< HEAD
 	secretObj, _ := NewSecretObj(*authenticate, logLogger)
+=======
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+>>>>>>> origin/BIPS-16472
 	response, err := secretObj.SecretGetFileSecret("1", testConfig.server.URL)
 
 	if response != "fake_password" {
@@ -86,7 +112,18 @@ func TestSecretGetFileSecret(t *testing.T) {
 }
 
 func TestSecretFlow(t *testing.T) {
+<<<<<<< HEAD
 
+=======
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+>>>>>>> origin/BIPS-16472
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +131,7 @@ func TestSecretFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
+<<<<<<< HEAD
 				w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
 
 			case "/Auth/Signout":
@@ -104,6 +142,30 @@ func TestSecretFlow(t *testing.T) {
 
 			case "/secrets-safe/secrets/9152f5b6-07d6-4955-175a-08db047219ce/file/download":
 				w.Write([]byte(`fake_password`))
+=======
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/Auth/Signout":
+				_, err := w.Write([]byte(``))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/secrets":
+				_, err := w.Write([]byte(`[{"SecretType": "FILE", "Password": "credential_in_sub_3_password","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "credential_in_sub_3"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/secrets/9152f5b6-07d6-4955-175a-08db047219ce/file/download":
+				_, err := w.Write([]byte(`fake_password`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+>>>>>>> origin/BIPS-16472
 
 			default:
 				http.NotFound(w, r)
@@ -113,7 +175,11 @@ func TestSecretFlow(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
+<<<<<<< HEAD
 	secretObj, _ := NewSecretObj(*authenticate, logLogger)
+=======
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+>>>>>>> origin/BIPS-16472
 
 	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	response, err := secretObj.GetSecretFlow(secretList, "/")
@@ -128,7 +194,18 @@ func TestSecretFlow(t *testing.T) {
 }
 
 func TestSecretFlow_SecretNotFound(t *testing.T) {
+<<<<<<< HEAD
 
+=======
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+>>>>>>> origin/BIPS-16472
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +213,7 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
+<<<<<<< HEAD
 				w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
 
 			case "/Auth/Signout":
@@ -143,6 +221,24 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 
 			case "/secrets-safe/secrets":
 				w.Write([]byte(`[]`))
+=======
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/Auth/Signout":
+				_, err := w.Write([]byte(``))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/secrets":
+				_, err := w.Write([]byte(`[]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+>>>>>>> origin/BIPS-16472
 
 			default:
 				http.NotFound(w, r)
@@ -152,7 +248,11 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
+<<<<<<< HEAD
 	secretObj, _ := NewSecretObj(*authenticate, logLogger)
+=======
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+>>>>>>> origin/BIPS-16472
 
 	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	_, err := secretObj.GetSecretFlow(secretList, "/")

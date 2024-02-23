@@ -5,7 +5,7 @@ import (
 	"go-client-library-passwordsafe/api/authentication"
 	logging "go-client-library-passwordsafe/api/logging"
 	managed_accounts "go-client-library-passwordsafe/api/managed_account"
-	secrets "go-client-library-passwordsafe/api/secrets"
+	"go-client-library-passwordsafe/api/secrets"
 	"go-client-library-passwordsafe/api/utils"
 	"strings"
 
@@ -23,7 +23,6 @@ func main() {
 	// create a zap logger
 	//logger, _ := zap.NewProduction()
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
 
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
@@ -34,24 +33,22 @@ func main() {
 	separator := "/"
 	certificate := ""
 	certificate_key := ""
-	clientTimeOutinSeconds := 30
+	clientTimeOutinSeconds := 5
 	verifyCa := true
 	maxElapsedTime := 15
 
 	// validate inputs
-	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutinSeconds, separator, verifyCa, zapLogger, certificate, certificate_key)
+	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutinSeconds, &separator, verifyCa, zapLogger, certificate, certificate_key)
 
 	if errors_in_inputs != nil {
-
-		//utils.Logging("ERROR", errors_in_inputs.Error(), *logger)
 		return
 	}
 
 	// creating a http client
-	httpClient, _ := utils.GetHttpClient(clientTimeOutinSeconds, verifyCa, certificate, certificate_key)
+	httpClientObj, _ := utils.GetHttpClient(clientTimeOutinSeconds, verifyCa, certificate, certificate_key, zapLogger)
 
 	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(httpClient, apiUrl, clientId, clientSecret, zapLogger, maxElapsedTime)
+	authenticate, _ := authentication.Authenticate(*httpClientObj, apiUrl, clientId, clientSecret, zapLogger, maxElapsedTime)
 
 	// authenticating in PS API
 	_, err := authenticate.GetPasswordSafeAuthentication()
@@ -62,34 +59,41 @@ func main() {
 	// instantiating secret obj
 	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger)
 
-	// getting secrets
-	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
-	gotSecrets, _ := secretObj.GetSecrets(secretList, separator)
-	zapLogger.Info(fmt.Sprintf("%v", gotSecrets))
-	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotSecrets), zapLogger)
+	paths := "oauthgrp/text1,oauthgrp/text2"
+	errors_in_path := utils.ValidatePath(paths)
+	if errors_in_path != nil {
+		return
+	}
 
 	// getting secrets
-	secretList = strings.Split("oauthgrp_nocert/client_id", ",")
+	secretList := strings.Split(paths, ",")
+	gotSecrets, _ := secretObj.GetSecrets(secretList, separator)
+	zapLogger.Info(fmt.Sprintf("%v", gotSecrets))
+
+	// getting single secret
+	secretList = strings.Split("oauthgrp/text1", ",")
 	gotSecret, _ := secretObj.GetSecret(secretList, separator)
 	zapLogger.Info(fmt.Sprintf("%v", gotSecret))
-	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotSecret), *logger)
 
 	// instantiating managed account obj
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
 
-	// getting managed accounts
-	managedAccountList := strings.Split("system01/managed_account01,system02/managed_account01", ",")
+	paths = "system01/managed_account01,system02/managed_account01"
+	errors_in_path = utils.ValidatePath(paths)
+	if errors_in_path != nil {
+		return
+	}
+
+	managedAccountList := strings.Split(paths, ",")
 	gotManagedAccounts, _ := manageAccountObj.GetSecrets(managedAccountList, separator)
 	zapLogger.Info(fmt.Sprintf("%v", gotManagedAccounts))
-	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotManagedAccounts), *logger)
 
 	// getting single managed account
 	managedAccountList = []string{}
 	gotManagedAccount, _ := manageAccountObj.GetSecret(append(managedAccountList, "system01/managed_account01"), separator)
 	zapLogger.Info(fmt.Sprintf("%v", gotManagedAccount))
-	//utils.Logging("DEBUG", fmt.Sprintf("%v", gotManagedAccount), *logger)
 
 	// signing out
-	authenticate.SignOut(fmt.Sprintf("%v%v", authenticate.ApiUrl, "Auth/Signout"))
+	_ = authenticate.SignOut(fmt.Sprintf("%v%v", authenticate.ApiUrl, "Auth/Signout"))
 
 }

@@ -95,7 +95,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	url := fmt.Sprintf("%s%s?%s", secretObj.authenticationObj.ApiUrl, endpointPath, params.Encode())
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, scode = secretObj.authenticationObj.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
+		body, technicalError, businessError, scode = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -107,6 +107,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		return entities.Secret{}, businessError
 	}
 
+	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -142,7 +143,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	url := fmt.Sprintf("%s%s%s%s", secretObj.authenticationObj.ApiUrl, endpointPath, secretId, "/file/download")
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = secretObj.authenticationObj.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "")
+		body, technicalError, businessError, _ = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -154,6 +155,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 		return "", businessError
 	}
 
+	defer body.Close()
 	responseData, err := io.ReadAll(body)
 	if err != nil {
 		return "", err
