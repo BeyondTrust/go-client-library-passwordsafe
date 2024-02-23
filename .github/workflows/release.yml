@@ -32,7 +32,7 @@ jobs:
           go tool cover -func="coverage.out"
 
       - name: Save unit tests coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: api/coverage.out
