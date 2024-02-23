@@ -27,6 +27,7 @@ jobs:
         
       - name: Run unit tests
         run: |
+          ls
           cd api
           go test -race -coverprofile=coverage.out -v ./...
           go tool cover -func="coverage.out"
