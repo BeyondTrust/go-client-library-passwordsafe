@@ -26,6 +26,9 @@ Remember, Release Please App will trigger once a PR with the conventional commit
 
 Look at TestClient.go for example usage of the library
 
+and execute:
+
 ```sh
-pip install -r ~/requirements.txt
+go build
+go run TestClient.go
 ```
