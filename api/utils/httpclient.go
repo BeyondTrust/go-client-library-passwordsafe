@@ -16,6 +16,7 @@ type HttpClientObj struct {
 	log        logging.Logger
 }
 
+// GetHttpClient is responsible for configuring an HTTP client and transport for API calls.
 func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certificate_key string, logger logging.Logger) (*HttpClientObj, error) {
 	var cert tls.Certificate
 
@@ -72,7 +73,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, bo
 	return response, technicalError, businessError, scode
 }
 
-// HttpRequest makes http request to he server
+// HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string) (closer io.ReadCloser, technicalError error, businessError error, scode int) {
 
 	req, err := http.NewRequest(method, url, &body)
@@ -93,14 +94,13 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 		return nil, err, nil, 0
 	}
 
-	fmt.Println(resp)
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
 		err = fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, scode, err, body)
 		client.log.Error(err.Error())
 		return nil, err, nil, resp.StatusCode
 	}
 
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode > http.StatusBadRequest {
 		respBody := new(bytes.Buffer)
 		_, err = respBody.ReadFrom(resp.Body)
 		if err != nil {
@@ -108,7 +108,7 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 			return nil, err, nil, 0
 		}
 
-		err = fmt.Errorf("got a non 200 status code: %v - %v", resp.StatusCode, respBody)
+		err = fmt.Errorf("error - status code: %v - %v", resp.StatusCode, respBody)
 		return nil, nil, err, resp.StatusCode
 	}
 

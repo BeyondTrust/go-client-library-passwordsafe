@@ -1,5 +1,5 @@
 // Copyright 2024 BeyondTrust. All rights reserved.
-// Package secrets implements Get secret logic
+// Package secrets implements Get secret logic for Secrets Safe (cred, text, file)
 package secrets
 
 import (
@@ -40,11 +40,12 @@ func (secretObj *SecretObj) GetSecrets(secretsList []string, separator string) (
 }
 
 // GetSecret returns secret value for a specific path and title.
-func (secretObj *SecretObj) GetSecret(secretsList []string, separator string) (map[string]string, error) {
-	return secretObj.GetSecretFlow(secretsList, separator)
+func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (map[string]string, error) {
+	secretList := []string{}
+	return secretObj.GetSecretFlow(append(secretList, secretPath), separator)
 }
 
-// GetSecretFlow returns secret value for a specific path and title list
+// GetSecretFlow is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
 func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
 
 	secretDictionary := make(map[string]string)

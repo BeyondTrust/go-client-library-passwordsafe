@@ -112,7 +112,7 @@ func TestSecretFlow(t *testing.T) {
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Mocking Response accorging to the endpoint path
+			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
@@ -149,8 +149,8 @@ func TestSecretFlow(t *testing.T) {
 	authenticate.ApiUrl = testConfig.server.URL + "/"
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
 
-	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
-	response, err := secretObj.GetSecretFlow(secretList, "/")
+	secretsPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
+	response, err := secretObj.GetSecretFlow(secretsPaths, "/")
 
 	if response["oauthgrp_nocert/Test1"] != testConfig.response {
 		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
@@ -173,7 +173,7 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Mocking Response accorging to the endpoint path
+			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":

@@ -4,6 +4,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	logging "go-client-library-passwordsafe/api/logging"
 	"strings"
 	"unicode/utf8"
@@ -22,7 +23,7 @@ type UserInputValidaton struct {
 
 var validate *validator.Validate
 
-// ValidateInputs validate inputs
+// ValidateInputs is responsible for validating end-user inputs.
 func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string) error {
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
@@ -53,7 +54,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		certificateLengthInBits := utf8.RuneCountInString(certificate) * 8
 
 		if certificateLengthInBits > 32768 {
-			message = "Invalid length for certificate"
+			message = "Invalid length for certificate, the maximum size is 32768 bits"
 			logger.Error(message)
 			return errors.New(message)
 		}
@@ -61,42 +62,75 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		certificateKeyLengthInBits := utf8.RuneCountInString(certificate_key) * 8
 
 		if certificateKeyLengthInBits > 32768 {
-			message = "Invalid length for certificate key"
+			message = "Invalid length for certificate key, the maximum size is 32768 bits"
 			logger.Error(message)
 			return errors.New(message)
 		}
 
 		if !strings.HasPrefix(certificate, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(certificate, "-----END CERTIFICATE-----") {
-			message = "Invalid certificate content"
+			message = "Invalid certificate content, must contain BEGIN and END CERTIFICATE"
 			logger.Error(message)
 			return errors.New(message)
 		}
 
 		if !strings.HasPrefix(certificate_key, "-----BEGIN PRIVATE KEY-----") || !strings.HasSuffix(certificate_key, "-----END PRIVATE KEY-----") {
-			message = "Invalid certificate key content"
+			message = "Invalid certificate key content, must contain BEGIN and END PRIVATE KEY"
 			logger.Error(message)
 			return errors.New(message)
 		}
 
 	}
 
-	if !strings.Contains(apiUrl, "/BeyondTrust/api/public/v3/") {
-		message = "Invalid API URL, it should contains /BeyondTrust/api/public/v3/ as path"
+	if !strings.Contains(apiUrl, "/BeyondTrust/api/public/v") {
+		message = "Invalid API URL, it must contains /BeyondTrust/api/public/v as part of the route"
 		logger.Error(message)
 		return errors.New(message)
 	}
 
 	logger.Debug("Validation passed!")
-	//Logging("DEBUG", "Validation passed!", *logger)
 	return nil
 }
 
-// ValidatePaths validate path
+// ValidatePaths is responsible for validating secret paths
 func ValidatePath(path string) error {
 	message := ""
 	if len(path) > 303 {
-		message = "Invalid Path Lenght"
+		message = fmt.Sprintf("Invalid Path Length, valid paths have a maximum size of %v", 303)
 		return errors.New(message)
 	}
 	return nil
+}
+
+// ValidatePaths validate managed accounts paths
+func ValidatePaths(secretPaths []string, separator string, logger logging.Logger) ([]string, error) {
+
+	newSecretPaths := []string{}
+
+	for _, secretToRetrieve := range secretPaths {
+
+		if strings.TrimSpace(secretToRetrieve) == "" {
+			logger.Debug("Please use a valid path")
+			continue
+		}
+
+		secretData := strings.Split(secretToRetrieve, separator)
+
+		systemName := secretData[0]
+		accountName := secretData[1]
+
+		systemName = strings.TrimSpace(systemName)
+		accountName = strings.TrimSpace(accountName)
+
+		if systemName == "" {
+			logger.Debug("Please use a valid system name value")
+		} else if accountName == "" {
+			logger.Debug("Please use a valid account name value")
+		} else {
+			secretPath := fmt.Sprintf("%s%s%s", systemName, separator, accountName)
+			newSecretPaths = append(newSecretPaths, secretPath)
+		}
+	}
+
+	return newSecretPaths, nil
+
 }

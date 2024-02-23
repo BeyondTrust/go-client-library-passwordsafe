@@ -182,7 +182,7 @@ func TestManageAccountFlow(t *testing.T) {
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Mocking Response accorging to the endpoint path
+			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
@@ -258,7 +258,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlowFailedManagedAccounts",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Mocking Response accorging to the endpoint path
+			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
@@ -284,7 +284,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: `got a non 200 status code: 404 - "Managed Account not found"`,
+		response: `error - status code: 404 - "Managed Account not found"`,
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL

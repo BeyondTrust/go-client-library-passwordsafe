@@ -6,11 +6,11 @@ package managed_accounts
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go-client-library-passwordsafe/api/authentication"
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
+	"go-client-library-passwordsafe/api/utils"
 	"io"
 	"strconv"
 	"strings"
@@ -32,33 +32,32 @@ func NewManagedAccountObj(authentication authentication.AuthenticationObj, logge
 	return managedAccounObj, nil
 }
 
-// GetSecrets returns secret value for a System Name and Account Name list.
-func (managedAccounObj *ManagedAccountstObj) GetSecrets(secretsList []string, separator string) (map[string]string, error) {
+// GetSecrets is responsible for getting a list of managed account secret values based on the list of systems and account names.
+func (managedAccounObj *ManagedAccountstObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
 	if separator == "" {
 		separator = ""
 	}
-	return managedAccounObj.ManageAccountFlow(secretsList, separator, make(map[string]string))
+	return managedAccounObj.ManageAccountFlow(secretPaths, separator, make(map[string]string))
 }
 
 // GetSecret returns secret value for a specific System Name and Account Name.
-func (managedAccounObj *ManagedAccountstObj) GetSecret(secretsList []string, separator string) (map[string]string, error) {
-	return managedAccounObj.ManageAccountFlow(secretsList, separator, make(map[string]string))
+func (managedAccounObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (map[string]string, error) {
+	managedAccountList := []string{}
+	return managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
 }
 
-// ManageAccountFlow returns value for a specific System Name and Account Name.
+// ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
 func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve []string, separator string, paths map[string]string) (map[string]string, error) {
 
 	secretDictionary := make(map[string]string)
 
-	for _, secretToRetrieve := range secretsToRetrieve {
+	secretsToRetrieve, _ = utils.ValidatePaths(secretsToRetrieve, separator, managedAccounObj.log)
 
+	for _, secretToRetrieve := range secretsToRetrieve {
 		secretData := strings.Split(secretToRetrieve, separator)
 
 		systemName := secretData[0]
 		accountName := secretData[1]
-
-		systemName = strings.TrimSpace(systemName)
-		accountName = strings.TrimSpace(accountName)
 
 		if len(paths) == 0 {
 			paths["SignAppinPath"] = "Auth/SignAppin"
@@ -70,18 +69,6 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		}
 
 		var err error
-
-		if systemName == "" {
-			err = errors.New("Please use a valid system_name value")
-			managedAccounObj.log.Error(err.Error())
-			return nil, err
-		}
-
-		if accountName == "" {
-			err = errors.New("Please use a valid system_name value")
-			managedAccounObj.log.Error(err.Error())
-			return nil, err
-		}
 
 		ManagedAccountGetUrl := managedAccounObj.RequestPath(paths["ManagedAccountGetPath"])
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
@@ -120,6 +107,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 	return secretDictionary, nil
 }
 
+// ManagedAccountGet is responsible for retrieving a managed account secret based on the system and name.
 func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string, accountName string, url string) (entities.ManagedAccount, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	managedAccounObj.log.Debug(messageLog)

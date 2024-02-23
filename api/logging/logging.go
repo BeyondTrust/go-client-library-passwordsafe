@@ -73,6 +73,7 @@ func (l *LogLogger) Error(msg string) {
 	l.logger.Println(msg)
 }
 
+// Debug logs a message at debug level
 func (l *LogLogger) Debug(msg string) {
 	prefix := fmt.Sprintf("%v :", "Debug")
 	l.logger.SetPrefix(prefix)
@@ -84,6 +85,7 @@ func NewZapLogger(logger *zap.Logger) *ZapLogger {
 	return &ZapLogger{logger: logger}
 }
 
+// NewLogrLogger creates a new logrLogger with the given logr.logger
 func NewLogrLogger(logger *logr.Logger) *LogrLogger {
 	return &LogrLogger{logger: logger}
 }

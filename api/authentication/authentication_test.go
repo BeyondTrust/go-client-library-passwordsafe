@@ -107,7 +107,7 @@ func TestGetToken(t *testing.T) {
 	testConfig := GetTokenConfig{
 		name: "TestGetToken",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Mocking Response accorging to the endpoint path
+			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/connect/token":

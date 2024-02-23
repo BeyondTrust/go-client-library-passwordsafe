@@ -26,7 +26,7 @@ type AuthenticationObj struct {
 	log                logging.Logger
 }
 
-// Authenticate in PS API
+// Authenticate is responsible for Auth configuration.
 func Authenticate(httpClient utils.HttpClientObj, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
 	backoffDefinition := backoff.NewExponentialBackOff()
@@ -34,12 +34,9 @@ func Authenticate(httpClient utils.HttpClientObj, endpointUrl string, clientId s
 	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeSeconds) * time.Second
 	backoffDefinition.RandomizationFactor = 0.5
 
-	// Client
-	var client = httpClient
-
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             endpointUrl,
-		HttpClient:         client,
+		HttpClient:         httpClient,
 		clientId:           clientId,
 		clientSecret:       clientSecret,
 		ExponentialBackOff: backoffDefinition,
@@ -49,7 +46,7 @@ func Authenticate(httpClient utils.HttpClientObj, endpointUrl string, clientId s
 	return authenticationObj, nil
 }
 
-// GetPasswordSafeAuthentication call get token and sign app endpoint
+// GetPasswordSafeAuthentication is responsible for getting a token and signing in.
 func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinResponse, error) {
 	accessToken, err := authenticationObj.GetToken(fmt.Sprintf("%v%v", authenticationObj.ApiUrl, "Auth/connect/token"), authenticationObj.clientId, authenticationObj.clientSecret)
 	if err != nil {
@@ -62,7 +59,7 @@ func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (ent
 	return signApinResponse, nil
 }
 
-// GetToken get token from PS API
+// GetToken is responsible for getting a token from the PS API.
 func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
 
 	params := url.Values{}
@@ -107,11 +104,13 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		return "", err
 	}
 
+	authenticationObj.log.Debug("Successfully retrieved token")
+
 	return data.AccessToken, nil
 
 }
 
-// SignAppin Signs app in  PS API
+// SignAppin is responsible for creating a PS API session.
 func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (entities.SignApinResponse, error) {
 
 	var userObject entities.SignApinResponse
@@ -152,11 +151,11 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		authenticationObj.log.Error(err.Error())
 		return entities.SignApinResponse{}, err
 	}
-
+	authenticationObj.log.Debug("Successfully Signed App In")
 	return userObject, nil
 }
 
-// SignOut signs out Secret Safe API.
+// SignOut is responsible for closing the PS API session and cleaning up idle connections.
 // Warn: should only be called one time for all data sources.
 func (authenticationObj *AuthenticationObj) SignOut(url string) error {
 	authenticationObj.log.Debug(url)
@@ -177,6 +176,6 @@ func (authenticationObj *AuthenticationObj) SignOut(url string) error {
 	}
 
 	defer authenticationObj.HttpClient.HttpClient.CloseIdleConnections()
-
+	authenticationObj.log.Debug("Successfully Signed out.")
 	return nil
 }
