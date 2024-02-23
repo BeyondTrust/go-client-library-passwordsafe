@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       
       - name: Set up JFrog
-        uses: jfrog/setup-jfrog-cli@v3
+        uses: jfrog/setup-jfrog-cli@v4
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
           
