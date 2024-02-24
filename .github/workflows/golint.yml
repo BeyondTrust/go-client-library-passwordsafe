@@ -1,10 +1,5 @@
 name: Go Lint
 
-env:
-  JFROG_CLI_BUILD_NAME: ${{ github.repository }}
-#  JFROG_SERVER: 
-  SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-
 on:
   pull_request_target:
     types: [opened, synchronize]
@@ -17,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  golint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
