@@ -4,7 +4,6 @@
 package managed_accounts
 
 import (
-	"fmt"
 	"go-client-library-passwordsafe/api/authentication"
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
@@ -247,7 +246,6 @@ func TestManageAccountFlow(t *testing.T) {
 
 func TestManageAccountFlowNotFound(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync()
 
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
@@ -262,23 +260,44 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Auth/Signout":
-				w.Write([]byte(``))
+				_, err := w.Write([]byte(``))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
-			case fmt.Sprintf("/ManagedAccounts"):
+			case "/ManagedAccounts":
 				w.WriteHeader(http.StatusNotFound)
-				w.Write([]byte(`"Managed Account not found"`))
+				_, err := w.Write([]byte(`"Managed Account not found"`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Requests":
-				w.Write([]byte(`124`))
+				_, err := w.Write([]byte(`124`))
+
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Credentials/124":
-				w.Write([]byte(`"fake_credential"`))
+				_, err := w.Write([]byte(`"fake_credential"`))
+
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			case "/Requests/124/checkin":
-				w.Write([]byte(``))
+				_, err := w.Write([]byte(``))
+
+				if err != nil {
+					t.Error("Test case Failed")
+				}
 
 			default:
 				http.NotFound(w, r)
