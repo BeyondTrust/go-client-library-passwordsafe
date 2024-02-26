@@ -73,8 +73,9 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 			}
 
 			secretDictionary[secretToRetrieve] = fileSecretContent
+		} else {
+			secretDictionary[secretToRetrieve] = secret.Password
 		}
-		secretDictionary[secretToRetrieve] = secret.Password
 
 	}
 
