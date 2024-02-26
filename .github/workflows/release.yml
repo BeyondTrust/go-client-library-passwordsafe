@@ -113,13 +113,13 @@ jobs:
         
       - name: Setting up artifactory
         run: |
-          mkdir go-client-library-passwordsafe
+          mkdir go-library-passwordsafe
 
       - name: Download library binary
         uses: actions/download-artifact@v4
         with:
           name: library
-          path: go-client-library-passwordsafe
+          path: go-library-passwordsafe
     
       - name: Send artifacts to Jfrog 
         run: |
