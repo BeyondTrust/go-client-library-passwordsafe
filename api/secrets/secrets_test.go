@@ -204,8 +204,8 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 	authenticate.ApiUrl = testConfig.server.URL + "/"
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
 
-	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
-	_, err := secretObj.GetSecretFlow(secretList, "/")
+	secretPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
+	_, err := secretObj.GetSecretFlow(secretPaths, "/")
 
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)

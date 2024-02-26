@@ -32,17 +32,17 @@ func NewSecretObj(authentication authentication.AuthenticationObj, logger loggin
 }
 
 // GetSecrets returns secret value for a path and title list.
-func (secretObj *SecretObj) GetSecrets(secretsList []string, separator string) (map[string]string, error) {
+func (secretObj *SecretObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
 	if separator == "" {
 		separator = ""
 	}
-	return secretObj.GetSecretFlow(secretsList, separator)
+	return secretObj.GetSecretFlow(secretPaths, separator)
 }
 
 // GetSecret returns secret value for a specific path and title.
 func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (string, error) {
-	secretList := []string{}
-	secrets, _ := secretObj.GetSecretFlow(append(secretList, secretPath), separator)
+	secretPaths := []string{}
+	secrets, _ := secretObj.GetSecretFlow(append(secretPaths, secretPath), separator)
 	secretValue := secrets[secretPath]
 	return secretValue, nil
 }
@@ -73,9 +73,9 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 			}
 
 			secretDictionary[secretToRetrieve] = fileSecretContent
+		} else {
+			secretDictionary[secretToRetrieve] = secret.Password
 		}
-		secretDictionary[secretToRetrieve] = secret.Password
-
 	}
 
 	return secretDictionary, nil
@@ -126,7 +126,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 
 	if len(SecretObjectList) == 0 {
 		scode = 404
-		err = fmt.Errorf("Error %v: StatusCode: %v ", "SecretGetSecretByPath, Secret was not found", scode)
+		err = fmt.Errorf("error %v: StatusCode: %v ", "SecretGetSecretByPath, Secret was not found", scode)
 		return entities.Secret{}, err
 	}
 
@@ -137,7 +137,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 // and returns file secret value.
 func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	secretObj.log.Debug(messageLog)
+	secretObj.log.Debug(messageLog + "file/download")
 
 	var body io.ReadCloser
 	var technicalError error
