@@ -2,7 +2,7 @@ name: Release
 
 env:
   JFROG_CLI_BUILD_NAME: ${{ github.repository }}
-#  JFROG_SERVER: 
+  JFROG_SERVER: eng-generic-dev-local
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
 on:
@@ -24,6 +24,10 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
+
+      - name: Build library
+        run: |
+          go build
         
       - name: Run unit tests
         run: |
@@ -37,8 +41,13 @@ jobs:
           name: coverage
           path: api/coverage.out
 
+      - name: Save built library
+        uses: actions/upload-artifact@v4
+        with:
+          name: library
+          path: go-client-library-passwordsafe
+
   sonarqube:
-  # Sonar scan is not required for dependabot PRs
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -91,9 +100,31 @@ jobs:
   x-ray:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
-    if: false
     steps:
-      
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          # Allow goreleaser to access older tag information.
+          fetch-depth: 0
+
+      - name: Jfrog setup
+        uses: jfrog/setup-jfrog-cli@v3
+        env:
+          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+        
+      - name: Setting up artifactory
+        run: |
+          mkdir go-library-passwordsafe
+
+      - name: Download library binary
+        uses: actions/download-artifact@v4
+        with:
+          name: library
+          path: go-library-passwordsafe
+    
+      - name: Send artifacts to Jfrog 
+        run: |
+          jfrog rt u "go-library-passwordsafe/*" ${{ env.JFROG_SERVER}}
+
       - name: Publish Build Information
         run: |
           jfrog rt build-add-git
