@@ -101,6 +101,11 @@ jobs:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
     steps:
+      - name: Jfrog setup
+        uses: jfrog/setup-jfrog-cli@v3
+        env:
+          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+          
       - name: Download coverage
         uses: actions/download-artifact@v4
         with:
