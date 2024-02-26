@@ -33,9 +33,9 @@ func main() {
 	retryMaxElapsedTimeMinutes := 2
 
 	// validate inputs
-	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey)
+	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey)
 
-	if errors_in_inputs != nil {
+	if errorsInInputs != nil {
 		return
 	}
 
