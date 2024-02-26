@@ -105,7 +105,7 @@ jobs:
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
-          
+
       - name: Jfrog setup
         uses: jfrog/setup-jfrog-cli@v3
         env:
@@ -115,6 +115,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: library
+      
+      - name: Setting up artifactory
+        run: |
+          mkdir go-client-library-passwordsafe
+          mv go-client-library-passwordsafe go-client-library-passwordsafe/
 
       - name: Send artifacts to Jfrog 
         run: |
