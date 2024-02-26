@@ -15,9 +15,6 @@ import (
 // main funtion
 func main() {
 
-	//logFile, _ := os.Create("ProviderLogs.log")
-	//logger.SetOutput(logFile)
-
 	// create a zap logger
 	//logger, _ := zap.NewProduction()
 	logger, _ := zap.NewDevelopment()
@@ -30,23 +27,23 @@ func main() {
 	clientSecret := ""
 	separator := "/"
 	certificate := ""
-	certificate_key := ""
-	clientTimeOutInSeconds := 5
+	certificateKey := ""
+	clientTimeOutInSeconds := 30
 	verifyCa := true
-	maxElapsedTime := 15
+	retryMaxElapsedTimeMinutes := 2
 
 	// validate inputs
-	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificate_key)
+	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey)
 
 	if errors_in_inputs != nil {
 		return
 	}
 
 	// creating a http client
-	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificate_key, zapLogger)
+	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
 
 	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(*httpClientObj, apiUrl, clientId, clientSecret, zapLogger, maxElapsedTime)
+	authenticate, _ := authentication.Authenticate(*httpClientObj, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
 
 	// authenticating
 	_, err := authenticate.GetPasswordSafeAuthentication()
