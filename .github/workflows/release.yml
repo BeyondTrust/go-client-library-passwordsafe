@@ -110,17 +110,17 @@ jobs:
         uses: jfrog/setup-jfrog-cli@v3
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
-
-      - name: Download coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: library
-      
+        
       - name: Setting up artifactory
         run: |
           mkdir go-client-library-passwordsafe
-          mv go-client-library-passwordsafe go-client-library-passwordsafe/
 
+      - name: Download library binary
+        uses: actions/download-artifact@v4
+        with:
+          name: library
+          path: go-client-library-passwordsafe
+    
       - name: Send artifacts to Jfrog 
         run: |
           jfrog rt u "go-client-library-passwordsafe" ${{ env.JFROG_SERVER}}
