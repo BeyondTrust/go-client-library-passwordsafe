@@ -33,9 +33,9 @@ func main() {
 	retryMaxElapsedTimeMinutes := 2
 
 	// validate inputs
-	errors_in_inputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey)
+	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey)
 
-	if errors_in_inputs != nil {
+	if errorsInInputs != nil {
 		return
 	}
 
@@ -61,8 +61,8 @@ func main() {
 	}
 
 	// getting secrets
-	secretList := strings.Split(paths, ",")
-	gotSecrets, _ := secretObj.GetSecrets(secretList, separator)
+	secretPaths := strings.Split(paths, ",")
+	gotSecrets, _ := secretObj.GetSecrets(secretPaths, separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Info(fmt.Sprintf("%v", gotSecrets))
@@ -71,7 +71,7 @@ func main() {
 	gotSecret, _ := secretObj.GetSecret("fake/text1", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Info(fmt.Sprintf("%v", gotSecret))
+	zapLogger.Info(fmt.Sprintf("Secret Test: %v", gotSecret))
 
 	// instantiating managed account obj
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
