@@ -41,9 +41,11 @@ func (managedAccounObj *ManagedAccountstObj) GetSecrets(secretPaths []string, se
 }
 
 // GetSecret returns secret value for a specific System Name and Account Name.
-func (managedAccounObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (map[string]string, error) {
+func (managedAccounObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (string, error) {
 	managedAccountList := []string{}
-	return managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
+	secrets, _ := managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
+	secretValue := secrets[secretPath]
+	return secretValue, nil
 }
 
 // ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
