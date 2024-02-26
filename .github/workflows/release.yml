@@ -108,7 +108,6 @@ jobs:
 
       - name: Send artifacts to Jfrog 
         run: |
-          cd dist
           jfrog rt u "go-client-library-passwordsafe" ${{ env.JFROG_SERVER}}
 
       - name: Publish Build Information
