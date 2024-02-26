@@ -106,6 +106,12 @@ logger, _ := zap.NewProduction()
 // create a zap logger wrapper
 zapLogger := logging.NewZapLogger(logger)
 ```
+## Unit Tests
+```
+go-client-library-passwordsafe\api\authentication> go test
+go-client-library-passwordsafe\api\managed_account> go test
+go-client-library-passwordsafe\api\secrets> go test
+```
 
 ## License
 This software is distributed under the Massachusetts Institute of Technology (MIT) License. See `LICENSE.txt` for more information.
