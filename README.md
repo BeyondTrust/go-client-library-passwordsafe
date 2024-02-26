@@ -1,8 +1,10 @@
 <a href="https://www.beyondtrust.com">
     <img src="assets/beyondtrust_logo.svg" alt="BeyondTrust" title="BeyondTrust" align="right" height="50">
 </a>
+
 # Go Client Library for Password Safe
 The Go client library for Password Safe enables Go developers to easily manage passwords from Password Safe. It provide simplifications that significantly reduce the amount of code you need to write.
+
 [![License](https://img.shields.io/badge/license-MIT%20-brightgreen.svg)](LICENSE)
 
 ## Prerequisites
@@ -97,12 +99,12 @@ Copy the text from the ps_cert.pem to a secret.
 ## Logging Abstraction
 This library supports Zap, Logr, and go log package. The library can be extended to support other logging packages, see logging.go.
 ```
-    // create a zap logger
-	logger, _ := zap.NewProduction()
-	// logger, _ := zap.NewDevelopment()
+// create a zap logger
+logger, _ := zap.NewProduction()
+// logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+// create a zap logger wrapper
+zapLogger := logging.NewZapLogger(logger)
 ```
 
 ## License
