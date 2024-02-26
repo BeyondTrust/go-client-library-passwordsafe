@@ -143,7 +143,7 @@ func TestSecretFlow(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: "credential_in_sub_3_password",
+		response: "fake_password",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
@@ -198,14 +198,14 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: "Error SecretGetSecretByPath, Secret was not found: StatusCode: 404 ",
+		response: "error SecretGetSecretByPath, Secret was not found: StatusCode: 404 ",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
 
-	secretList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
-	_, err := secretObj.GetSecretFlow(secretList, "/")
+	secretPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
+	_, err := secretObj.GetSecretFlow(secretPaths, "/")
 
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)
