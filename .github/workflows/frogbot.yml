@@ -12,18 +12,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-      
+
       - name: Set up JFrog
-        uses: jfrog/setup-jfrog-cli@v4
+        uses: jfrog/setup-jfrog-cli@26da2259ee7690e63b5410d7451b2938d08ce1f9 # v4.0.0
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
-          
+
       - name: Run XRay scan
-        uses: jfrog/frogbot@v2.19.10
+        uses: jfrog/frogbot@ba42e26db24cec85bd14e096dfc2e01fb85ac29f # v2.19.10
         env:
           JF_URL: https://beyondtrust.jfrog.io
           JF_ACCESS_TOKEN: ${{ secrets.ARTIFACTORY_FROGBOT_TOKEN }}

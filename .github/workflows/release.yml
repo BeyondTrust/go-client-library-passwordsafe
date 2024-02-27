@@ -10,7 +10,7 @@ on:
     types: [opened, synchronize]
   push:
     branches:
-    - main
+      - main
   workflow_dispatch:
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
       - name: Build library
         run: |
           go build
-        
+
       - name: Run unit tests
         run: |
           cd api
@@ -36,13 +36,13 @@ jobs:
           go tool cover -func="coverage.out"
 
       - name: Save unit tests coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: coverage
           path: api/coverage.out
 
       - name: Save built library
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: library
           path: go-client-library-passwordsafe
@@ -55,31 +55,31 @@ jobs:
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
-      
+
       - name: Download coverage
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
         with:
           name: coverage
 
       - name: SonarQube Scan on PR
-        if: ${{ github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' }} 
-        uses: sonarsource/sonarqube-scan-action@master
+        if: ${{ github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' }}
+        uses: sonarsource/sonarqube-scan-action@69c1a75940dec6249b86dace6b630d3a2ae9d2a7 # v2.0.1
         with:
           projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.pullrequest.key=${{ github.event.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
-          
+
       - name: SonarQube Scan on branch
-        if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }} 
-        uses: sonarsource/sonarqube-scan-action@master
+        if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }}
+        uses: sonarsource/sonarqube-scan-action@69c1a75940dec6249b86dace6b630d3a2ae9d2a7 # v2.0.1
         with:
           projectBaseDir: .
           args: >
@@ -91,12 +91,12 @@ jobs:
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
 
       - name: SonarQube Quality Gate check
-        if: ${{ github.actor != 'dependabot[bot]' && inputs.quality_gate_check }} 
-        uses: sonarsource/sonarqube-quality-gate-action@master
+        if: ${{ github.actor != 'dependabot[bot]' }}
+        uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1.1.0
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-          
+
   x-ray:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
@@ -107,23 +107,23 @@ jobs:
           fetch-depth: 0
 
       - name: Jfrog setup
-        uses: jfrog/setup-jfrog-cli@v4.0.0
+        uses: jfrog/setup-jfrog-cli@26da2259ee7690e63b5410d7451b2938d08ce1f9 # v4.0.0
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
-        
+
       - name: Setting up artifactory
         run: |
           mkdir go-library-passwordsafe
 
       - name: Download library binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@87c55149d96e628cc2ef7e6fc2aab372015aec85 # v4.1.3
         with:
           name: library
           path: go-library-passwordsafe
-    
-      - name: Send artifacts to Jfrog 
+
+      - name: Send artifacts to Jfrog
         run: |
-          jfrog rt u "go-library-passwordsafe/*" ${{ env.JFROG_SERVER}}
+          jfrog rt u "go-library-passwordsafe/*" ${{ env.JFROG_SERVER }}
 
       - name: Publish Build Information
         run: |

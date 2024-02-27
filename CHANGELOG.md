@@ -4,7 +4,7 @@
 
 #### Bug Fixes
 
-* solve minnor issues and linting issues ([#30](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/30))
+* solve minor issues and linting issues ([#30](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/30))
 
 ### [0.2.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.1.0...v0.2.0) / 2024-02-23
 
