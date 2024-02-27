@@ -10,6 +10,7 @@ import (
 	"go-client-library-passwordsafe/api/authentication"
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
+	"go-client-library-passwordsafe/api/utils"
 	"io"
 	"net/url"
 	"strings"
@@ -50,6 +51,8 @@ func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (stri
 // GetSecretFlow is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
 func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
 
+	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, false, separator, secretObj.log)
+	secretObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
 	secretDictionary := make(map[string]string)
 
 	for _, secretToRetrieve := range secretsToRetrieve {

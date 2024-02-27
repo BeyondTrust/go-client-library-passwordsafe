@@ -36,7 +36,7 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
     - type: string
     - required: False
 - verifyCA:
-    - description: Indicates whether to verify the certificate authority on the Secrets Safe instance. Warning: false is insecure, instructs the Secrets Safe custom action not to verify the certificate authority.
+    - description: Indicates whether to verify the certificate authority on the Secrets Safe instance. Warning: false is insecure, instructs not to verify the certificate authority.
     - type: boolean 
     - default: True
     - required: False

@@ -151,12 +151,13 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		authenticationObj.log.Error(err.Error())
 		return entities.SignApinResponse{}, err
 	}
-	authenticationObj.log.Debug("Successfully Signed App In")
+	authenticationObj.log.Info("Successfully Signed App In")
 	return userObject, nil
 }
 
 // SignOut is responsible for closing the PS API session and cleaning up idle connections.
-// Warn: should only be called one time for all data sources.
+// Warn: should only be called one time for all data sources. The session is closed server
+// side automatically after 20 minutes of uninterupted inactivity.
 func (authenticationObj *AuthenticationObj) SignOut(url string) error {
 	authenticationObj.log.Debug(url)
 
@@ -176,6 +177,6 @@ func (authenticationObj *AuthenticationObj) SignOut(url string) error {
 	}
 
 	defer authenticationObj.HttpClient.HttpClient.CloseIdleConnections()
-	authenticationObj.log.Debug("Successfully Signed out.")
+	authenticationObj.log.Info("Successfully Signed out.")
 	return nil
 }
