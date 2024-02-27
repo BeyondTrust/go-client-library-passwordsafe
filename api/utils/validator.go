@@ -32,6 +32,10 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	}
 
+	if *retryMaxElapsedTimeMinutes == 0 {
+		*retryMaxElapsedTimeMinutes = 2
+	}
+
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
