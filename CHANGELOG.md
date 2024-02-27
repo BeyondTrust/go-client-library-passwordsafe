@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.2.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.2.1...v0.2.2) / 2024-02-27
+
+#### Bug Fixes
+
+* file download ([#33](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/33))
+
 ### [0.2.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.2.0...v0.2.1) / 2024-02-26
 
 #### Bug Fixes
