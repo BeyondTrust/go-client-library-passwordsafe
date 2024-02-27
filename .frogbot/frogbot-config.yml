@@ -1,4 +1,4 @@
--  params:
+- params:
     git:
       repoName: go-client-library-passwordsafe
       branches:
