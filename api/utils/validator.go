@@ -16,7 +16,7 @@ type UserInputValidaton struct {
 	ClientId               string `validate:"required,min=36,max=36"`
 	ClientSecret           string `validate:"required,min=36,max=64"`
 	ApiUrl                 string `validate:"required,http_url"`
-	ClientTimeOutinSeconds int    `validate:"gte=1,lte=301"`
+	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
 	VerifyCa               bool   `validate:"required"`
 }
@@ -25,6 +25,10 @@ var validate *validator.Validate
 
 // ValidateInputs is responsible for validating end-user inputs.
 func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string) error {
+
+	if clientTimeOutinSeconds == 0 {
+		clientTimeOutinSeconds = 30
+	}
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
