@@ -1,3 +1,5 @@
+// Copyright 2024 BeyondTrust. All rights reserved.
+// Package logging abstraction.
 package logging
 
 import (
@@ -13,6 +15,7 @@ type Logger interface {
 	Info(msg string)
 	Error(msg string)
 	Debug(msg string)
+	Warn(msg string)
 }
 
 // ZapLogger is a struct that implements the Logger interface using zap
@@ -30,9 +33,14 @@ func (z *ZapLogger) Error(msg string) {
 	z.logger.Error(msg)
 }
 
-// Error logs a message at error level
+// Debug logs a message at error level
 func (z *ZapLogger) Debug(msg string) {
 	z.logger.Debug(msg)
+}
+
+// Warn logs a message at error level
+func (z *ZapLogger) Warn(msg string) {
+	z.logger.Warn(msg)
 }
 
 // logr.logger
@@ -51,6 +59,10 @@ func (r *LogrLogger) Error(msg string) {
 }
 
 func (r *LogrLogger) Debug(msg string) {
+	r.logger.Info(msg)
+}
+
+func (r *LogrLogger) Warn(msg string) {
 	r.logger.Info(msg)
 }
 
@@ -80,6 +92,13 @@ func (l *LogLogger) Debug(msg string) {
 	l.logger.Println(msg)
 }
 
+// Warn logs a message at debug level
+func (l *LogLogger) Warn(msg string) {
+	prefix := fmt.Sprintf("%v :", "Warn")
+	l.logger.SetPrefix(prefix)
+	l.logger.Println(msg)
+}
+
 // NewZapLogger creates a new ZapLogger with the given zap.Logger
 func NewZapLogger(logger *zap.Logger) *ZapLogger {
 	return &ZapLogger{logger: logger}
@@ -90,6 +109,7 @@ func NewLogrLogger(logger *logr.Logger) *LogrLogger {
 	return &LogrLogger{logger: logger}
 }
 
+// NewLogLogger creates a new go log logger
 func NewLogLogger(logger *log.Logger) *LogLogger {
 	return &LogLogger{logger: logger}
 }

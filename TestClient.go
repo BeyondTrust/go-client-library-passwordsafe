@@ -7,7 +7,6 @@ import (
 	managed_accounts "go-client-library-passwordsafe/api/managed_account"
 	"go-client-library-passwordsafe/api/secrets"
 	"go-client-library-passwordsafe/api/utils"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -54,45 +53,35 @@ func main() {
 	// instantiating secret obj
 	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger)
 
-	paths := "fake/text1,fake/text2"
-	errors_in_path := utils.ValidatePath(paths)
-	if errors_in_path != nil {
-		return
-	}
+	secretPaths := []string{"fake/Client", "fake/test_file_1"}
 
-	// getting secrets
-	secretPaths := strings.Split(paths, ",")
 	gotSecrets, _ := secretObj.GetSecrets(secretPaths, separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Info(fmt.Sprintf("%v", gotSecrets))
+	zapLogger.Warn(fmt.Sprintf("%v", gotSecrets))
 
 	// getting single secret
-	gotSecret, _ := secretObj.GetSecret("fake/text1", separator)
+	gotSecret, _ := secretObj.GetSecret("fake/Test1", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Info(fmt.Sprintf("Secret Test: %v", gotSecret))
+	zapLogger.Warn(fmt.Sprintf("Secret Test: %v", gotSecret))
 
 	// instantiating managed account obj
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
 
-	paths = "fake/account01,fake/account02"
-	errors_in_path = utils.ValidatePath(paths)
-	if errors_in_path != nil {
-		return
-	}
+	newSecretPaths := []string{"fake/account01", "fake/account01"}
 
-	managedAccountList := strings.Split(paths, ",")
-	gotManagedAccounts, _ := manageAccountObj.GetSecrets(managedAccountList, separator)
+	//managedAccountList := strings.Split(paths, ",")
+	gotManagedAccounts, _ := manageAccountObj.GetSecrets(newSecretPaths, separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Info(fmt.Sprintf("%v", gotManagedAccounts))
+	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccounts))
 
 	// getting single managed account
-	gotManagedAccount, _ := manageAccountObj.GetSecret("fake/account01", separator)
+	gotManagedAccount, _ := manageAccountObj.GetSecret("fake/account04", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Info(fmt.Sprintf("%v", gotManagedAccount))
+	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
 
 	// signing out
 	_ = authenticate.SignOut(fmt.Sprintf("%v%v", authenticate.ApiUrl, "Auth/Signout"))
