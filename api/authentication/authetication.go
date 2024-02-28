@@ -17,6 +17,7 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
+// AuthenticationObj responsbile for authentication request data.
 type AuthenticationObj struct {
 	ApiUrl             string
 	clientId           string

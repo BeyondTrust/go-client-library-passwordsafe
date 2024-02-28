@@ -1,6 +1,5 @@
 // Copyright 2024 BeyondTrust. All rights reserved.
 // Package managed_accounts implements Get managed account logic
-
 package managed_accounts
 
 import (
@@ -18,6 +17,7 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
+// ManagedAccountstObj responsible for session requests.
 type ManagedAccountstObj struct {
 	log               logging.Logger
 	authenticationObj authentication.AuthenticationObj

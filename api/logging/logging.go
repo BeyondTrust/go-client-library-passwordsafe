@@ -1,3 +1,5 @@
+// Copyright 2024 BeyondTrust. All rights reserved.
+// Package logging abstraction.
 package logging
 
 import (
@@ -107,6 +109,7 @@ func NewLogrLogger(logger *logr.Logger) *LogrLogger {
 	return &LogrLogger{logger: logger}
 }
 
+// NewLogLogger creates a new go log logger
 func NewLogLogger(logger *log.Logger) *LogLogger {
 	return &LogLogger{logger: logger}
 }

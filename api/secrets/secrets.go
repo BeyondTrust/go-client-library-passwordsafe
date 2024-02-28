@@ -18,6 +18,7 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
+// SecretObj responsible for session requests.
 type SecretObj struct {
 	log               logging.Logger
 	authenticationObj authentication.AuthenticationObj

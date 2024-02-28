@@ -13,6 +13,7 @@ import (
 	validator "github.com/go-playground/validator/v10"
 )
 
+// UserInputValidaton responsible for input paramerter validation.
 type UserInputValidaton struct {
 	ClientId               string `validate:"required,min=36,max=36"`
 	ClientSecret           string `validate:"required,min=36,max=64"`
@@ -164,6 +165,7 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 }
 
+// ValidateURL responsible for validating the Password Safe API URL.
 func ValidateURL(apiUrl string) error {
 	val, err := url.Parse(apiUrl)
 	if err != nil {
