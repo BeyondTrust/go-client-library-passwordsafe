@@ -1,3 +1,5 @@
+// Copyright 2024 BeyondTrust. All rights reserved.
+// utils responsible for utility functions.
 package utils
 
 import (
@@ -11,6 +13,7 @@ import (
 	"time"
 )
 
+// HttpClientObj responsible for http request instance.
 type HttpClientObj struct {
 	HttpClient *http.Client
 	log        logging.Logger
