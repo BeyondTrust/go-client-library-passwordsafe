@@ -25,7 +25,7 @@ type UserInputValidaton struct {
 var validate *validator.Validate
 
 // ValidateInputs is responsible for validating end-user inputs.
-func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int, maxFileSecretSize int) error {
+func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int, maxFileSecretSize *int) error {
 
 	if clientTimeOutinSeconds == 0 {
 		clientTimeOutinSeconds = 30
@@ -37,6 +37,10 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		*retryMaxElapsedTimeMinutes = 2
 	}
 
+	if *maxFileSecretSize == 0 {
+		*maxFileSecretSize = 4000
+	}
+
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
@@ -46,7 +50,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		ClientTimeOutinSeconds: clientTimeOutinSeconds,
 		Separator:              *separator,
 		VerifyCa:               verifyCa,
-		MaxFileSecretSize:      maxFileSecretSize,
+		MaxFileSecretSize:      *maxFileSecretSize,
 	}
 
 	if strings.TrimSpace(*separator) == "" {

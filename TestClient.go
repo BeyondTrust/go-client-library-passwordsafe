@@ -34,7 +34,7 @@ func main() {
 	maxFileSecretSize := 4000
 
 	// validate inputs
-	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, maxFileSecretSize)
+	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSize)
 
 	if errorsInInputs != nil {
 		return

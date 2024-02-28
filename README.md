@@ -59,9 +59,10 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
   - default: 2 minutes
   - required: False
 - maxFileSecretSize
-  - description: Max file secret size
+  - description: Max file size allows the user of the library to set a limit on the file size that the library will work with. Range 1-5000000 Bytes.
   - type: int
-  - required: True
+  - default: 4000
+  - required: false
 
 ## Methods
 
