@@ -152,7 +152,7 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 			message := fmt.Sprintf("Invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, len(path), maxName)
 			logger.Warn(message)
 		} else if len(name) > maxName || name == "" {
-			message := fmt.Sprintf("systemName=%s but found invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", path, invalidName, len(name), maxName)
+			message := fmt.Sprintf("%s=%s but found invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, path, invalidName, len(name), maxName)
 			logger.Warn(message)
 		} else {
 			secretPath := fmt.Sprintf("%s%s%s", path, separator, name)
