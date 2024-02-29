@@ -22,13 +22,15 @@ import (
 type SecretObj struct {
 	log               logging.Logger
 	authenticationObj authentication.AuthenticationObj
+	maxFileSecretSize int
 }
 
 // NewSecretObj creates secret obj
-func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger) (*SecretObj, error) {
+func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger, maxFileSecretSize int) (*SecretObj, error) {
 	secretObj := &SecretObj{
 		log:               logger,
 		authenticationObj: authentication,
+		maxFileSecretSize: maxFileSecretSize,
 	}
 	return secretObj, nil
 }
@@ -76,7 +78,14 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 				return nil, err
 			}
 
-			secretDictionary[secretToRetrieve] = fileSecretContent
+			secretInBytes := []byte(fileSecretContent)
+
+			if len(secretInBytes) > secretObj.maxFileSecretSize {
+				secretObj.log.Error(fmt.Sprintf("%v%v%v: %v %v %v %v", secretPath, separator, secretTitle, "Secret file Size:", len(secretInBytes), "is greater than the maximum allowed size:", secretObj.maxFileSecretSize))
+			} else {
+				secretDictionary[secretToRetrieve] = fileSecretContent
+			}
+
 		} else {
 			secretDictionary[secretToRetrieve] = secret.Password
 		}

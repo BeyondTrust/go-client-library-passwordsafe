@@ -55,7 +55,7 @@ func TestSecretGetSecretByPath(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	response, err := secretObj.SecretGetSecretByPath("path1/path2", "fake_title", "/", "secrets-safe/secrets")
 
@@ -88,7 +88,7 @@ func TestSecretGetFileSecret(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 	response, err := secretObj.SecretGetFileSecret("1", testConfig.server.URL)
 
 	if response != "fake_password" {
@@ -147,7 +147,7 @@ func TestSecretFlow(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	response, err := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -202,7 +202,7 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL + "/"
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	secretPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	_, err := secretObj.GetSecretFlow(secretPaths, "/")

@@ -30,9 +30,10 @@ func main() {
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
+	maxFileSecretSize := 4000
 
 	// validate inputs
-	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes)
+	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSize)
 
 	if errorsInInputs != nil {
 		return
@@ -51,7 +52,7 @@ func main() {
 	}
 
 	// instantiating secret obj
-	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger)
+	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, maxFileSecretSize)
 
 	secretPaths := []string{"fake/Client", "fake/test_file_1"}
 
