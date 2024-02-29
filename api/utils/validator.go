@@ -117,10 +117,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 	var maxSystemNameLength = 129
 	var maxPathLength = 1792
 	var maxTitleLength = 256
-	var maxPath = 0
-	var maxName = 0
-	var invalidPathName = ""
-	var invalidName = ""
 
 	for _, secretToRetrieve := range secretPaths {
 
@@ -133,17 +129,16 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		path := secretData[0]
 		name := secretData[1]
+		maxPath := maxPathLength
+		maxName := maxTitleLength
+		invalidPathName := "path"
+		invalidName := "title"
 
 		if isManagedAccount {
 			maxPath = maxSystemNameLength
 			maxName = maxAccountNameLength
 			invalidPathName = "system name"
 			invalidName = "account name"
-		} else {
-			maxPath = maxPathLength
-			maxName = maxTitleLength
-			invalidPathName = "path"
-			invalidName = "title"
 		}
 
 		path = strings.TrimSpace(path)
