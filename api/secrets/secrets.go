@@ -37,9 +37,6 @@ func NewSecretObj(authentication authentication.AuthenticationObj, logger loggin
 
 // GetSecrets returns secret value for a path and title list.
 func (secretObj *SecretObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	if separator == "" {
-		separator = ""
-	}
 	return secretObj.GetSecretFlow(secretPaths, separator)
 }
 
@@ -61,8 +58,12 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	for _, secretToRetrieve := range secretsToRetrieve {
 		secretData := strings.Split(secretToRetrieve, separator)
 
+		secretTitle := secretData[len(secretData)-1]
 		secretPath := secretData[0]
-		secretTitle := secretData[1]
+		if len(secretData) > 2 {
+			_, secretData = secretData[len(secretData)-1], secretData[:len(secretData)-1]
+			secretPath = strings.TrimSuffix(strings.Join(secretData, separator), separator)
+		}
 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
@@ -96,8 +97,6 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 
 // SecretGetSecretByPath returns secret object for a specific path, title.
 func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle string, separator string, endpointPath string) (entities.Secret, error) {
-	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error
@@ -109,7 +108,8 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	params.Add("title", secretTitle)
 
 	url := fmt.Sprintf("%s%s?%s", secretObj.authenticationObj.ApiUrl, endpointPath, params.Encode())
-
+	messageLog := fmt.Sprintf("%v %v", "GET", url)
+	secretObj.log.Debug(messageLog)
 	technicalError = backoff.Retry(func() error {
 		body, technicalError, businessError, scode = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
 		return technicalError

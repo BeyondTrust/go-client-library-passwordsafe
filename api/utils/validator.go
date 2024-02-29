@@ -133,8 +133,13 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		secretData := strings.Split(secretToRetrieve, separator)
 
+		name := secretData[len(secretData)-1]
 		path := secretData[0]
-		name := secretData[1]
+		if len(secretData) > 2 {
+			secretData[len(secretData)-1] = ""
+			path = strings.Join(secretData, separator)
+		}
+
 		maxPath := maxPathLength
 		maxName := maxTitleLength
 		invalidPathName := "path"
@@ -146,9 +151,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 			invalidPathName = "system name"
 			invalidName = "account name"
 		}
-
-		path = strings.TrimSpace(path)
-		name = strings.TrimSpace(name)
 
 		if len(path) > maxPath || path == "" {
 			message := fmt.Sprintf("Invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, len(path), maxName)
