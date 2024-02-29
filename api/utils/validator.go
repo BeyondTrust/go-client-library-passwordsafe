@@ -21,12 +21,13 @@ type UserInputValidaton struct {
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
 	VerifyCa               bool   `validate:"required"`
+	MaxFileSecretSizeBytes int    `validate:"gte=1,lte=5000000"`
 }
 
 var validate *validator.Validate
 
 // ValidateInputs is responsible for validating end-user inputs.
-func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int) error {
+func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int, maxFileSecretSizeBytes *int) error {
 
 	if clientTimeOutinSeconds == 0 {
 		clientTimeOutinSeconds = 30
@@ -38,6 +39,10 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		*retryMaxElapsedTimeMinutes = 2
 	}
 
+	if *maxFileSecretSizeBytes == 0 {
+		*maxFileSecretSizeBytes = 4000
+	}
+
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
@@ -47,6 +52,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		ClientTimeOutinSeconds: clientTimeOutinSeconds,
 		Separator:              *separator,
 		VerifyCa:               verifyCa,
+		MaxFileSecretSizeBytes: *maxFileSecretSizeBytes,
 	}
 
 	if !verifyCa {
@@ -117,10 +123,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 	var maxSystemNameLength = 129
 	var maxPathLength = 1792
 	var maxTitleLength = 256
-	var maxPath = 0
-	var maxName = 0
-	var invalidPathName = ""
-	var invalidName = ""
 
 	for _, secretToRetrieve := range secretPaths {
 
@@ -133,17 +135,16 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		path := secretData[0]
 		name := secretData[1]
+		maxPath := maxPathLength
+		maxName := maxTitleLength
+		invalidPathName := "path"
+		invalidName := "title"
 
 		if isManagedAccount {
 			maxPath = maxSystemNameLength
 			maxName = maxAccountNameLength
 			invalidPathName = "system name"
 			invalidName = "account name"
-		} else {
-			maxPath = maxPathLength
-			maxName = maxTitleLength
-			invalidPathName = "path"
-			invalidName = "title"
 		}
 
 		path = strings.TrimSpace(path)

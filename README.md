@@ -58,6 +58,11 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
   - type: int
   - default: 2 minutes
   - required: False
+- maxFileSecretSizeBytes
+  - description: Max file size allows the user of the library to set a limit on the file size. If max size is exceeded an error is logged and the secret is ignored. Range 1-5000000 Bytes.
+  - type: int
+  - default: 4000
+  - required: false
 
 ## Methods
 
@@ -141,7 +146,7 @@ In order to use Release Please App, we need to use conventional commits, but [he
 Some of the more important and common commit types are:
 
 | Type     | Description                                                   | Triggers Release Please |
-|:---------|:--------------------------------------------------------------|:-------------------------|
+| :------- | :------------------------------------------------------------ | :---------------------- |
 | feat!    | Introduce a major change e.g. v1.0.0 to v2.0.0                | Yes                     |
 | feat     | Introduce a minor change e.g. v1.0.0 to v1.1.0                | Yes                     |
 | fix      | Introduce a patch change e.g. v1.0.0 to v1.0.1                | Yes                     |
