@@ -21,9 +21,9 @@ func main() {
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
 
-	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
-	clientId := ""
-	clientSecret := ""
+	apiUrl := "https://jury2310.ps-dev.beyondtrustcloud.com:443/BeyondTrust/api/public/v3/"
+	clientId := "6138d050-e266-4b05-9ced-35e7dd5093ae"
+	clientSecret := "8i7U0Yulabon8mTcOzJcltiEg4wYOhDVMerXva+Nuw8="
 	separator := "/"
 	certificate := ""
 	certificateKey := ""
@@ -54,7 +54,9 @@ func main() {
 	// instantiating secret obj
 	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, maxFileSecretSizeBytes)
 
-	secretPaths := []string{"fake/Client", "fake/test_file_1"}
+	//"oauthgrp/folder1/folder2/folder 3/folder4/folder5/folder6/text-test",
+	//, "oauthgrp/folder1/folder2/folder 3/folder4/folder5/folder6/TextLongPath"
+	secretPaths := []string{"oauthgrp/text1", "oauthgrp/folder1/folder2/secret"}
 
 	gotSecrets, _ := secretObj.GetSecrets(secretPaths, separator)
 
@@ -62,15 +64,15 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotSecrets))
 
 	// getting single secret
-	gotSecret, _ := secretObj.GetSecret("fake/Test1", separator)
+	//gotSecret, _ := secretObj.GetSecret("fake/Test1", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Warn(fmt.Sprintf("Secret Test: %v", gotSecret))
+	//zapLogger.Warn(fmt.Sprintf("Secret Test: %v", gotSecret))
 
 	// instantiating managed account obj
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
 
-	newSecretPaths := []string{"fake/account01", "fake/account01"}
+	newSecretPaths := []string{"system01/managed_account01", "system02/managed_account01"}
 
 	//managedAccountList := strings.Split(paths, ",")
 	gotManagedAccounts, _ := manageAccountObj.GetSecrets(newSecretPaths, separator)
@@ -79,10 +81,10 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccounts))
 
 	// getting single managed account
-	gotManagedAccount, _ := manageAccountObj.GetSecret("fake/account04", separator)
+	//gotManagedAccount, _ := manageAccountObj.GetSecret("fake/account04", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
+	//zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
 
 	// signing out
 	_ = authenticate.SignOut(fmt.Sprintf("%v%v", authenticate.ApiUrl, "Auth/Signout"))

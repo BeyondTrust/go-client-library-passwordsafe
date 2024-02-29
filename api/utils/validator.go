@@ -137,7 +137,7 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 		path := secretData[0]
 		if len(secretData) > 2 {
 			secretData[len(secretData)-1] = ""
-			path = strings.Join(secretData, separator)
+			path = strings.TrimSuffix(strings.Join(secretData, separator), separator)
 		}
 
 		maxPath := maxPathLength
