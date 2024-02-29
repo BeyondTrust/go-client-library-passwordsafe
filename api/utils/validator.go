@@ -21,7 +21,7 @@ type UserInputValidaton struct {
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
 	VerifyCa               bool   `validate:"required"`
-	MaxFileSecretSizeBytes int    `validate:"gte=1,lte=5000"`
+	MaxFileSecretSizeBytes int    `validate:"gte=1,lte=5000000"`
 }
 
 var validate *validator.Validate
