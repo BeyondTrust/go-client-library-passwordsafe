@@ -40,7 +40,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 	}
 
 	if *maxFileSecretSizeBytes == 0 {
-		*maxFileSecretSizeBytes = 4000
+		*maxFileSecretSizeBytes = 4000000
 	}
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
