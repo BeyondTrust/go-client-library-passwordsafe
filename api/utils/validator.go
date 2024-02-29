@@ -109,7 +109,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		return err
 	}
 
-	message = fmt.Sprintf("Library settings: ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v", userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa)
+	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa, userInput.MaxFileSecretSizeBytes, certificate != "")
 	logger.Debug(message)
 	return nil
 }
