@@ -20,17 +20,17 @@ import (
 
 // SecretObj responsible for session requests.
 type SecretObj struct {
-	log               logging.Logger
-	authenticationObj authentication.AuthenticationObj
-	maxFileSecretSize int
+	log                    logging.Logger
+	authenticationObj      authentication.AuthenticationObj
+	maxFileSecretSizeBytes int
 }
 
 // NewSecretObj creates secret obj
-func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger, maxFileSecretSize int) (*SecretObj, error) {
+func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger, maxFileSecretSizeBytes int) (*SecretObj, error) {
 	secretObj := &SecretObj{
-		log:               logger,
-		authenticationObj: authentication,
-		maxFileSecretSize: maxFileSecretSize,
+		log:                    logger,
+		authenticationObj:      authentication,
+		maxFileSecretSizeBytes: maxFileSecretSizeBytes,
 	}
 	return secretObj, nil
 }
@@ -80,8 +80,8 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 
 			secretInBytes := []byte(fileSecretContent)
 
-			if len(secretInBytes) > secretObj.maxFileSecretSize {
-				secretObj.log.Error(fmt.Sprintf("%v%v%v: %v %v %v %v", secretPath, separator, secretTitle, "Secret file Size:", len(secretInBytes), "is greater than the maximum allowed size:", secretObj.maxFileSecretSize))
+			if len(secretInBytes) > secretObj.maxFileSecretSizeBytes {
+				secretObj.log.Error(fmt.Sprintf("%v%v%v: %v %v %v %v", secretPath, separator, secretTitle, "Secret file Size:", len(secretInBytes), "is greater than the maximum allowed size:", secretObj.maxFileSecretSizeBytes))
 			} else {
 				secretDictionary[secretToRetrieve] = fileSecretContent
 			}
