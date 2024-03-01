@@ -76,21 +76,21 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
 			managedAccounObj.log.Error(err.Error())
-			return nil, err
+			continue
 		}
 
 		ManagedAccountCreateRequestUrl := managedAccounObj.RequestPath(paths["ManagedAccountCreateRequestPath"])
 		requestId, err := managedAccounObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
 			managedAccounObj.log.Error(err.Error())
-			return nil, err
+			continue
 		}
 
 		CredentialByRequestIdUrl := managedAccounObj.RequestPath(fmt.Sprintf(paths["CredentialByRequestIdPath"], requestId))
 		secret, err := managedAccounObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
 		if err != nil {
 			managedAccounObj.log.Error(err.Error())
-			return nil, err
+			continue
 		}
 
 		ManagedAccountRequestCheckInPath := fmt.Sprintf(paths["ManagedAccountRequestCheckInPath"], requestId)
@@ -99,7 +99,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 
 		if err != nil {
 			managedAccounObj.log.Error(err.Error())
-			return nil, err
+			continue
 		}
 
 		secretValue, _ := strconv.Unquote(secret)
