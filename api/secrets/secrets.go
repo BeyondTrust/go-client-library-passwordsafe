@@ -68,6 +68,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
 		if err != nil {
+			secretObj.log.Error(err.Error())
 			return nil, err
 		}
 
