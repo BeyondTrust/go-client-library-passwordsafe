@@ -57,39 +57,40 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 
 	for _, secretToRetrieve := range secretsToRetrieve {
 		secretData := strings.Split(secretToRetrieve, separator)
-
+		managedAccounObj.log.Info(fmt.Sprintf("%v", secretData))
 		systemName := secretData[0]
 		accountName := secretData[1]
 
 		if len(paths) == 0 {
 			paths["SignAppinPath"] = "Auth/SignAppin"
 			paths["SignAppOutPath"] = "Auth/Signout"
-			paths["ManagedAccountGetPath"] = fmt.Sprintf("ManagedAccounts?systemName=%v&accountName=%v", systemName, accountName)
 			paths["ManagedAccountCreateRequestPath"] = "Requests"
 			paths["CredentialByRequestIdPath"] = "Credentials/%v"
 			paths["ManagedAccountRequestCheckInPath"] = "Requests/%v/checkin"
 		}
+
+		paths["ManagedAccountGetPath"] = fmt.Sprintf("ManagedAccounts?systemName=%v&accountName=%v", systemName, accountName)
 
 		var err error
 
 		ManagedAccountGetUrl := managedAccounObj.RequestPath(paths["ManagedAccountGetPath"])
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
-			managedAccounObj.log.Error(err.Error())
+			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
 
 		ManagedAccountCreateRequestUrl := managedAccounObj.RequestPath(paths["ManagedAccountCreateRequestPath"])
 		requestId, err := managedAccounObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
-			managedAccounObj.log.Error(err.Error())
+			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
 
 		CredentialByRequestIdUrl := managedAccounObj.RequestPath(fmt.Sprintf(paths["CredentialByRequestIdPath"], requestId))
 		secret, err := managedAccounObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
 		if err != nil {
-			managedAccounObj.log.Error(err.Error())
+			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
 
@@ -98,7 +99,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		_, err = managedAccounObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
 
 		if err != nil {
-			managedAccounObj.log.Error(err.Error())
+			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
 
