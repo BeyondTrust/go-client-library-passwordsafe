@@ -133,8 +133,9 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		secretData := strings.Split(secretToRetrieve, separator)
 
-		path := secretData[0]
-		name := secretData[1]
+		name := secretData[len(secretData)-1]
+		path := strings.Join(secretData[:len(secretData)-1], separator)
+
 		maxPath := maxPathLength
 		maxName := maxTitleLength
 		invalidPathName := "path"

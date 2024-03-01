@@ -61,8 +61,13 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	for _, secretToRetrieve := range secretsToRetrieve {
 		secretData := strings.Split(secretToRetrieve, separator)
 
-		secretPath := secretData[0]
-		secretTitle := secretData[1]
+		secretObj.log.Info(fmt.Sprintf("secretData: %v ", secretData))
+
+		secretTitle := secretData[len(secretData)-1]
+		secretPath := strings.Join(secretData[:len(secretData)-1], separator)
+
+		secretObj.log.Info(fmt.Sprintf("Ttile: %v ", secretTitle))
+		secretObj.log.Info(fmt.Sprintf("Path: %v ", secretPath))
 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
