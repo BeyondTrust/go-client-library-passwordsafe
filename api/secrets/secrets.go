@@ -68,15 +68,16 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
 		if err != nil {
-			return nil, err
+			secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+			continue
 		}
 
 		// When secret type is FILE, it calls SecretGetFileSecret method.
 		if strings.ToUpper(secret.SecretType) == "FILE" {
 			fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
 			if err != nil {
-				secretObj.log.Error(err.Error())
-				return nil, err
+				secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+				continue
 			}
 
 			secretInBytes := []byte(fileSecretContent)
