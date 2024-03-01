@@ -8,6 +8,8 @@ import (
 	"go-client-library-passwordsafe/api/secrets"
 	"go-client-library-passwordsafe/api/utils"
 
+	//"os"
+
 	"go.uber.org/zap"
 )
 
@@ -30,7 +32,10 @@ func main() {
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	maxFileSecretSizeBytes := 4000
+	maxFileSecretSizeBytes := 5000000
+
+	//certificate = os.Getenv("CERTIFICATE")
+	//certificateKey = os.Getenv("CERTIFICATE_KEY")
 
 	// validate inputs
 	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSizeBytes)

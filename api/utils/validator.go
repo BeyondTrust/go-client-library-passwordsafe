@@ -40,7 +40,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 	}
 
 	if *maxFileSecretSizeBytes == 0 {
-		*maxFileSecretSizeBytes = 4000
+		*maxFileSecretSizeBytes = 4000000
 	}
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
@@ -109,7 +109,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		return err
 	}
 
-	message = fmt.Sprintf("Library settings: ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v", userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa)
+	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa, userInput.MaxFileSecretSizeBytes, certificate != "")
 	logger.Debug(message)
 	return nil
 }
@@ -133,8 +133,13 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		secretData := strings.Split(secretToRetrieve, separator)
 
+		name := secretData[len(secretData)-1]
 		path := secretData[0]
-		name := secretData[1]
+		if len(secretData) > 2 {
+			secretData[len(secretData)-1] = ""
+			path = strings.TrimSuffix(strings.Join(secretData, separator), separator)
+		}
+
 		maxPath := maxPathLength
 		maxName := maxTitleLength
 		invalidPathName := "path"
@@ -146,9 +151,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 			invalidPathName = "system name"
 			invalidName = "account name"
 		}
-
-		path = strings.TrimSpace(path)
-		name = strings.TrimSpace(name)
 
 		if len(path) > maxPath || path == "" {
 			message := fmt.Sprintf("Invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, len(path), maxName)
