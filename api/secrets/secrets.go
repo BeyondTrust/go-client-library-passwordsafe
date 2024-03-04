@@ -56,13 +56,12 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	secretDictionary := make(map[string]string)
 
 	for _, secretToRetrieve := range secretsToRetrieve {
-		secretData := strings.Split(secretToRetrieve, separator)
-
-		secretTitle := secretData[len(secretData)-1]
-		secretPath := secretData[0]
-		if len(secretData) > 2 {
-			_, secretData = secretData[len(secretData)-1], secretData[:len(secretData)-1]
-			secretPath = strings.TrimSuffix(strings.Join(secretData, separator), separator)
+		retrievalData := strings.Split(secretToRetrieve, separator)
+		secretTitle := retrievalData[len(retrievalData)-1]
+		secretPath := retrievalData[0]
+		if len(retrievalData) > 2 {
+			_, retrievalData = retrievalData[len(retrievalData)-1], retrievalData[:len(retrievalData)-1]
+			secretPath = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
 		}
 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")

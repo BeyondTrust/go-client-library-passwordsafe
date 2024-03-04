@@ -126,38 +126,56 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 	for _, secretToRetrieve := range secretPaths {
 
+		// validate empty paths
 		if strings.TrimSpace(secretToRetrieve) == "" {
-			logger.Warn("Empty path encountered.")
+			logger.Error("Empty path encountered. Validate your path input.")
 			continue
-		}
-
-		secretData := strings.Split(secretToRetrieve, separator)
-
-		name := secretData[len(secretData)-1]
-		path := secretData[0]
-		if len(secretData) > 2 {
-			secretData[len(secretData)-1] = ""
-			path = strings.TrimSuffix(strings.Join(secretData, separator), separator)
 		}
 
 		maxPath := maxPathLength
 		maxName := maxTitleLength
 		invalidPathName := "path"
 		invalidName := "title"
+		maxPathDepth := 7
+		titleDepth := 1
 
 		if isManagedAccount {
 			maxPath = maxSystemNameLength
 			maxName = maxAccountNameLength
 			invalidPathName = "system name"
 			invalidName = "account name"
+			maxPathDepth = 2
 		}
 
+		retrievalData := strings.Split(secretToRetrieve, separator)
+
+		// validate max depth
+		if len(retrievalData) > maxPathDepth+titleDepth {
+			message := fmt.Sprintf("Invalid %s PathDepth=%v, valid path depth is %v, this secret will be skipped.", invalidPathName, len(retrievalData)-titleDepth, maxPathDepth)
+			logger.Error(message)
+			continue
+		}
+
+		name := retrievalData[len(retrievalData)-1]
+		path := retrievalData[0]
+		if len(retrievalData) > 2 {
+			retrievalData[len(retrievalData)-1] = ""
+			path = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
+		}
+
+		// trim all the leading and trailing white space
+		path = strings.TrimSpace(path)
+		name = strings.TrimSpace(name)
+
+		// validate max path and name length
 		if len(path) > maxPath || path == "" {
 			message := fmt.Sprintf("Invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, len(path), maxName)
-			logger.Warn(message)
+			logger.Error(message)
+			continue
 		} else if len(name) > maxName || name == "" {
 			message := fmt.Sprintf("%s=%s but found invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, path, invalidName, len(name), maxName)
-			logger.Warn(message)
+			logger.Error(message)
+			continue
 		} else {
 			secretPath := fmt.Sprintf("%s%s%s", path, separator, name)
 			newSecretPaths = append(newSecretPaths, secretPath)
@@ -165,7 +183,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 	}
 
 	return newSecretPaths
-
 }
 
 // ValidateURL responsible for validating the Password Safe API URL.

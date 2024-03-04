@@ -11,6 +11,7 @@ import (
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
 	"io"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -34,18 +35,15 @@ func NewManagedAccountObj(authentication authentication.AuthenticationObj, logge
 
 // GetSecrets is responsible for getting a list of managed account secret values based on the list of systems and account names.
 func (managedAccounObj *ManagedAccountstObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	if separator == "" {
-		separator = ""
-	}
 	return managedAccounObj.ManageAccountFlow(secretPaths, separator, make(map[string]string))
 }
 
 // GetSecret returns secret value for a specific System Name and Account Name.
 func (managedAccounObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (string, error) {
 	managedAccountList := []string{}
-	secrets, _ := managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
+	secrets, err := managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
 	secretValue := secrets[secretPath]
-	return secretValue, nil
+	return secretValue, err
 }
 
 // ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
@@ -54,12 +52,12 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, true, separator, managedAccounObj.log)
 	managedAccounObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
 	secretDictionary := make(map[string]string)
+	var saveLastErr error = nil
 
 	for _, secretToRetrieve := range secretsToRetrieve {
-		secretData := strings.Split(secretToRetrieve, separator)
-		managedAccounObj.log.Info(fmt.Sprintf("%v", secretData))
-		systemName := secretData[0]
-		accountName := secretData[1]
+		retrievalData := strings.Split(secretToRetrieve, separator)
+		systemName := retrievalData[0]
+		accountName := retrievalData[1]
 
 		if len(paths) == 0 {
 			paths["SignAppinPath"] = "Auth/SignAppin"
@@ -69,13 +67,17 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 			paths["ManagedAccountRequestCheckInPath"] = "Requests/%v/checkin"
 		}
 
-		paths["ManagedAccountGetPath"] = fmt.Sprintf("ManagedAccounts?systemName=%v&accountName=%v", systemName, accountName)
+		v := url.Values{}
+		v.Add("systemName", systemName)
+		v.Add("accountName", accountName)
+		paths["ManagedAccountGetPath"] = "ManagedAccounts?" + v.Encode()
 
 		var err error
 
 		ManagedAccountGetUrl := managedAccounObj.RequestPath(paths["ManagedAccountGetPath"])
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
+			saveLastErr = err
 			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
@@ -83,6 +85,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		ManagedAccountCreateRequestUrl := managedAccounObj.RequestPath(paths["ManagedAccountCreateRequestPath"])
 		requestId, err := managedAccounObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
+			saveLastErr = err
 			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
@@ -90,6 +93,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		CredentialByRequestIdUrl := managedAccounObj.RequestPath(fmt.Sprintf(paths["CredentialByRequestIdPath"], requestId))
 		secret, err := managedAccounObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
 		if err != nil {
+			saveLastErr = err
 			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
@@ -99,6 +103,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		_, err = managedAccounObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
 
 		if err != nil {
+			saveLastErr = err
 			managedAccounObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
 			continue
 		}
@@ -107,7 +112,8 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		secretDictionary[secretToRetrieve] = secretValue
 
 	}
-	return secretDictionary, nil
+
+	return secretDictionary, saveLastErr
 }
 
 // ManagedAccountGet is responsible for retrieving a managed account secret based on the system and name.
