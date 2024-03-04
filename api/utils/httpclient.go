@@ -27,6 +27,7 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 		certi, err := tls.X509KeyPair([]byte(certificate), []byte(certificate_key))
 
 		if err != nil {
+			logger.Error("issue parsing certificate public/private key pair of PEM encoded data.")
 			return nil, err
 		}
 
