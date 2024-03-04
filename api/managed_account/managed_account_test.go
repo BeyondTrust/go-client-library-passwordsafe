@@ -303,7 +303,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: `error - status code: 404 - "Managed Account not found"`,
+		response: "",
 	}
 
 	authenticate.ApiUrl = testConfig.server.URL
@@ -312,9 +312,9 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 	secretDictionary := make(map[string]string)
 	managedAccounList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 
-	_, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/", secretDictionary)
+	secrets, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/", secretDictionary)
 
-	if err.Error() != testConfig.response {
+	if len(secrets) != 0 {
 		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
 	}
 }

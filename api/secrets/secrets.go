@@ -37,9 +37,6 @@ func NewSecretObj(authentication authentication.AuthenticationObj, logger loggin
 
 // GetSecrets returns secret value for a path and title list.
 func (secretObj *SecretObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	if separator == "" {
-		separator = ""
-	}
 	return secretObj.GetSecretFlow(secretPaths, separator)
 }
 
@@ -59,23 +56,27 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	secretDictionary := make(map[string]string)
 
 	for _, secretToRetrieve := range secretsToRetrieve {
-		secretData := strings.Split(secretToRetrieve, separator)
-
-		secretPath := secretData[0]
-		secretTitle := secretData[1]
+		retrievalData := strings.Split(secretToRetrieve, separator)
+		secretTitle := retrievalData[len(retrievalData)-1]
+		secretPath := retrievalData[0]
+		if len(retrievalData) > 2 {
+			_, retrievalData = retrievalData[len(retrievalData)-1], retrievalData[:len(retrievalData)-1]
+			secretPath = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
+		}
 
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
 		if err != nil {
-			return nil, err
+			secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+			continue
 		}
 
 		// When secret type is FILE, it calls SecretGetFileSecret method.
 		if strings.ToUpper(secret.SecretType) == "FILE" {
 			fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
 			if err != nil {
-				secretObj.log.Error(err.Error())
-				return nil, err
+				secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+				continue
 			}
 
 			secretInBytes := []byte(fileSecretContent)
@@ -96,8 +97,6 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 
 // SecretGetSecretByPath returns secret object for a specific path, title.
 func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle string, separator string, endpointPath string) (entities.Secret, error) {
-	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
 	var technicalError error
@@ -109,6 +108,9 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	params.Add("title", secretTitle)
 
 	url := fmt.Sprintf("%s%s?%s", secretObj.authenticationObj.ApiUrl, endpointPath, params.Encode())
+
+	messageLog := fmt.Sprintf("%v %v", "GET", url)
+	secretObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
 		body, technicalError, businessError, scode = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
