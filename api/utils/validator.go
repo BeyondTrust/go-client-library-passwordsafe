@@ -31,8 +31,6 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	if clientTimeOutinSeconds == 0 {
 		clientTimeOutinSeconds = 30
-		*retryMaxElapsedTimeMinutes = 2
-
 	}
 
 	if *retryMaxElapsedTimeMinutes == 0 {
@@ -41,6 +39,12 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	if *maxFileSecretSizeBytes == 0 {
 		*maxFileSecretSizeBytes = 4000000
+	}
+
+	err := ValidateURL(apiUrl)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
 	}
 
 	validate = validator.New(validator.WithRequiredStructEnabled())
@@ -63,7 +67,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		*separator = "/"
 	}
 
-	err := validate.Struct(userInput)
+	err = validate.Struct(userInput)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -103,12 +107,6 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	}
 
-	err = ValidateURL(apiUrl)
-	if err != nil {
-		logger.Error(err.Error())
-		return err
-	}
-
 	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa, userInput.MaxFileSecretSizeBytes, certificate != "")
 	logger.Debug(message)
 	return nil
@@ -144,7 +142,7 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 			maxName = maxAccountNameLength
 			invalidPathName = "system name"
 			invalidName = "account name"
-			maxPathDepth = 2
+			maxPathDepth = 1
 		}
 
 		retrievalData := strings.Split(secretToRetrieve, separator)
@@ -193,13 +191,13 @@ func ValidateURL(apiUrl string) error {
 	}
 
 	scheme := val.Scheme
-	if scheme == "http" {
-		message := "http is not support. Use https"
+	if scheme != "https" {
+		message := fmt.Sprintf("%s is not support. Use https", scheme)
 		return errors.New(message)
 	}
 
-	if !strings.Contains(apiUrl, "/BeyondTrust/api/public/v") {
-		message := "invalid API URL, it must contains /BeyondTrust/api/public/v as part of the route"
+	if !strings.Contains(val.Path, "/BeyondTrust/api/public/v") {
+		message := "invalid API URL, it must contains /BeyondTrust/api/public/v as part of the path"
 		return errors.New(message)
 	}
 

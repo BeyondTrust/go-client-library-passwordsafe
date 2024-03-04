@@ -106,14 +106,14 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	params := url.Values{}
 	params.Add("path", secretPath)
 	params.Add("title", secretTitle)
+	params.Add("separator", separator)
 
-	url := fmt.Sprintf("%s%s?%s", secretObj.authenticationObj.ApiUrl, endpointPath, params.Encode())
-
+	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String() + "?" + params.Encode()
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, scode = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
+		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -158,10 +158,10 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	var technicalError error
 	var businessError error
 
-	url := fmt.Sprintf("%s%s%s%s", secretObj.authenticationObj.ApiUrl, endpointPath, secretId, "/file/download")
+	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath, secretId, "/file/download").String()
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 

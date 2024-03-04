@@ -8,10 +8,10 @@ import (
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
-	"strings"
-
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"go.uber.org/zap"
@@ -53,8 +53,8 @@ func TestSecretGetSecretByPath(t *testing.T) {
 			Password: "credential_in_sub_3_password",
 		},
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	response, err := secretObj.SecretGetSecretByPath("path1/path2", "fake_title", "/", "secrets-safe/secrets")
@@ -86,8 +86,8 @@ func TestSecretGetFileSecret(t *testing.T) {
 			}
 		})),
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 	response, err := secretObj.SecretGetFileSecret("1", testConfig.server.URL)
 
@@ -145,8 +145,8 @@ func TestSecretFlow(t *testing.T) {
 		})),
 		response: "fake_password",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
@@ -200,8 +200,8 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 		})),
 		response: "",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	secretPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
