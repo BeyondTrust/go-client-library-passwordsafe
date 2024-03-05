@@ -1,5 +1,16 @@
 # Changelog
 
+### [0.3.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.2.1...v0.3.0) / 2024-03-05
+
+#### Features
+
+* put 30 seconds as default client time out ([#39](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/39))
+
+#### Bug Fixes
+
+* file download ([#33](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/33))
+* long paths not parsing correctly ([#50](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/50))
+
 ### [0.2.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.2.0...v0.2.1) / 2024-02-26
 
 #### Bug Fixes
