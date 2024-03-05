@@ -4,7 +4,7 @@
 
 # Go Client Library for Password Safe
 
-The Go client library for Password Safe enables Go developers to easily manage passwords from Password Safe. It provide simplifications that significantly reduce the amount of code you need to write.
+The Go client library for Password Safe enables Go developers to easily manage passwords from Password Safe. It provides simplifications that significantly reduce the amount of code you need to write.
 
 [![License](https://img.shields.io/badge/license-MIT%20-brightgreen.svg)](LICENSE)
 
