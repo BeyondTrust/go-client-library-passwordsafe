@@ -7,10 +7,10 @@ import (
 	"go-client-library-passwordsafe/api/entities"
 	"go-client-library-passwordsafe/api/logging"
 	"go-client-library-passwordsafe/api/utils"
-	"reflect"
-
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"reflect"
 	"testing"
 
 	"go.uber.org/zap"
@@ -171,7 +171,8 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 			EmailAddress: "Felipe",
 		},
 	}
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	response, err := authenticate.GetPasswordSafeAuthentication()
 
 	if !reflect.DeepEqual(response, *testConfig.response) {

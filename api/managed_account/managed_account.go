@@ -35,19 +35,19 @@ func NewManagedAccountObj(authentication authentication.AuthenticationObj, logge
 
 // GetSecrets is responsible for getting a list of managed account secret values based on the list of systems and account names.
 func (managedAccounObj *ManagedAccountstObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	return managedAccounObj.ManageAccountFlow(secretPaths, separator, make(map[string]string))
+	return managedAccounObj.ManageAccountFlow(secretPaths, separator)
 }
 
 // GetSecret returns secret value for a specific System Name and Account Name.
 func (managedAccounObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (string, error) {
 	managedAccountList := []string{}
-	secrets, err := managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator, make(map[string]string))
+	secrets, err := managedAccounObj.ManageAccountFlow(append(managedAccountList, secretPath), separator)
 	secretValue := secrets[secretPath]
 	return secretValue, err
 }
 
 // ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
-func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve []string, separator string, paths map[string]string) (map[string]string, error) {
+func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
 
 	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, true, separator, managedAccounObj.log)
 	managedAccounObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
@@ -59,22 +59,13 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 		systemName := retrievalData[0]
 		accountName := retrievalData[1]
 
-		if len(paths) == 0 {
-			paths["SignAppinPath"] = "Auth/SignAppin"
-			paths["SignAppOutPath"] = "Auth/Signout"
-			paths["ManagedAccountCreateRequestPath"] = "Requests"
-			paths["CredentialByRequestIdPath"] = "Credentials/%v"
-			paths["ManagedAccountRequestCheckInPath"] = "Requests/%v/checkin"
-		}
-
 		v := url.Values{}
 		v.Add("systemName", systemName)
 		v.Add("accountName", accountName)
-		paths["ManagedAccountGetPath"] = "ManagedAccounts?" + v.Encode()
 
 		var err error
 
-		ManagedAccountGetUrl := managedAccounObj.RequestPath(paths["ManagedAccountGetPath"])
+		ManagedAccountGetUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts").String() + "?" + v.Encode()
 		managedAccount, err := managedAccounObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
 			saveLastErr = err
@@ -82,7 +73,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 			continue
 		}
 
-		ManagedAccountCreateRequestUrl := managedAccounObj.RequestPath(paths["ManagedAccountCreateRequestPath"])
+		ManagedAccountCreateRequestUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("Requests").String()
 		requestId, err := managedAccounObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
 			saveLastErr = err
@@ -90,7 +81,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 			continue
 		}
 
-		CredentialByRequestIdUrl := managedAccounObj.RequestPath(fmt.Sprintf(paths["CredentialByRequestIdPath"], requestId))
+		CredentialByRequestIdUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("Credentials", requestId).String()
 		secret, err := managedAccounObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
 		if err != nil {
 			saveLastErr = err
@@ -98,8 +89,7 @@ func (managedAccounObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve
 			continue
 		}
 
-		ManagedAccountRequestCheckInPath := fmt.Sprintf(paths["ManagedAccountRequestCheckInPath"], requestId)
-		ManagedAccountRequestCheckInUrl := managedAccounObj.RequestPath(ManagedAccountRequestCheckInPath)
+		ManagedAccountRequestCheckInUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("Requests", requestId, "checkin").String()
 		_, err = managedAccounObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
 
 		if err != nil {
@@ -126,7 +116,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "")
 		if technicalError != nil {
 			return technicalError
 		}
@@ -173,7 +163,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -209,7 +199,7 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -228,14 +218,9 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 		return "", err
 	}
 
-	if err != nil {
-		return "", err
-	}
-
 	responseString := string(bodyBytes)
 
 	return responseString, nil
-
 }
 
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
@@ -250,7 +235,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reques
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		_, technicalError, businessError, _ = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "")
+		_, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -263,9 +248,4 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reques
 	}
 
 	return "", nil
-}
-
-// requestPath Build endpint path.
-func (managedAccounObj *ManagedAccountstObj) RequestPath(path string) string {
-	return fmt.Sprintf("%v/%v", managedAccounObj.authenticationObj.ApiUrl, path)
 }
