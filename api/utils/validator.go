@@ -41,6 +41,10 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		*maxFileSecretSizeBytes = 4000000
 	}
 
+	if strings.TrimSpace(*separator) == "" {
+		*separator = "/"
+	}
+
 	err := ValidateURL(apiUrl)
 	if err != nil {
 		logger.Error(err.Error())
@@ -61,10 +65,6 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 
 	if !verifyCa {
 		logger.Warn("verifyCa=false is insecure, instructs not to verify the certificate authority.")
-	}
-
-	if strings.TrimSpace(*separator) == "" {
-		*separator = "/"
 	}
 
 	err = validate.Struct(userInput)
