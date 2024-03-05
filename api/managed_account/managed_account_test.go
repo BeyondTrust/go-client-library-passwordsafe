@@ -10,6 +10,7 @@ import (
 	"go-client-library-passwordsafe/api/utils"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -54,7 +55,8 @@ func TestManagedAccountGet(t *testing.T) {
 			AccountId: 10,
 		},
 	}
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountGet("fake_system_name", "fake_account_name", testConfig.server.URL)
 
@@ -87,8 +89,8 @@ func TestManagedAccountCreateRequest(t *testing.T) {
 		})),
 		response: "124",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountCreateRequest(1, 10, testConfig.server.URL)
 
@@ -121,8 +123,8 @@ func TestCredentialByRequestId(t *testing.T) {
 		})),
 		response: "fake_credential",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.CredentialByRequestId("124", testConfig.server.URL)
 
@@ -155,8 +157,8 @@ func TestManagedAccountRequestCheckIn(t *testing.T) {
 		})),
 		response: "",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL + "/"
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	response, err := managedAccountObj.ManagedAccountRequestCheckIn("124", testConfig.server.URL)
 
@@ -226,14 +228,13 @@ func TestManageAccountFlow(t *testing.T) {
 		})),
 		response: "fake_credential",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL
+	apiUrl, _ := url.Parse(testConfig.server.URL)
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 
-	secretDictionary := make(map[string]string)
 	managedAccounList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 
-	response, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/", secretDictionary)
+	response, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/")
 
 	if response["oauthgrp_nocert/Test1"] != testConfig.response {
 		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
@@ -305,14 +306,13 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 		})),
 		response: "",
 	}
-
-	authenticate.ApiUrl = testConfig.server.URL
+	apiUrl, _ := url.Parse(testConfig.server.URL)
+	authenticate.ApiUrl = *apiUrl
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 
-	secretDictionary := make(map[string]string)
 	managedAccounList := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 
-	secrets, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/", secretDictionary)
+	secrets, err := managedAccountObj.ManageAccountFlow(managedAccounList, "/")
 
 	if len(secrets) != 0 {
 		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
