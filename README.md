@@ -158,3 +158,29 @@ Some of the more important and common commit types are:
 | ci       | Changes to CI configuration files and scripts                 | No                      |
 
 Remember, Release Please App will trigger once a PR with the conventional commit structure are merged into the main branch, so if you are working on features that are related to a Jira ticket, you can still use **feat** while developing, and because we can squash the commits once we want to merge the PR, only one commit with the conventional syntax will be on the history and on the changelog.
+
+## Performance Tests
+
+Run performance Tests
+
+```bash
+go run performancetest/PerformanceTest.go
+```
+
+In Other console run
+
+```bash
+# run web UI
+go tool pprof -http=:8080 memory.pprof
+go tool pprof -http=:8081 cpu.pprof
+
+# run with not web UI
+go tool pprof memory.pprof
+go tool pprof cpu.pprof
+
+# check functions memory and cpu usage
+top
+
+# go inside of function memory usage
+list  main.callPasswordSafeAPI
+```
