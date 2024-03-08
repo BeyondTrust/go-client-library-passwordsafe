@@ -7,9 +7,11 @@ import (
 	managed_accounts "go-client-library-passwordsafe/api/managed_account"
 	"go-client-library-passwordsafe/api/secrets"
 	"go-client-library-passwordsafe/api/utils"
+	"time"
 
 	//"os"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
 
@@ -34,11 +36,16 @@ func main() {
 	retryMaxElapsedTimeMinutes := 2
 	maxFileSecretSizeBytes := 5000000
 
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.InitialInterval = 1 * time.Second
+	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeMinutes) * time.Second
+	backoffDefinition.RandomizationFactor = 0.5
+
 	//certificate = os.Getenv("CERTIFICATE")
 	//certificateKey = os.Getenv("CERTIFICATE_KEY")
 
 	// validate inputs
-	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSizeBytes)
+	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, &apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSizeBytes)
 
 	if errorsInInputs != nil {
 		return
@@ -48,7 +55,7 @@ func main() {
 	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
 
 	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(*httpClientObj, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
+	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
 
 	// authenticating
 	_, err := authenticate.GetPasswordSafeAuthentication()
