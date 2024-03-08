@@ -11,7 +11,6 @@ import (
 	"io"
 
 	"net/url"
-	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
 )
@@ -28,12 +27,8 @@ type AuthenticationObj struct {
 
 // Authenticate is responsible for Auth configuration.
 // Prerequisites - use input validation methods before using this class.
-func Authenticate(httpClient utils.HttpClientObj, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
+func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.InitialInterval = 1 * time.Second
-	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeSeconds) * time.Second
-	backoffDefinition.RandomizationFactor = 0.5
 	apiUrl, _ := url.Parse(endpointUrl)
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             *apiUrl,

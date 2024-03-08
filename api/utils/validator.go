@@ -27,7 +27,7 @@ type UserInputValidaton struct {
 var validate *validator.Validate
 
 // ValidateInputs is responsible for validating end-user inputs.
-func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int, maxFileSecretSizeBytes *int) error {
+func ValidateInputs(clientId string, clientSecret string, apiUrl *string, clientTimeOutinSeconds int, separator *string, verifyCa bool, logger logging.Logger, certificate string, certificate_key string, retryMaxElapsedTimeMinutes *int, maxFileSecretSizeBytes *int) error {
 
 	if clientTimeOutinSeconds == 0 {
 		clientTimeOutinSeconds = 30
@@ -45,7 +45,9 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 		*separator = "/"
 	}
 
-	err := ValidateURL(apiUrl)
+	*apiUrl = strings.TrimSpace(*apiUrl)
+
+	err := ValidateURL(*apiUrl)
 	if err != nil {
 		logger.Error(err.Error())
 		return err
@@ -56,7 +58,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl string, clientT
 	userInput := &UserInputValidaton{
 		ClientId:               clientId,
 		ClientSecret:           clientSecret,
-		ApiUrl:                 apiUrl,
+		ApiUrl:                 *apiUrl,
 		ClientTimeOutinSeconds: clientTimeOutinSeconds,
 		Separator:              *separator,
 		VerifyCa:               verifyCa,
@@ -117,8 +119,8 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 	newSecretPaths := []string{}
 
-	var maxAccountNameLength = 246
-	var maxSystemNameLength = 129
+	var maxAccountNameLength = 245
+	var maxSystemNameLength = 128
 	var maxPathLength = 1792
 	var maxTitleLength = 256
 

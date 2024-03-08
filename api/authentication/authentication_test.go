@@ -12,7 +12,9 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +44,10 @@ func TestSignOut(t *testing.T) {
 
 	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
 
-	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := UserTestConfig{
 		name: "TestSignOut",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +74,10 @@ func TestSignAppin(t *testing.T) {
 
 	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
 
-	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := UserTestConfig{
 		name: "TestSignAppin",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +111,10 @@ func TestGetToken(t *testing.T) {
 
 	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
 
-	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := GetTokenConfig{
 		name: "TestGetToken",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +153,10 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 
 	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
 
-	var authenticate, _ = Authenticate(*httpClientObj, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := GetPasswordSafeAuthenticationConfig{
 		name: "TestGetPasswordSafeAuthentication",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
