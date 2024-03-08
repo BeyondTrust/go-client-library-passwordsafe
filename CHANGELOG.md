@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.4.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.3.0...v0.4.0) / 2024-03-08
+
+#### Features
+
+* add performance test ([#56](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/56))
+
 ### [0.3.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.2.1...v0.3.0) / 2024-03-05
 
 #### Features
