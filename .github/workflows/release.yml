@@ -62,7 +62,7 @@ jobs:
           name: coverage
 
       - name: SonarQube Scan on PR
-        if: ${{ github.actor != 'dependabot[bot]' && github.event_name == 'pull_request' }}
+        if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' ) }}
         uses: sonarsource/sonarqube-scan-action@69c1a75940dec6249b86dace6b630d3a2ae9d2a7 # v2.0.1
         with:
           projectBaseDir: .
@@ -78,7 +78,7 @@ jobs:
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
 
       - name: SonarQube Scan on branch
-        if: ${{ github.actor != 'dependabot[bot]' && github.event_name != 'pull_request' }}
+        if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target' ) }}
         uses: sonarsource/sonarqube-scan-action@69c1a75940dec6249b86dace6b630d3a2ae9d2a7 # v2.0.1
         with:
           projectBaseDir: .
