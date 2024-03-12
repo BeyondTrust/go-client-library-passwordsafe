@@ -5,10 +5,11 @@ package utils
 import (
 	"errors"
 	"fmt"
-	logging "go-client-library-passwordsafe/api/logging"
 	"net/url"
 	"strings"
 	"unicode/utf8"
+
+	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 
 	validator "github.com/go-playground/validator/v10"
 )
