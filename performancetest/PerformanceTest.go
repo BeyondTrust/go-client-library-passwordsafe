@@ -10,6 +10,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
+
 	"time"
 
 	backoff "github.com/cenkalti/backoff/v4"
@@ -20,6 +21,7 @@ import (
 const numberOfIterations = 5
 
 func main() {
+
 	go func() {
 		err := http.ListenAndServe("localhost:6060", nil)
 		if err != nil {
