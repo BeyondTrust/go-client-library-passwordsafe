@@ -6,11 +6,12 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	logging "go-client-library-passwordsafe/api/logging"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
+
+	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 )
 
 // HttpClientObj responsible for http request instance.

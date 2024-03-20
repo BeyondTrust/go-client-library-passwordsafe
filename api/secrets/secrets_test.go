@@ -4,16 +4,17 @@
 package secrets
 
 import (
-	"go-client-library-passwordsafe/api/authentication"
-	"go-client-library-passwordsafe/api/entities"
-	"go-client-library-passwordsafe/api/logging"
-	"go-client-library-passwordsafe/api/utils"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
