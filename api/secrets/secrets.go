@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-client-library-passwordsafe/api/authentication"
-	"go-client-library-passwordsafe/api/entities"
-	"go-client-library-passwordsafe/api/logging"
-	"go-client-library-passwordsafe/api/utils"
 	"io"
 	"net/url"
 	"strings"
+
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 
 	backoff "github.com/cenkalti/backoff/v4"
 )
