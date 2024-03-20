@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"go-client-library-passwordsafe/api/authentication"
-	logging "go-client-library-passwordsafe/api/logging"
-	managed_accounts "go-client-library-passwordsafe/api/managed_account"
-	"go-client-library-passwordsafe/api/secrets"
-	"go-client-library-passwordsafe/api/utils"
 	"time"
+
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 
 	//"os"
 

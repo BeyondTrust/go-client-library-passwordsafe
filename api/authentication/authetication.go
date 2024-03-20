@@ -5,10 +5,11 @@ package authentication
 import (
 	"bytes"
 	"encoding/json"
-	"go-client-library-passwordsafe/api/entities"
-	"go-client-library-passwordsafe/api/logging"
-	"go-client-library-passwordsafe/api/utils"
 	"io"
+
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 
 	"net/url"
 
