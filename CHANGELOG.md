@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.4.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.4.0...v0.4.1) / 2024-03-20
+
+#### Bug Fixes
+
+* change library imports paths ([#71](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/71))
+* change module name in .mod file ([#65](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/65))
+
 ### [0.4.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.3.0...v0.4.0) / 2024-03-08
 
 #### Features
