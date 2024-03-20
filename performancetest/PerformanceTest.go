@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"go-client-library-passwordsafe/api/authentication"
-	"go-client-library-passwordsafe/api/logging"
-	"go-client-library-passwordsafe/api/secrets"
-	"go-client-library-passwordsafe/api/utils"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
 	"time"
+
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
