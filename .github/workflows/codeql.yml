@@ -21,22 +21,22 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/init@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
         with:
           config-file: codeql-config.yml
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/autobuild@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/analyze@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
 
   analyze_on_branch:
     name: Analyze on branch
@@ -49,7 +49,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           fetch-depth: 0
           ref: ${{ github.ref }}
@@ -59,13 +59,13 @@ jobs:
           echo ${{ github.event_name }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/init@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
         with:
           config-file: codeql-config.yml
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/autobuild@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@8a470fddafa5cbb6266ee11b37ef4d8aae19c571 # v3.24.6
+        uses: github/codeql-action/analyze@05963f47d870e2cb19a537396c1f668a348c7d8f # v3.24.8
