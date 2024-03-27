@@ -20,7 +20,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout code on PR 
+        if: ${{ github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }} 
+
+      - name: Checkout code on Branch
+        if: ${{ github.event_name != 'pull_request' ||  github.event_name != 'pull_request_target' }}
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           fetch-depth: 0
@@ -101,7 +109,8 @@ jobs:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+      - name: Checkout code
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
