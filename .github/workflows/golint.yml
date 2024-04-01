@@ -20,7 +20,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Go Lint
-        uses: golangci/golangci-lint-action@3cfe3a4abbb849e10058ce4af15d205b6da42804 # v4.0.0
+      - name: Configure Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
         with:
-          version: v1.54
+          go-version-file: "go.mod"
+          check-latest: true
+          cache: false
+
+      # MegaLinter
+      - name: MegaLinter
+        id: ml
+        # You can override MegaLinter flavor used to have faster performances
+        # More info at https://megalinter.io/latest/flavors/
+        uses: oxsecurity/megalinter/flavors/go@688bc7466d7ab4faa83d614c2e6f9acf42b674dc #v7.8.0
+        env:
+          # All available variables are described in documentation
+          # https://megalinter.io/latest/configuration/
+          VALIDATE_ALL_CODEBASE: ${{ inputs.full }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload MegaLinter artifacts
+      - name: Archive production artifacts
+        if: ${{ success() || failure() }}
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.0
+        with:
+          name: MegaLinter reports
+          path: |
+            megalinter-reports
+            mega-linter.log

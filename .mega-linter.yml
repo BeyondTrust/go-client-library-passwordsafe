@@ -1,0 +1,10 @@
+## This will be use by linter.yaml in the workflow
+---
+DISABLE_LINTERS:
+  - SPELL_CSPELL # Not helpful. Configuration is way too tedious just to catch the odd typo.
+
+FILTER_REGEX_EXCLUDE: (CHANGELOG.md)
+GO_GOLANGCI_LINT_CLI_LINT_MODE: project
+GO_GOLANGCI_LINT_CONFIG_FILE: .golangci.yml
+GO_REVIVE_CLI_LINT_MODE: project
+APPLY_FIXES: none
