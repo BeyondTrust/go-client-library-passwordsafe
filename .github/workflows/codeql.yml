@@ -12,7 +12,7 @@ permissions:
 jobs:
   analyze_on_PR:
     name: Analyze on PR
-    if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' ) }}
+    if: ${{ github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target'  }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -40,7 +40,7 @@ jobs:
 
   analyze_on_branch:
     name: Analyze on branch
-    if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target' ) }}
+    if: ${{ github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target'  }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
