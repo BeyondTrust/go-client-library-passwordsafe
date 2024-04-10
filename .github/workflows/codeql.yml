@@ -1,7 +1,9 @@
 name: CodeQL Static Analysis
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  push:
+    branches:
+      - main
+      - BIPS-*
   workflow_dispatch:
 
 permissions:

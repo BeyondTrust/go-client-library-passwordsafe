@@ -1,8 +1,12 @@
 name: Frogbot
 
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  push:
+    branches:
+      - main
+      - BIPS-*
+  workflow_dispatch:
+    
 permissions:
   pull-requests: write
   contents: read
