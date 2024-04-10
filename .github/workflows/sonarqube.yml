@@ -4,11 +4,10 @@ env:
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
 on:
-  pull_request_target:
-    types: [opened, synchronize]
   push:
     branches:
       - main
+      - BIPS-*
   workflow_dispatch:
 
 permissions:
