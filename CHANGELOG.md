@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.4.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.4.1...v0.4.2) / 2024-04-11
+
+#### Bug Fixes
+
+* adding checks for PR workflow run ([#74](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/74))
+* signout method ([#81](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/81))
+
 ### [0.4.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.4.0...v0.4.1) / 2024-03-20
 
 #### Bug Fixes
