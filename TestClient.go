@@ -98,6 +98,6 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
 
 	// signing out
-	_ = authenticate.SignOut(authenticate.ApiUrl.JoinPath("Auth/Signout").String())
+	_ = authenticate.SignOut()
 
 }
