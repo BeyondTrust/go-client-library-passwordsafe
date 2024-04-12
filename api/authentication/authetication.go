@@ -156,22 +156,24 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 // SignOut is responsible for closing the PS API session and cleaning up idle connections.
 // Warn: should only be called one time for all data sources. The session is closed server
 // side automatically after 20 minutes of uninterupted inactivity.
-func (authenticationObj *AuthenticationObj) SignOut(url string) error {
-	authenticationObj.log.Debug(url)
+func (authenticationObj *AuthenticationObj) SignOut() error {
 
 	var technicalError error
 	var businessError error
 	var body io.ReadCloser
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", bytes.Buffer{}, "SignOut", "")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "")
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
-	defer body.Close()
 	if businessError != nil {
 		authenticationObj.log.Error(businessError.Error())
 		return businessError
+	}
+
+	if body != nil {
+		defer body.Close()
 	}
 
 	defer authenticationObj.HttpClient.HttpClient.CloseIdleConnections()
