@@ -48,7 +48,6 @@ func TestSignOut(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := UserTestConfig{
 		name: "TestSignOut",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +60,9 @@ func TestSignOut(t *testing.T) {
 		response: nil,
 	}
 
-	err := authenticate.SignOut(testConfig.server.URL)
+	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, testConfig.server.URL, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+
+	err := authenticate.SignOut()
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
 	}

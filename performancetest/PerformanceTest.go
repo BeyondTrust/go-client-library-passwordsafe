@@ -71,7 +71,7 @@ func callPasswordSafeAPI() {
 	separator := "/"
 	certificate := ""
 	certificateKey := ""
-	clientTimeOutInSeconds := 5
+	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 15
 	maxFileSecretSizeBytes := 5000000
@@ -109,6 +109,6 @@ func callPasswordSafeAPI() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotSecret))
 
 	// signing out
-	_ = authenticate.SignOut(authenticate.ApiUrl.JoinPath("Auth/Signout").String())
+	_ = authenticate.SignOut()
 
 }
