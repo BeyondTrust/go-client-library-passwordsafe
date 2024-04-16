@@ -21,7 +21,6 @@ type UserInputValidaton struct {
 	ApiUrl                 string `validate:"required,http_url"`
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
-	VerifyCa               bool   `validate:"required"`
 	MaxFileSecretSizeBytes int    `validate:"gte=1,lte=5000000"`
 }
 
@@ -62,7 +61,6 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl *string, client
 		ApiUrl:                 *apiUrl,
 		ClientTimeOutinSeconds: clientTimeOutinSeconds,
 		Separator:              *separator,
-		VerifyCa:               verifyCa,
 		MaxFileSecretSizeBytes: *maxFileSecretSizeBytes,
 	}
 
@@ -110,7 +108,7 @@ func ValidateInputs(clientId string, clientSecret string, apiUrl *string, client
 
 	}
 
-	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, userInput.VerifyCa, userInput.MaxFileSecretSizeBytes, certificate != "")
+	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, verifyCa, userInput.MaxFileSecretSizeBytes, certificate != "")
 	logger.Debug(message)
 	return nil
 }
