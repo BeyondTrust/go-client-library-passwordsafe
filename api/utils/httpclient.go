@@ -105,7 +105,7 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 		return nil, resp.StatusCode, err, nil
 	}
 
-	if resp.StatusCode > http.StatusBadRequest {
+	if resp.StatusCode >= http.StatusBadRequest {
 		respBody := new(bytes.Buffer)
 		_, err = respBody.ReadFrom(resp.Body)
 		if err != nil {
