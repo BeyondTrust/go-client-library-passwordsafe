@@ -21,13 +21,13 @@ jobs:
      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
      with:
        oss-fuzz-project-name: ''
-       language: 
+       language: go
 
    - name: Run Fuzzers
      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
      with:
        oss-fuzz-project-name: '${{ github.event.repository.name }}'
-       language: c++
+       language: go
        fuzz-seconds: 600
        output-sarif: true
 
