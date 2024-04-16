@@ -1,8 +1,6 @@
 name: Release
 
 env:
-  JFROG_CLI_BUILD_NAME: ${{ github.repository }}
-  JFROG_SERVER: eng-generic-dev-local
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
 on:
@@ -17,7 +15,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  unit-testing:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -41,14 +39,8 @@ jobs:
           name: coverage
           path: api/coverage.out
 
-      - name: Save built library
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
-        with:
-          name: library
-          path: go-client-library-passwordsafe
-
   sonarqube:
-    needs: build
+    needs: unit-testing
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -96,41 +88,3 @@ jobs:
         timeout-minutes: 5
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-
-  x-ray:
-    needs: [build, sonarqube]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
-        with:
-          # Allow goreleaser to access older tag information.
-          fetch-depth: 0
-
-      - name: Jfrog setup
-        uses: jfrog/setup-jfrog-cli@d82fe26823e1f25529250895d5673f65b02af085 # v4.0.1
-        env:
-          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
-
-      - name: Setting up artifactory
-        run: |
-          mkdir go-library-passwordsafe
-
-      - name: Download library binary
-        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # v4.1.4
-        with:
-          name: library
-          path: go-library-passwordsafe
-
-      - name: Send artifacts to Jfrog
-        run: |
-          jfrog rt u "go-library-passwordsafe/*" ${{ env.JFROG_SERVER }}
-
-      - name: Publish Build Information
-        run: |
-          jfrog rt build-add-git
-          jfrog rt build-collect-env
-          jfrog rt build-publish ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
-
-      - name: Scan Build
-        run: jfrog rt build-scan ${{ env.JFROG_CLI_BUILD_NAME }} ${{ env.JFROG_CLI_BUILD_NUMBER }}
