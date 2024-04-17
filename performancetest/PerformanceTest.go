@@ -6,6 +6,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
+
 	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
@@ -21,6 +22,7 @@ import (
 const numberOfIterations = 5
 
 func main() {
+
 	go func() {
 		err := http.ListenAndServe("localhost:6060", nil)
 		if err != nil {
