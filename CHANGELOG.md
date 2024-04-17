@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.5.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.4.2...v0.5.0) / 2024-04-16
+
+#### Features
+
+* remove verifyca from required list ([#86](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/86))
+
 ### [0.4.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.4.0...v0.4.1) / 2024-03-20
 
 #### Bug Fixes
