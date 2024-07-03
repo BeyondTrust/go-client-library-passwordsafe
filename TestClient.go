@@ -45,8 +45,23 @@ func main() {
 	//certificate = os.Getenv("CERTIFICATE")
 	//certificateKey = os.Getenv("CERTIFICATE_KEY")
 
+	// Create an instance of ValidationParams
+	params := utils.ValidationParams{
+		ClientID:                   clientId,
+		ClientSecret:               clientSecret,
+		ApiUrl:                     &apiUrl,
+		ClientTimeOutInSeconds:     clientTimeOutInSeconds,
+		Separator:                  &separator,
+		VerifyCa:                   verifyCa,
+		Logger:                     zapLogger,
+		Certificate:                certificate,
+		CertificateKey:             certificateKey,
+		RetryMaxElapsedTimeMinutes: &retryMaxElapsedTimeMinutes,
+		MaxFileSecretSizeBytes:     &maxFileSecretSizeBytes,
+	}
+
 	// validate inputs
-	errorsInInputs := utils.ValidateInputs(clientId, clientSecret, &apiUrl, clientTimeOutInSeconds, &separator, verifyCa, zapLogger, certificate, certificateKey, &retryMaxElapsedTimeMinutes, &maxFileSecretSizeBytes)
+	errorsInInputs := utils.ValidateInputs(params)
 
 	if errorsInInputs != nil {
 		return
