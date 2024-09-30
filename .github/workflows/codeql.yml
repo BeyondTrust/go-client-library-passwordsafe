@@ -9,7 +9,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write
+  security-events: read
   actions: read
 
 jobs:
