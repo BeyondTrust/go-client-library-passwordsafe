@@ -55,7 +55,7 @@ jobs:
 
       - name: SonarQube Scan on PR
         if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@53c3e3207fe4b8d52e2f1ac9d6eb1d2506f626c0 # v2.0.2
+        uses: sonarsource/sonarqube-scan-action@884b79409bbd464b2a59edc326a4b77dc56b2195 # v3.0.0
         with:
           projectBaseDir: .
           args: >
@@ -71,7 +71,7 @@ jobs:
 
       - name: SonarQube Scan on branch
         if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@53c3e3207fe4b8d52e2f1ac9d6eb1d2506f626c0 # v2.0.2
+        uses: sonarsource/sonarqube-scan-action@884b79409bbd464b2a59edc326a4b77dc56b2195 # v3.0.0
         with:
           projectBaseDir: .
           args: >
