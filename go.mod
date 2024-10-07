@@ -4,8 +4,8 @@ go 1.21.9
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/go-logr/logr v1.4.1
-	github.com/go-playground/validator/v10 v10.19.0
+	github.com/go-logr/logr v1.4.2
+	github.com/go-playground/validator/v10 v10.22.1
 	go.uber.org/zap v1.27.0
 )
 
