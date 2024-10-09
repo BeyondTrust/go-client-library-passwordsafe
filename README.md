@@ -135,10 +135,6 @@ go-client-library-passwordsafe\api\secrets> go test
 
 This software is distributed under the Massachusetts Institute of Technology (MIT) License. See `LICENSE.txt` for more information.
 
-## Get Help
-
-Contact [BeyondTrust support](https://www.beyondtrust.com/docs/index.htm#support)
-
 ## Release Please App usage
 
 In order to use Release Please App, we need to use conventional commits, but [here](https://github.com/angular/angular/blob/22b96b9/CONTRIBUTING.md#type) is a more comprehensive guide about some conventional commits that we can use.
