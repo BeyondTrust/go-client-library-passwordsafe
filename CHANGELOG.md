@@ -1,5 +1,17 @@
 # Changelog
 
+### [0.7.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.6.0...v0.7.0) / 2024-10-17
+
+#### Features
+
+* launch please release app ([#140](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/140))
+* Support API Key Authentication ([#139](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/139))
+
+#### Bug Fixes
+
+* artifactory documentation updated ([#131](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/131))
+* security findings resolved and fixed ([#130](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/130))
+
 ### [0.6.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.5.0...v0.6.0) / 2024-07-03
 
 #### Features
