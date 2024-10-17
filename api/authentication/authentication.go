@@ -80,7 +80,6 @@ func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (ent
 	if err != nil {
 		return entities.SignApinResponse{}, err
 	}
-
 	return signApinResponse, nil
 }
 
