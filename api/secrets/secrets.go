@@ -114,7 +114,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	secretObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
-		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "")
+		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -162,7 +162,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath, secretId, "/file/download").String()
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "", "")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
