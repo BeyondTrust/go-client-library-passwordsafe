@@ -21,12 +21,13 @@ type AuthenticationObj struct {
 	ApiUrl             url.URL
 	clientId           string
 	clientSecret       string
+	apiKey             string
 	HttpClient         utils.HttpClientObj
 	ExponentialBackOff *backoff.ExponentialBackOff
 	log                logging.Logger
 }
 
-// Authenticate is responsible for Auth configuration.
+// Authenticate is responsible for Auth configuration using Client Id and Client secret.
 // Prerequisites - use input validation methods before using this class.
 func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
@@ -36,24 +37,50 @@ func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.Exp
 		HttpClient:         httpClient,
 		clientId:           clientId,
 		clientSecret:       clientSecret,
+		apiKey:             "",
 		ExponentialBackOff: backoffDefinition,
 		log:                logger,
 	}
 
+	authenticationObj.log.Debug("Signing in using Oauth")
+	return authenticationObj, nil
+}
+
+// AuthenticateUsingApiKey is responsible for Auth configuration using API Key.
+// Prerequisites - use input validation methods before using this class.
+func AuthenticateUsingApiKey(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, logger logging.Logger, retryMaxElapsedTimeSeconds int, apiKey string) (*AuthenticationObj, error) {
+
+	apiUrl, _ := url.Parse(endpointUrl)
+	authenticationObj := &AuthenticationObj{
+		ApiUrl:             *apiUrl,
+		HttpClient:         httpClient,
+		clientId:           "",
+		clientSecret:       "",
+		apiKey:             apiKey,
+		ExponentialBackOff: backoffDefinition,
+		log:                logger,
+	}
+	authenticationObj.log.Debug("Signing in using API Key")
 	return authenticationObj, nil
 }
 
 // GetPasswordSafeAuthentication is responsible for getting a token and signing in.
 func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinResponse, error) {
+	var accessToken string = ""
+	var err error
 
-	accessToken, err := authenticationObj.GetToken(authenticationObj.ApiUrl.JoinPath("Auth/connect/token").String(), authenticationObj.clientId, authenticationObj.clientSecret)
+	if authenticationObj.clientId != "" && authenticationObj.clientSecret != "" {
+		accessToken, err = authenticationObj.GetToken(authenticationObj.ApiUrl.JoinPath("Auth/connect/token").String(), authenticationObj.clientId, authenticationObj.clientSecret)
+		if err != nil {
+			return entities.SignApinResponse{}, err
+		}
+	}
+
+	signApinResponse, err := authenticationObj.SignAppin(authenticationObj.ApiUrl.JoinPath("Auth/SignAppIn").String(), accessToken, authenticationObj.apiKey)
 	if err != nil {
 		return entities.SignApinResponse{}, err
 	}
-	signApinResponse, err := authenticationObj.SignAppin(authenticationObj.ApiUrl.JoinPath("Auth/SignAppIn").String(), accessToken)
-	if err != nil {
-		return entities.SignApinResponse{}, err
-	}
+
 	return signApinResponse, nil
 }
 
@@ -73,7 +100,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 	buffer.WriteString(params.Encode())
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "", "")
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
@@ -109,7 +136,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 }
 
 // SignAppin is responsible for creating a PS API session.
-func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string) (entities.SignApinResponse, error) {
+func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string, apiKey string) (entities.SignApinResponse, error) {
 
 	var userObject entities.SignApinResponse
 	var body io.ReadCloser
@@ -118,7 +145,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	var scode int
 
 	err := backoff.Retry(func() error {
-		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken)
+		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken, apiKey)
 		if scode == 0 {
 			return nil
 		}
@@ -163,7 +190,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	var body io.ReadCloser
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "", "")
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 

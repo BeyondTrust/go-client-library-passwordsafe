@@ -117,7 +117,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountGet(systemName string
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "", "")
 		if technicalError != nil {
 			return technicalError
 		}
@@ -164,7 +164,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemN
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -200,7 +200,7 @@ func (managedAccounObj *ManagedAccountstObj) CredentialByRequestId(requestId str
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "")
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
@@ -236,7 +236,7 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reques
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		_, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "")
+		_, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "", "")
 		return technicalError
 	}, managedAccounObj.authenticationObj.ExponentialBackOff)
 
