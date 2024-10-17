@@ -5,13 +5,18 @@ package utils
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
+	"path/filepath"
 	"time"
 
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"golang.org/x/crypto/pkcs12"
 )
 
 // HttpClientObj responsible for http request instance.
@@ -63,9 +68,54 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 	return httpClientObj, nil
 }
 
+func GetPFXContent(clientCertificatePath string, clientCertificateName string, clientCertificatePassword string, logger logging.Logger) (string, string, error) {
+
+	if clientCertificateName != "" {
+		pfxFile, err := os.ReadFile(filepath.Join(clientCertificatePath, clientCertificateName))
+		if err != nil {
+			logger.Error(err.Error())
+			return "", "", err
+		}
+
+		pfxFileBlock, err := pkcs12.ToPEM(pfxFile, clientCertificatePassword)
+		if err != nil {
+			logger.Error(err.Error())
+			return "", "", err
+		}
+
+		var keyBlock, certificateBlock *pem.Block
+		for _, pemBlock := range pfxFileBlock {
+			if pemBlock.Type == "PRIVATE KEY" {
+				keyBlock = pemBlock
+			} else if pemBlock.Type == "CERTIFICATE" {
+				certificateBlock = pemBlock
+			}
+		}
+
+		if keyBlock == nil {
+			err = errors.New("error getting Key Block")
+			logger.Error(err.Error())
+			return "", "", err
+		}
+		if certificateBlock == nil {
+			err = errors.New("error getting Certificate Block")
+			logger.Error(err.Error())
+			return "", "", err
+		}
+
+		privateKeyData := pem.EncodeToMemory(keyBlock)
+		certData := pem.EncodeToMemory(certificateBlock)
+
+		return string(certData), string(privateKeyData), nil
+	}
+
+	return "", "", errors.New("empty certificate path")
+
+}
+
 // CallSecretSafeAPI prepares http call
-func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string) (io.ReadCloser, int, error, error) {
-	response, scode, technicalError, businessError := client.HttpRequest(url, httpMethod, body, accesToken)
+func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string, apiKey string) (io.ReadCloser, int, error, error) {
+	response, scode, technicalError, businessError := client.HttpRequest(url, httpMethod, body, accesToken, apiKey)
 	if technicalError != nil {
 		messageLog := fmt.Sprintf("Error in %v %v \n", method, technicalError)
 		client.log.Error(messageLog)
@@ -79,7 +129,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, bo
 }
 
 // HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string, apiKey string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
 
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
@@ -91,6 +141,10 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 	if accesToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accesToken)
+	}
+
+	if apiKey != "" {
+		req.Header.Set("Authorization", "PS-Auth key="+apiKey)
 	}
 
 	resp, err := client.HttpClient.Do(req)
