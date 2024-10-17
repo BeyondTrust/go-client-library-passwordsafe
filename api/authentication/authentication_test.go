@@ -94,7 +94,44 @@ func TestSignAppin(t *testing.T) {
 		},
 	}
 
-	response, err := authenticate.SignAppin(testConfig.server.URL+"/"+"TestSignAppin", "")
+	response, err := authenticate.SignAppin(testConfig.server.URL+"/"+"TestSignAppin", "", "")
+
+	if !reflect.DeepEqual(response, *testConfig.response) {
+		t.Errorf("Test case Failed %v, %v", response, *testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSignAppinWithApiKey(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = AuthenticateUsingApiKey(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", zapLogger, 300, "fake_api_key_")
+	testConfig := UserTestConfig{
+		name: "TestSignAppin",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+		})),
+		response: &entities.SignApinResponse{
+			UserId:       1,
+			EmailAddress: "Felipe",
+		},
+	}
+
+	response, err := authenticate.SignAppin(testConfig.server.URL+"/"+"TestSignAppin", "", "fake_api_key_")
 
 	if !reflect.DeepEqual(response, *testConfig.response) {
 		t.Errorf("Test case Failed %v, %v", response, *testConfig.response)
