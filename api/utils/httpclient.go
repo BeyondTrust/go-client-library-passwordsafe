@@ -135,7 +135,7 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 	if err != nil {
 		return nil, 0, err, nil
 	}
-	req.Header = http.Header{"Content-Type": {"application/json"}}
+	req.Header = http.Header{"Content-Type": []string{"application/json"}}
 
 	if accesToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accesToken)
