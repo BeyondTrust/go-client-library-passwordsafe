@@ -55,6 +55,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, false, separator, secretObj.log)
 	secretObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
 	secretDictionary := make(map[string]string)
+	var saveLastErr error = nil
 
 	for _, secretToRetrieve := range secretsToRetrieve {
 		retrievalData := strings.Split(secretToRetrieve, separator)
@@ -65,9 +66,11 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 			secretPath = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
 		}
 
+		var err error
 		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
 
 		if err != nil {
+			saveLastErr = err
 			secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
 			continue
 		}
@@ -76,6 +79,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		if strings.ToUpper(secret.SecretType) == "FILE" {
 			fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
 			if err != nil {
+				saveLastErr = err
 				secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
 				continue
 			}
@@ -93,7 +97,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		}
 	}
 
-	return secretDictionary, nil
+	return secretDictionary, saveLastErr
 }
 
 // SecretGetSecretByPath returns secret object for a specific path, title.
