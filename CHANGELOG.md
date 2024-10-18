@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.8.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.7.0...v0.8.0) / 2024-10-18
+
+#### Features
+
+* return error when occurs from secrets flow ([#142](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/142))
+
 ### [0.7.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.6.0...v0.7.0) / 2024-10-17
 
 #### Features
