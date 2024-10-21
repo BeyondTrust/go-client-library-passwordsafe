@@ -44,9 +44,9 @@ func (secretObj *SecretObj) GetSecrets(secretPaths []string, separator string) (
 // GetSecret returns secret value for a specific path and title.
 func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (string, error) {
 	secretPaths := []string{}
-	secrets, _ := secretObj.GetSecretFlow(append(secretPaths, secretPath), separator)
+	secrets, err := secretObj.GetSecretFlow(append(secretPaths, secretPath), separator)
 	secretValue := secrets[secretPath]
-	return secretValue, nil
+	return secretValue, err
 }
 
 // GetSecretFlow is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
