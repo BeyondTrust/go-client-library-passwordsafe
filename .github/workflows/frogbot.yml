@@ -28,7 +28,7 @@ jobs:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
 
       - name: Run XRay scan
-        uses: jfrog/frogbot@004036218e8600cb17aa29fb975eb1d222c6a595 # v2.21.13
+        uses: jfrog/frogbot@092691b8ae0a6e62a1e0412e103ce87eda4aa6a0 # v2.23.0
         env:
           JF_URL: https://beyondtrust.jfrog.io
           JF_ACCESS_TOKEN: ${{ secrets.ARTIFACTORY_FROGBOT_TOKEN }}
