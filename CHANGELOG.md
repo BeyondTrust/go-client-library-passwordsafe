@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.8.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.8.0...v0.8.1) / 2024-10-21
+
+#### Bug Fixes
+
+* return error when secret was not found ([#145](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/145))
+
 ### [0.8.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.7.0...v0.8.0) / 2024-10-18
 
 #### Features
