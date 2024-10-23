@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.9.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.8.1...v0.9.0) / 2024-10-23
+
+#### Features
+
+* BIPS-18112 Enforce PR link to Jira ([#147](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/147))
+
 ### [0.8.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.8.0...v0.8.1) / 2024-10-21
 
 #### Bug Fixes
