@@ -15,7 +15,6 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
-
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
@@ -249,4 +248,145 @@ func (managedAccounObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reques
 	}
 
 	return "", nil
+}
+
+// ManageAccountCreateFlow is responsible for creating a managed accounts in Password Safe.
+func (managedAccounObj *ManagedAccountstObj) ManageAccountCreateFlow(systemNameTarget string, accountDetails entities.AccountDetails) (entities.CreateManagedAccountsResponse, error) {
+
+	var managedSystem *entities.ManagedSystemResponse
+	var createResponse entities.CreateManagedAccountsResponse
+
+	accountDetails, err := utils.ValidateCreateManagedAccountInput(accountDetails)
+
+	if err != nil {
+		return createResponse, err
+	}
+
+	ManagedAccountSytemUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems").String()
+	managedSystemGetSystemsResponse, err := managedAccounObj.ManagedSystemGetSystems(ManagedAccountSytemUrl)
+
+	if err != nil {
+		return createResponse, err
+	}
+
+	for _, v := range managedSystemGetSystemsResponse {
+		if v.SystemName == systemNameTarget {
+			managedSystem = &v
+			break
+		}
+	}
+
+	if managedSystem == nil {
+		return createResponse, fmt.Errorf("managed system %v was not found in managed system list", systemNameTarget)
+	}
+
+	ManagedAccountCreateManagedAccountUrl := managedAccounObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems", fmt.Sprintf("%d", managedSystem.ManagedSystemID), "ManagedAccounts").String()
+	createResponse, err = managedAccounObj.ManagedAccountCreateManagedAccount(accountDetails, ManagedAccountCreateManagedAccountUrl)
+
+	if err != nil {
+		return createResponse, err
+	}
+
+	return createResponse, nil
+
+}
+
+// ManagedAccountCreateManagedAccount calls Secret Safe API Requests enpoint to create managed accounts.
+func (managedAccounObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount(accountDetails entities.AccountDetails, url string) (entities.CreateManagedAccountsResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "POST", url)
+	managedAccounObj.log.Debug(messageLog)
+
+	accountDetailsJson, err := json.Marshal(accountDetails)
+	if err != nil {
+		return entities.CreateManagedAccountsResponse{}, err
+	}
+
+	accountDetailsJsonString := string(accountDetailsJson)
+
+	b := bytes.NewBufferString(accountDetailsJsonString)
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateManagedAccount", "", "")
+		return technicalError
+	}, managedAccounObj.authenticationObj.ExponentialBackOff)
+
+	var CreateManagedAccountsResponse entities.CreateManagedAccountsResponse
+
+	if technicalError != nil {
+		return entities.CreateManagedAccountsResponse{}, technicalError
+	}
+
+	if businessError != nil {
+		return entities.CreateManagedAccountsResponse{}, businessError
+	}
+
+	defer body.Close()
+	bodyBytes, err := io.ReadAll(body)
+
+	if err != nil {
+		return entities.CreateManagedAccountsResponse{}, err
+	}
+
+	err = json.Unmarshal([]byte(bodyBytes), &CreateManagedAccountsResponse)
+
+	if err != nil {
+		managedAccounObj.log.Error(err.Error())
+		return entities.CreateManagedAccountsResponse{}, err
+	}
+
+	return CreateManagedAccountsResponse, nil
+
+}
+
+// ManagedAccountGetSystem is responsible for retrieving managed systems list
+func (managedAccounObj *ManagedAccountstObj) ManagedSystemGetSystems(url string) ([]entities.ManagedSystemResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", url)
+	managedAccounObj.log.Debug(messageLog)
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = managedAccounObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedSystemGetSystems", "", "")
+		if technicalError != nil {
+			return technicalError
+		}
+		return nil
+
+	}, managedAccounObj.authenticationObj.ExponentialBackOff)
+
+	var managedSystemObject []entities.ManagedSystemResponse
+
+	if technicalError != nil {
+		return managedSystemObject, technicalError
+	}
+
+	if businessError != nil {
+		return managedSystemObject, businessError
+	}
+
+	defer body.Close()
+	bodyBytes, err := io.ReadAll(body)
+
+	if err != nil {
+		return managedSystemObject, err
+	}
+
+	err = json.Unmarshal(bodyBytes, &managedSystemObject)
+	if err != nil {
+		managedAccounObj.log.Error(err.Error())
+		return managedSystemObject, err
+	}
+
+	if len(managedSystemObject) == 0 {
+		return managedSystemObject, fmt.Errorf("empty System Account List")
+	}
+
+	return managedSystemObject, nil
+
 }
