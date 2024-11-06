@@ -20,6 +20,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
       - name: Go Lint
         uses: golangci/golangci-lint-action@v6 
         with:
