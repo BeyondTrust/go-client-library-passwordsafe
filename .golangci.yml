@@ -1,6 +1,6 @@
 issues:
   exclude-dirs:
-    - "(?<=/|^)(opt)(?=/|$)"
+    - /opt/
 output:
   formats:
     - format: colored-line-number
