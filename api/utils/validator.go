@@ -16,6 +16,7 @@ import (
 )
 
 type ValidationParams struct {
+	ApiKey               	   string
 	ClientID                   string
 	ClientSecret               string
 	ApiUrl                     *string
@@ -31,8 +32,9 @@ type ValidationParams struct {
 
 // UserInputValidaton responsible for input paramerter validation.
 type UserInputValidaton struct {
-	ClientId               string `validate:"required,min=36,max=36"`
-	ClientSecret           string `validate:"required,min=36,max=64"`
+	ApiKey                 string `validate:"omitempty,min=128,max=263"`
+	ClientId               string `validate:"omitempty,min=36,max=36,required_without=ApiKey"`
+	ClientSecret           string `validate:"omitempty,min=36,max=64,required_without=ApiKey"`
 	ApiUrl                 string `validate:"required,http_url"`
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
@@ -71,6 +73,7 @@ func ValidateInputs(params ValidationParams) error {
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
+		ApiKey:               	params.ApiKey,
 		ClientId:               params.ClientID,
 		ClientSecret:           params.ClientSecret,
 		ApiUrl:                 *params.ApiUrl,
