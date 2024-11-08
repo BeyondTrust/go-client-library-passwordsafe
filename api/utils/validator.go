@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 
 	validator "github.com/go-playground/validator/v10"
@@ -217,4 +218,35 @@ func ValidateURL(apiUrl string) error {
 	}
 
 	return nil
+}
+
+func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (entities.AccountDetails, error) {
+	validate := validator.New()
+	err := validate.Struct(accountDetails)
+
+	if err != nil {
+		return accountDetails, err
+	}
+
+	if accountDetails.ChangeFrequencyType == "" {
+		accountDetails.ChangeFrequencyType = "first"
+	}
+
+	if accountDetails.ReleaseDuration == 0 {
+		accountDetails.ReleaseDuration = 120
+	}
+
+	if accountDetails.MaxReleaseDuration == 0 {
+		accountDetails.MaxReleaseDuration = 525600
+	}
+
+	if accountDetails.ISAReleaseDuration == 0 {
+		accountDetails.ISAReleaseDuration = 120
+	}
+
+	if accountDetails.ChangeTime == "" {
+		accountDetails.ChangeTime = "00:00"
+	}
+
+	return accountDetails, nil
 }

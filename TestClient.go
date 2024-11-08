@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
@@ -111,6 +112,50 @@ func main() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
+
+	account := entities.AccountDetails{
+		AccountName:                       "ManagedAccountTest",
+		Password:                          "Passw0rd101!*",
+		DomainName:                        "exampleDomain",
+		UserPrincipalName:                 "user@example.com",
+		SAMAccountName:                    "samAccount",
+		DistinguishedName:                 "CN=example,CN=Users,DC=domain,DC=com",
+		PrivateKey:                        "privateKey",
+		Passphrase:                        "passphrase",
+		PasswordFallbackFlag:              true,
+		LoginAccountFlag:                  false,
+		Description:                       "Sample account for testing",
+		ApiEnabled:                        true,
+		ReleaseNotificationEmail:          "notify@example.com",
+		ChangeServicesFlag:                false,
+		RestartServicesFlag:               false,
+		ChangeTasksFlag:                   true,
+		MaxReleaseDuration:                300000,
+		ISAReleaseDuration:                180,
+		MaxConcurrentRequests:             5,
+		AutoManagementFlag:                false,
+		DSSAutoManagementFlag:             false,
+		CheckPasswordFlag:                 true,
+		ResetPasswordOnMismatchFlag:       false,
+		ChangePasswordAfterAnyReleaseFlag: true,
+		ChangeFrequencyDays:               1,
+		ChangeTime:                        "",
+		NextChangeDate:                    "2023-12-01",
+		UseOwnCredentials:                 true,
+		ChangeWindowsAutoLogonFlag:        true,
+		ChangeComPlusFlag:                 false,
+		ObjectID:                          "uniqueObjectID",
+	}
+
+	// creating a managed account in system_integration_test managed system.
+	createResponse, err := manageAccountObj.ManageAccountCreateFlow("system_integration_test", account)
+
+	if err != nil {
+		zapLogger.Error(fmt.Sprintf(" %v", err))
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Warn(fmt.Sprintf("Created Managed Account: %v", createResponse.AccountName))
 
 	// signing out
 	_ = authenticate.SignOut()
