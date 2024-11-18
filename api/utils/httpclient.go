@@ -9,10 +9,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
@@ -114,8 +116,8 @@ func GetPFXContent(clientCertificatePath string, clientCertificateName string, c
 }
 
 // CallSecretSafeAPI prepares http call
-func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string, apiKey string) (io.ReadCloser, int, error, error) {
-	response, scode, technicalError, businessError := client.HttpRequest(url, httpMethod, body, accesToken, apiKey)
+func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string, apiKey string, contentType string) (io.ReadCloser, int, error, error) {
+	response, scode, technicalError, businessError := client.HttpRequest(url, httpMethod, body, accesToken, apiKey, contentType)
 	if technicalError != nil {
 		messageLog := fmt.Sprintf("Error in %v %v \n", method, technicalError)
 		client.log.Error(messageLog)
@@ -129,13 +131,13 @@ func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, bo
 }
 
 // HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string, apiKey string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
 
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil
 	}
-	req.Header = http.Header{"Content-Type": []string{"application/json"}}
+	req.Header = http.Header{"Content-Type": []string{contentType}}
 
 	if accesToken != "" {
 		req.Header.Set("Authorization", "Bearer "+accesToken)
@@ -170,4 +172,43 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 	}
 
 	return resp.Body, resp.StatusCode, nil, nil
+}
+
+// CreateMultipartRequest creates and sends multipart request.
+func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string) (io.ReadCloser, error) {
+
+	var requestBody bytes.Buffer
+
+	multipartWriter := multipart.NewWriter(&requestBody)
+
+	err := multipartWriter.WriteField("secretmetadata", string(metadata))
+	if err != nil {
+		return nil, err
+	}
+
+	fileWriter, err := multipartWriter.CreateFormFile("file", fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	fileReader := strings.NewReader(fileContent)
+
+	_, err = io.Copy(fileWriter, fileReader)
+	if err != nil {
+		return nil, err
+	}
+
+	multipartWriter.Close()
+
+	body, _, technicalError, businessError := client.CallSecretSafeAPI(url, "POST", requestBody, "CreateMultiPartRequest", "", "", multipartWriter.FormDataContentType())
+
+	if technicalError != nil {
+		return body, technicalError
+	}
+
+	if businessError != nil {
+		return body, businessError
+	}
+
+	return body, nil
 }

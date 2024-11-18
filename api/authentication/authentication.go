@@ -99,7 +99,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 	buffer.WriteString(params.Encode())
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "", "")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "", "", "application/json")
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
@@ -144,7 +144,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	var scode int
 
 	err := backoff.Retry(func() error {
-		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken, apiKey)
+		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken, apiKey, "application/json")
 		if scode == 0 {
 			return nil
 		}
@@ -189,7 +189,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	var body io.ReadCloser
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "", "")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "", "", "application/json")
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 

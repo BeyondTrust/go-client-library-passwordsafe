@@ -16,7 +16,7 @@ import (
 )
 
 type ValidationParams struct {
-	ApiKey               	   string
+	ApiKey                     string
 	ClientID                   string
 	ClientSecret               string
 	ApiUrl                     *string
@@ -73,7 +73,7 @@ func ValidateInputs(params ValidationParams) error {
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
-		ApiKey:               	params.ApiKey,
+		ApiKey:                 params.ApiKey,
 		ClientId:               params.ClientID,
 		ClientSecret:           params.ClientSecret,
 		ApiUrl:                 *params.ApiUrl,
@@ -223,12 +223,15 @@ func ValidateURL(apiUrl string) error {
 	return nil
 }
 
+// ValidateCreateManagedAccountInput responsible for validating Managed Account input
 func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (entities.AccountDetails, error) {
 	validate := validator.New()
 	err := validate.Struct(accountDetails)
 
 	if err != nil {
-		return accountDetails, err
+		for _, err := range err.(validator.ValidationErrors) {
+			return accountDetails, errors.New(formatErrorMessage(err))
+		}
 	}
 
 	if accountDetails.ChangeFrequencyType == "" {
@@ -252,4 +255,32 @@ func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (
 	}
 
 	return accountDetails, nil
+}
+
+// ValidateCreateSecretInput responsible for validating secret input.
+func ValidateCreateSecretInput(secretDetails interface{}) (interface{}, error) {
+	validate := validator.New()
+	err := validate.Struct(secretDetails)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return secretDetails, errors.New(formatErrorMessage(err))
+		}
+	}
+	return secretDetails, nil
+}
+
+// formatErrorMessage responsible for formating errors text.
+func formatErrorMessage(err validator.FieldError) string {
+	switch err.Tag() {
+	case "required":
+		return fmt.Sprintf("The field '%s' is required.", err.Field())
+	case "required_if":
+		return fmt.Sprintf("Field '%s' is mandatory when %s", err.Field(), err.Param())
+	case "oneof":
+		return fmt.Sprintf("The field '%s' must be one of the following values: %s.", err.Field(), err.Param())
+	case "required_without":
+		return fmt.Sprintf("The field '%s' is required when the field '%s' is not provided.", err.Field(), err.Param())
+	default:
+		return fmt.Sprintf("Error en el campo '%s': %s.", err.Field(), err.Tag())
+	}
 }
