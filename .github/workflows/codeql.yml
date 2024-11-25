@@ -30,16 +30,16 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/init@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
         with:
           config-file: codeql-config.yml
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/autobuild@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/analyze@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
 
   analyze_on_branch:
     name: Analyze on branch
@@ -62,13 +62,13 @@ jobs:
           echo ${{ github.event_name }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/init@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
         with:
           config-file: codeql-config.yml
           languages: ${{ matrix.language }}
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/autobuild@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
+        uses: github/codeql-action/analyze@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.27.5
