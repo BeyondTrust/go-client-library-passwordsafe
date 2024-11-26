@@ -10,6 +10,7 @@ import (
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
+	"github.com/google/uuid"
 
 	//"os"
 
@@ -75,7 +76,7 @@ func main() {
 	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
 
 	// authenticating
-	_, err := authenticate.GetPasswordSafeAuthentication()
+	userObject, err := authenticate.GetPasswordSafeAuthentication()
 	if err != nil {
 		return
 	}
@@ -156,6 +157,107 @@ func main() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("Created Managed Account: %v", createResponse.AccountName))
+
+	objCredential := entities.SecretCredentialDetails{
+		Title:       "CREDENTIAL_" + uuid.New().String(),
+		Description: "My Credential Secret Description",
+		Username:    "my_user",
+		Password:    "MyPass2#$!",
+		OwnerType:   "User",
+		Notes:       "My note",
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: userObject.UserId,
+				Owner:   userObject.UserName,
+				Email:   userObject.EmailAddress,
+			},
+		},
+		Urls: []entities.UrlDetails{
+			{
+				Id:           uuid.New(),
+				CredentialId: uuid.New(),
+				Url:          "https://www.test.com/",
+			},
+		},
+	}
+
+	// creating a credential secret in folder1.
+	createdSecret, err := secretObj.CreateSecretFlow("folder1", objCredential)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Credential secret: %v", createdSecret.Title))
+
+	objText := entities.SecretTextDetails{
+		Title:       "TEXT_" + uuid.New().String(),
+		Description: "My Text Secret Description",
+		Text:        "my_p4ssword!*2024",
+		OwnerType:   "User",
+		OwnerId:     userObject.UserId,
+		FolderId:    uuid.New(),
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: userObject.UserId,
+				Owner:   userObject.UserName,
+				Email:   userObject.EmailAddress,
+			},
+		},
+		Urls: []entities.UrlDetails{
+			{
+				Id:           uuid.New(),
+				CredentialId: uuid.New(),
+				Url:          "https://www.test.com/",
+			},
+		},
+	}
+
+	// creating a text secret in folder1.
+	createdSecret, err = secretObj.CreateSecretFlow("folder1", objText)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Text secret: %v", createdSecret.Title))
+
+	objFile := entities.SecretFileDetails{
+		Title:       "FILE_" + uuid.New().String(),
+		Description: "My File Secret Description",
+		OwnerType:   "User",
+		OwnerId:     userObject.UserId,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: userObject.UserId,
+				Owner:   userObject.UserName,
+				Email:   userObject.EmailAddress,
+			},
+		},
+		Notes:       "Notes 1",
+		FileName:    "my_secret.txt",
+		FileContent: "my_p4ssword!*2024",
+		Urls: []entities.UrlDetails{
+			{
+				Id:           uuid.New(),
+				CredentialId: uuid.New(),
+				Url:          "https://www.test.com/",
+			},
+		},
+	}
+
+	// creating a file secret in folder1.
+	createdSecret, err = secretObj.CreateSecretFlow("folder1", objFile)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created File secret: %v", createdSecret.Title))
 
 	// signing out
 	_ = authenticate.SignOut()
