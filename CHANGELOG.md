@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.10.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.9.1...v0.10.0) / 2024-11-26
+
+#### Features
+
+* add writing secrets feature in terraform provider ([#161](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/161))
+
 ### [0.9.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.9.0...v0.9.1) / 2024-11-08
 
 #### Bug Fixes
