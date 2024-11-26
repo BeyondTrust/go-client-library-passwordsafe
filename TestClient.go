@@ -259,6 +259,22 @@ func main() {
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created File secret: %v", createdSecret.Title))
 
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Secret Description",
+	}
+
+	// creating a folder secret in folder1 folder.
+	createdFolder, err := secretObj.CreateFolderFlow("folder1", folderDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Folder: %v", createdFolder.Name))
+
 	// signing out
 	_ = authenticate.SignOut()
 

@@ -148,3 +148,18 @@ type UrlDetails struct {
 	CredentialId uuid.UUID `json:",omitempty" validate:"omitempty,uuid"`
 	Url          string    `json:",omitempty" validate:"required,max=2048,url"`
 }
+
+type CreateFolderResponse struct {
+	Id          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ParentId    uuid.UUID `json:"parentId"`
+	UserGroupId int       `json:"userGroupId"`
+}
+
+type FolderDetails struct {
+	Name        string    `json:",omitempty" validate:"required"`
+	Description string    `json:",omitempty" validate:"omitempty,max=2048"`
+	ParentId    uuid.UUID `json:",omitempty" validate:"required"`
+	UserGroupId int       `json:",omitempty" validate:"omitempty"`
+}
