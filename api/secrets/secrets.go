@@ -242,8 +242,6 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 
 	payload := string(secretCredentialDetailsJson)
 
-	secretObj.log.Debug(payload)
-
 	var CreateSecretResponse entities.CreateSecretResponse
 
 	b := bytes.NewBufferString(payload)
@@ -259,8 +257,8 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 		path = "secrets/file"
 	}
 
-	SecretCreateSecreUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", folderId, path).String()
-	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecreUrl)
+	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", folderId, path).String()
+	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 
 	var fileSecret entities.SecretFileDetails
@@ -269,7 +267,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	// file secrets have a special behavior, they need to be created using multipart request.
 	if path == "secrets/file" {
 		if fileSecret, ok = secretDetails.(entities.SecretFileDetails); ok {
-			body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecreUrl, fileSecret.FileName, []byte(payload), fileSecret.FileContent)
+			body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileSecret.FileName, []byte(payload), fileSecret.FileContent)
 			if err != nil {
 				return entities.CreateSecretResponse{}, err
 			}
@@ -295,7 +293,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecreUrl, "POST", *b, "SecretCreateSecret", "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecretUrl, "POST", *b, "SecretCreateSecret", "", "", "application/json")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
