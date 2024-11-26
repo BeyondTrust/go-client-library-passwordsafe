@@ -2,6 +2,10 @@
 // Package entities implements DTO's used by Beyondtrust Secret Safe API.
 package entities
 
+import (
+	"github.com/google/uuid"
+)
+
 // SignApinResponse responsbile for API sign in information.
 type SignApinResponse struct {
 	UserId       int    `json:"UserId"`
@@ -81,4 +85,66 @@ type AccountDetails struct {
 	ChangeDComFlag                    bool   `validate:"omitempty"`
 	ChangeSComFlag                    bool   `validate:"omitempty"`
 	ObjectID                          string `validate:"omitempty,max=36"`
+}
+
+type FolderResponse struct {
+	Id          string
+	Name        string
+	Description string
+}
+
+type CreateSecretResponse struct {
+	Id          string
+	Title       string
+	Description string
+	FolderId    string
+}
+
+type SecretCredentialDetails struct {
+	Title          string         `json:",omitempty" validate:"required"`
+	Description    string         `json:",omitempty" validate:"omitempty,max=256"`
+	Username       string         `json:",omitempty" validate:"required"`
+	Password       string         `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	OwnerId        int            `json:",omitempty" validate:"required_if=OwnerType Group"`
+	OwnerType      string         `json:",omitempty" validate:"required,oneof=User Group"`
+	Owners         []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
+	Notes          string         `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls           []UrlDetails   `json:",omitempty" validate:"omitempty"`
+	PasswordRuleID int            `json:",omitempty" validate:"omitempty"`
+}
+
+type SecretTextDetails struct {
+	Title       string         `json:",omitempty" validate:"required,max=256"`
+	Description string         `json:",omitempty" validate:"omitempty,max=256"`
+	Text        string         `json:",omitempty" validate:"required,max=4096"`
+	OwnerId     int            `json:",omitempty" validate:"required_if=OwnerType Group"`
+	OwnerType   string         `json:",omitempty" validate:"required,oneof=User Group"`
+	Owners      []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
+	Notes       string         `json:",omitempty" validate:"omitempty,max=4000"`
+	FolderId    uuid.UUID      `json:",omitempty" validate:"omitempty"`
+	Urls        []UrlDetails   `json:",omitempty" validate:"omitempty"`
+}
+
+type SecretFileDetails struct {
+	Title       string         `json:",omitempty" validate:"required,max=256"`
+	Description string         `json:",omitempty" validate:"omitempty,max=256"`
+	OwnerId     int            `json:",omitempty" validate:"required_if=OwnerType Group"`
+	OwnerType   string         `json:",omitempty" validate:"required,oneof=User Group"`
+	Owners      []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
+	Notes       string         `json:",omitempty" validate:"omitempty,max=4000"`
+	FileName    string         `json:",omitempty" validate:"required,max=256"`
+	FileContent string         `json:",omitempty" validate:"required,max=256"`
+	Urls        []UrlDetails   `json:",omitempty" validate:"omitempty"`
+}
+
+type OwnerDetails struct {
+	OwnerId int    `json:",omitempty" validate:"required,min=1,max=2147483647"`
+	Owner   string `json:",omitempty" validate:"omitempty"`
+	Email   string `json:",omitempty" validate:"omitempty"`
+}
+
+type UrlDetails struct {
+	Id           uuid.UUID `json:",omitempty" validate:"omitempty,uuid"`
+	CredentialId uuid.UUID `json:",omitempty" validate:"omitempty,uuid"`
+	Url          string    `json:",omitempty" validate:"required,max=2048,url"`
 }
