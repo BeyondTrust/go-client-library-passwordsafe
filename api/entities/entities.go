@@ -159,7 +159,7 @@ type CreateFolderResponse struct {
 
 type FolderDetails struct {
 	Name        string    `json:",omitempty" validate:"required"`
-	Description string    `json:",omitempty" validate:"omitempty,max=2048"`
+	Description string    `json:",omitempty" validate:"omitempty,max=256"`
 	ParentId    uuid.UUID `json:",omitempty" validate:"required"`
 	UserGroupId int       `json:",omitempty" validate:"omitempty"`
 }
