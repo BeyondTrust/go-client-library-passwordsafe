@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.11.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.10.0...v0.11.0) / 2024-11-29
+
+#### Features
+
+* add creating folders feature in terraform provider ([#165](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/165))
+
 ### [0.10.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.9.1...v0.10.0) / 2024-11-26
 
 #### Features
