@@ -15,6 +15,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
+	"github.com/google/uuid"
 
 	backoff "github.com/cenkalti/backoff/v4"
 )
@@ -368,5 +369,103 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 	}
 
 	return foldersObj, nil
+
+}
+
+// CreateFolderFlow is responsible for creating folder in Password Safe.
+func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
+
+	var folder *entities.FolderResponse
+	var createFolderesponse entities.CreateFolderResponse
+
+	folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
+
+	if err != nil {
+		return createFolderesponse, err
+	}
+
+	for _, v := range folders {
+		if v.Name == strings.TrimSpace(folderTarget) {
+			folder = &v
+			break
+		}
+	}
+
+	if folder == nil {
+		return createFolderesponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
+	}
+
+	folderId, _ := uuid.Parse(folder.Id)
+	folderDetails.ParentId = folderId
+
+	folderDetails, err = utils.ValidateCreateFolderInput(folderDetails)
+
+	if err != nil {
+		return createFolderesponse, err
+	}
+
+	if err != nil {
+		return entities.CreateFolderResponse{}, err
+	}
+
+	createFolderesponse, err = secretObj.SecretCreateFolder(folderDetails)
+
+	if err != nil {
+		return createFolderesponse, err
+	}
+
+	return createFolderesponse, nil
+}
+
+// SecretCreateFolder calls Secret Safe API Requests enpoint to create folders in Password Safe.
+func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
+
+	folderCredentialDetailsJson, err := json.Marshal(folderDetails)
+
+	if err != nil {
+		return entities.CreateFolderResponse{}, err
+	}
+
+	payload := string(folderCredentialDetailsJson)
+	b := bytes.NewBufferString(payload)
+
+	var createSecretResponse entities.CreateFolderResponse
+
+	SecretCreateSecreUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders/").String()
+	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecreUrl)
+	secretObj.log.Debug(messageLog)
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecreUrl, "POST", *b, "SecretCreateSecret", "", "", "application/json")
+		return technicalError
+	}, secretObj.authenticationObj.ExponentialBackOff)
+
+	if technicalError != nil {
+		return entities.CreateFolderResponse{}, technicalError
+	}
+
+	if businessError != nil {
+		return entities.CreateFolderResponse{}, businessError
+	}
+
+	defer body.Close()
+	bodyBytes, err := io.ReadAll(body)
+
+	if err != nil {
+		return entities.CreateFolderResponse{}, err
+	}
+
+	err = json.Unmarshal([]byte(bodyBytes), &createSecretResponse)
+
+	if err != nil {
+		secretObj.log.Error(err.Error())
+		return entities.CreateFolderResponse{}, err
+	}
+
+	return createSecretResponse, nil
 
 }

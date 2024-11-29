@@ -284,3 +284,15 @@ func formatErrorMessage(err validator.FieldError) string {
 		return fmt.Sprintf("Error en el campo '%s': %s.", err.Field(), err.Tag())
 	}
 }
+
+// ValidateCreateFolderInput responsible for validating folder input.
+func ValidateCreateFolderInput(folderDetails entities.FolderDetails) (entities.FolderDetails, error) {
+	validate := validator.New()
+	err := validate.Struct(folderDetails)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return folderDetails, errors.New(formatErrorMessage(err))
+		}
+	}
+	return folderDetails, nil
+}

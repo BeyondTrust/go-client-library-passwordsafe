@@ -118,7 +118,7 @@ func TestSignAppinWithApiKey(t *testing.T) {
 
 	var authenticate, _ = AuthenticateUsingApiKey(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", zapLogger, 300, "fake_api_key_")
 	testConfig := UserTestConfig{
-		name: "TestSignAppin",
+		name: "TestSignAppinWithApiKey",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
 			if err != nil {
