@@ -283,7 +283,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 
 	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
-		name: "TestManageAccountFlowFailedManagedAccounts",
+		name: "TestManageAccountFlowNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
