@@ -64,7 +64,7 @@ func callPasswordSafeAPI() {
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
 
-	zapLogger.Info("Starting flow")
+	zapLogger.Info("Starting Performance Test execution")
 	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
 	clientId := ""
 	clientSecret := ""
@@ -122,6 +122,8 @@ func callPasswordSafeAPI() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("%v", gotSecret))
+
+	zapLogger.Info("Ending Performance Test execution")
 
 	// signing out
 	_ = authenticate.SignOut()
