@@ -58,6 +58,10 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	secretDictionary := make(map[string]string)
 	var saveLastErr error = nil
 
+	if len(secretsToRetrieve) == 0 {
+		return secretDictionary, errors.New("empty secret list")
+	}
+
 	for _, secretToRetrieve := range secretsToRetrieve {
 		retrievalData := strings.Split(secretToRetrieve, separator)
 		secretTitle := retrievalData[len(retrievalData)-1]
