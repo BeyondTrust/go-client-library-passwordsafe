@@ -5,6 +5,7 @@ package managed_accounts
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -53,6 +54,10 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 	managedAccountObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
 	secretDictionary := make(map[string]string)
 	var saveLastErr error = nil
+
+	if len(secretsToRetrieve) == 0 {
+		return secretDictionary, errors.New("empty managed account list")
+	}
 
 	for _, secretToRetrieve := range secretsToRetrieve {
 		retrievalData := strings.Split(secretToRetrieve, separator)
