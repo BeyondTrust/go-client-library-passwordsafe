@@ -108,7 +108,7 @@ jobs:
           fetch-depth: 0
 
       - name: Jfrog setup
-        uses: jfrog/setup-jfrog-cli@d82fe26823e1f25529250895d5673f65b02af085 # v4.0.1
+        uses: jfrog/setup-jfrog-cli@040913fd7ac2a2bcb29a7e963ea99e7c309d63e5 # v4.5.0
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
 
