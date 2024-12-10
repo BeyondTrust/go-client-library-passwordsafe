@@ -457,8 +457,8 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 
 	var createSecretResponse entities.CreateFolderResponse
 
-	SecretCreateSecreUrl := secretObj.authenticationObj.ApiUrl.JoinPath(path).String()
-	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecreUrl)
+	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath(path).String()
+	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
@@ -466,7 +466,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecreUrl, "POST", *b, function, "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecretUrl, "POST", *b, function, "", "", "application/json")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
