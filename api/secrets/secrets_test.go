@@ -129,7 +129,7 @@ func TestSecretFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -193,7 +193,7 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -326,7 +326,7 @@ func TestSecretFlowTechnicalErrorFile(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -387,7 +387,7 @@ func TestSecretFlowBusinessErrorFile(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -448,7 +448,7 @@ func TestSecretFlowLongSecret(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -510,7 +510,7 @@ func TestSecretFlowTechnicalErrorCredential(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -565,7 +565,7 @@ func TestSecretFlowBusinessErrorCredential(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -620,7 +620,7 @@ func TestSecretFlowBadBody(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -632,7 +632,7 @@ func TestSecretFlowBadBody(t *testing.T) {
 				}
 
 			case "/secrets-safe/secrets":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -1163,6 +1163,7 @@ func TestSecretFolderFlow(t *testing.T) {
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
 		Description: "My Folder Description",
+		FolderType:  "FOLDER",
 	}
 
 	response, err := secretObj.CreateFolderFlow("folder1", folderDetails)
@@ -1222,6 +1223,7 @@ func TestSecretFolderFlowBadParentFolder(t *testing.T) {
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
 		Description: "My Folder Description",
+		FolderType:  "FOLDER",
 	}
 
 	_, err := secretObj.CreateFolderFlow("folder1", folderDetails)
@@ -1232,6 +1234,90 @@ func TestSecretFolderFlowBadParentFolder(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSecretFolderFlowEmptyParentFolder(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "FOLDER",
+	}
+
+	_, err := secretObj.CreateFolderFlow("", folderDetails)
+
+	expetedErrorMessage := "parent folder name must not be empty"
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSecretSafeFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretSafeFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			// Mocking Response according to the endpoint path
+			if r.URL.Path == "/secrets-safe/safes/" && r.Method == "POST" {
+				_, err := w.Write([]byte(`{"Id": "5b6fc3fb-fa78-48f9-9796-08dd18b16b5b","Name": "Safe Title", "Description": "Safe Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "SAFE",
+	}
+
+	response, err := secretObj.CreateFolderFlow("", folderDetails)
+
+	if response.Name != "Safe Title" {
+		t.Errorf("Test case Failed %v, %v", response.Name, "Safe Title")
+	}
+
+	if response.Description != "Safe Description" {
+		t.Errorf("Test case Failed %v, %v", response.Description, "Safe Description")
+	}
+
+	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
 	}
 }
