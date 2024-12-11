@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.13.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.12.0...v0.13.0) / 2024-12-11
+
+#### Features
+
+* add creating safes feature in terraform provider ([#175](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/175))
+* add fuzzing tests ([#171](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/171))
+
 ### [0.12.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.11.0...v0.12.0) / 2024-12-02
 
 #### Features
