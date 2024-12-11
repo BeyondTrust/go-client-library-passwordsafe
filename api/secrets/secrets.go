@@ -376,31 +376,45 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 
 }
 
-// CreateFolderFlow is responsible for creating folder in Password Safe.
+// CreateFolderFlow is responsible for creating folders/safes in Password Safe.
 func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
 
 	var folder *entities.FolderResponse
 	var createFolderesponse entities.CreateFolderResponse
+	var err error
 
-	folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
-
-	if err != nil {
-		return createFolderesponse, err
+	if folderDetails.FolderType == "" {
+		folderDetails.FolderType = "FOLDER"
 	}
 
-	for _, v := range folders {
-		if v.Name == strings.TrimSpace(folderTarget) {
-			folder = &v
-			break
+	secretObj.log.Debug(fmt.Sprintf("Folder Type: %v", folderDetails.FolderType))
+
+	// if it is folder
+	if folderDetails.FolderType == "FOLDER" {
+		if folderTarget == "" {
+			return createFolderesponse, fmt.Errorf("parent folder name must not be empty")
 		}
-	}
 
-	if folder == nil {
-		return createFolderesponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
-	}
+		folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
 
-	folderId, _ := uuid.Parse(folder.Id)
-	folderDetails.ParentId = folderId
+		if err != nil {
+			return createFolderesponse, err
+		}
+
+		for _, v := range folders {
+			if v.Name == strings.TrimSpace(folderTarget) {
+				folder = &v
+				break
+			}
+		}
+
+		if folder == nil {
+			return createFolderesponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
+		}
+
+		folderId, _ := uuid.Parse(folder.Id)
+		folderDetails.ParentId = folderId
+	}
 
 	folderDetails, err = utils.ValidateCreateFolderInput(folderDetails)
 
@@ -421,8 +435,16 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 	return createFolderesponse, nil
 }
 
-// SecretCreateFolder calls Secret Safe API Requests enpoint to create folders in Password Safe.
+// SecretCreateFolder calls Secret Safe API Requests enpoint to create folders/safes in Password Safe.
 func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
+
+	path := "secrets-safe/folders/"
+	function := "SecretCreateSecret"
+
+	if folderDetails.FolderType == "SAFE" {
+		path = "secrets-safe/safes/"
+		function = "SecretCreateSafes"
+	}
 
 	folderCredentialDetailsJson, err := json.Marshal(folderDetails)
 
@@ -435,8 +457,8 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 
 	var createSecretResponse entities.CreateFolderResponse
 
-	SecretCreateSecreUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders/").String()
-	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecreUrl)
+	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath(path).String()
+	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 
 	var body io.ReadCloser
@@ -444,7 +466,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecreUrl, "POST", *b, "SecretCreateSecret", "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecretUrl, "POST", *b, function, "", "", "application/json")
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 

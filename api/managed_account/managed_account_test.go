@@ -212,7 +212,7 @@ func TestManageAccountFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -289,7 +289,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -366,7 +366,7 @@ func TestSecretGetSecret(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -441,7 +441,7 @@ func TestSecretGetSecrets(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -517,7 +517,7 @@ func TestManagedAccountFlowTechnicalErrorCreatingRequest(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -592,7 +592,7 @@ func TestManagedAccountFlowBusinesslErrorCreatingRequest(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -667,7 +667,7 @@ func TestManagedAccountFlowTechnicalErrorCredentialByRequestId(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -742,7 +742,7 @@ func TestManagedAccountFlowBusinessErrorCredentialByRequestId(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -817,7 +817,7 @@ func TestManagedAccountFlowBusinessErrorAccountRequestCheckIn(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -892,7 +892,7 @@ func TestManagedAccountFlowTechnicalErrorAccountRequestCheckIn(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -967,7 +967,7 @@ func TestManagedAccountFlowGetAccountTechnicalError(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -1023,7 +1023,7 @@ func TestManageAccountFlowGetAccountBadResponse(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
