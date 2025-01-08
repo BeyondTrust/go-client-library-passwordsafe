@@ -1,5 +1,47 @@
 # Changelog
 
+### [0.13.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.12.0...v0.13.0) / 2024-12-11
+
+#### Features
+
+* add creating safes feature in terraform provider ([#175](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/175))
+* add fuzzing tests ([#171](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/171))
+
+### [0.12.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.11.0...v0.12.0) / 2024-12-02
+
+#### Features
+
+* add logs in performance test ([#169](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/169))
+
+### [0.11.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.10.0...v0.11.0) / 2024-11-29
+
+#### Features
+
+* add creating folders feature in terraform provider ([#165](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/165))
+
+### [0.10.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.9.1...v0.10.0) / 2024-11-26
+
+#### Features
+
+* add writing secrets feature in terraform provider ([#161](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/161))
+
+### [0.9.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.9.0...v0.9.1) / 2024-11-08
+
+#### Bug Fixes
+
+* client credentials are not required, add apikey validation ([#154](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/154))
+
+### [0.9.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.8.1...v0.9.0) / 2024-11-08
+
+#### Features
+
+* add writing managed accounts feature in terraform provider ([#152](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/152))
+* BIPS-18112 Enforce PR link to Jira ([#147](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/147))
+
+#### Bug Fixes
+
+* Fixing Go Linter ([#153](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/153))
+
 ### [0.8.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.8.0...v0.8.1) / 2024-10-21
 
 #### Bug Fixes

@@ -9,12 +9,14 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 
 	validator "github.com/go-playground/validator/v10"
 )
 
 type ValidationParams struct {
+	ApiKey                     string
 	ClientID                   string
 	ClientSecret               string
 	ApiUrl                     *string
@@ -30,8 +32,9 @@ type ValidationParams struct {
 
 // UserInputValidaton responsible for input paramerter validation.
 type UserInputValidaton struct {
-	ClientId               string `validate:"required,min=36,max=36"`
-	ClientSecret           string `validate:"required,min=36,max=64"`
+	ApiKey                 string `validate:"omitempty,min=128,max=263"`
+	ClientId               string `validate:"omitempty,min=36,max=36,required_without=ApiKey"`
+	ClientSecret           string `validate:"omitempty,min=36,max=64,required_without=ApiKey"`
 	ApiUrl                 string `validate:"required,http_url"`
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
@@ -70,6 +73,7 @@ func ValidateInputs(params ValidationParams) error {
 	validate = validator.New(validator.WithRequiredStructEnabled())
 
 	userInput := &UserInputValidaton{
+		ApiKey:                 params.ApiKey,
 		ClientId:               params.ClientID,
 		ClientSecret:           params.ClientSecret,
 		ApiUrl:                 *params.ApiUrl,
@@ -217,4 +221,78 @@ func ValidateURL(apiUrl string) error {
 	}
 
 	return nil
+}
+
+// ValidateCreateManagedAccountInput responsible for validating Managed Account input
+func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (entities.AccountDetails, error) {
+	validate := validator.New()
+	err := validate.Struct(accountDetails)
+
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return accountDetails, errors.New(formatErrorMessage(err))
+		}
+	}
+
+	if accountDetails.ChangeFrequencyType == "" {
+		accountDetails.ChangeFrequencyType = "first"
+	}
+
+	if accountDetails.ReleaseDuration == 0 {
+		accountDetails.ReleaseDuration = 120
+	}
+
+	if accountDetails.MaxReleaseDuration == 0 {
+		accountDetails.MaxReleaseDuration = 525600
+	}
+
+	if accountDetails.ISAReleaseDuration == 0 {
+		accountDetails.ISAReleaseDuration = 120
+	}
+
+	if accountDetails.ChangeTime == "" {
+		accountDetails.ChangeTime = "00:00"
+	}
+
+	return accountDetails, nil
+}
+
+// ValidateCreateSecretInput responsible for validating secret input.
+func ValidateCreateSecretInput(secretDetails interface{}) (interface{}, error) {
+	validate := validator.New()
+	err := validate.Struct(secretDetails)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return secretDetails, errors.New(formatErrorMessage(err))
+		}
+	}
+	return secretDetails, nil
+}
+
+// formatErrorMessage responsible for formating errors text.
+func formatErrorMessage(err validator.FieldError) string {
+	switch err.Tag() {
+	case "required":
+		return fmt.Sprintf("The field '%s' is required.", err.Field())
+	case "required_if":
+		return fmt.Sprintf("Field '%s' is mandatory when %s", err.Field(), err.Param())
+	case "oneof":
+		return fmt.Sprintf("The field '%s' must be one of the following values: %s.", err.Field(), err.Param())
+	case "required_without":
+		return fmt.Sprintf("The field '%s' is required when the field '%s' is not provided.", err.Field(), err.Param())
+	default:
+		return fmt.Sprintf("Error en el campo '%s': %s.", err.Field(), err.Tag())
+	}
+}
+
+// ValidateCreateFolderInput responsible for validating folder input.
+func ValidateCreateFolderInput(folderDetails entities.FolderDetails) (entities.FolderDetails, error) {
+	validate := validator.New()
+	err := validate.Struct(folderDetails)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return folderDetails, errors.New(formatErrorMessage(err))
+		}
+	}
+	return folderDetails, nil
 }

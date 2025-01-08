@@ -83,14 +83,14 @@ func TestSignAppin(t *testing.T) {
 	testConfig := UserTestConfig{
 		name: "TestSignAppin",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 			if err != nil {
 				t.Error("Test case Failed")
 			}
 		})),
 		response: &entities.SignApinResponse{
 			UserId:       1,
-			EmailAddress: "Felipe",
+			EmailAddress: "test@beyondtrust.com",
 		},
 	}
 
@@ -118,16 +118,16 @@ func TestSignAppinWithApiKey(t *testing.T) {
 
 	var authenticate, _ = AuthenticateUsingApiKey(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", zapLogger, 300, "fake_api_key_")
 	testConfig := UserTestConfig{
-		name: "TestSignAppin",
+		name: "TestSignAppinWithApiKey",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 			if err != nil {
 				t.Error("Test case Failed")
 			}
 		})),
 		response: &entities.SignApinResponse{
 			UserId:       1,
-			EmailAddress: "Felipe",
+			EmailAddress: "test@beyondtrust.com",
 		},
 	}
 
@@ -209,7 +209,7 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 				}
 
 			case "/Auth/SignAppIn":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 
 				if err != nil {
 					t.Error("Test case Failed")
@@ -221,7 +221,7 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 		})),
 		response: &entities.SignApinResponse{
 			UserId:       1,
-			EmailAddress: "Felipe",
+			EmailAddress: "test@beyondtrust.com",
 		},
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")

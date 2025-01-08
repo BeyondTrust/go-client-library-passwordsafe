@@ -4,6 +4,7 @@
 package managed_accounts
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -30,6 +31,12 @@ type ManagedAccountTestConfigStringResponse struct {
 	name     string
 	server   *httptest.Server
 	response string
+}
+
+type CreateManagedAccountsResponse struct {
+	name     string
+	server   *httptest.Server
+	response *entities.CreateManagedAccountsResponse
 }
 
 func TestManagedAccountGet(t *testing.T) {
@@ -205,7 +212,7 @@ func TestManageAccountFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -276,13 +283,13 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 
 	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
-		name: "TestManageAccountFlowFailedManagedAccounts",
+		name: "TestManageAccountFlowNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -359,7 +366,7 @@ func TestSecretGetSecret(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -434,7 +441,7 @@ func TestSecretGetSecrets(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -510,7 +517,7 @@ func TestManagedAccountFlowTechnicalErrorCreatingRequest(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -585,7 +592,7 @@ func TestManagedAccountFlowBusinesslErrorCreatingRequest(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -660,7 +667,7 @@ func TestManagedAccountFlowTechnicalErrorCredentialByRequestId(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -735,7 +742,7 @@ func TestManagedAccountFlowBusinessErrorCredentialByRequestId(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -810,7 +817,7 @@ func TestManagedAccountFlowBusinessErrorAccountRequestCheckIn(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -885,7 +892,7 @@ func TestManagedAccountFlowTechnicalErrorAccountRequestCheckIn(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -960,7 +967,7 @@ func TestManagedAccountFlowGetAccountTechnicalError(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -1016,7 +1023,7 @@ func TestManageAccountFlowGetAccountBadResponse(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -1050,4 +1057,297 @@ func TestManageAccountFlowGetAccountBadResponse(t *testing.T) {
 	if len(secrets) != 0 {
 		t.Errorf("Test case Failed")
 	}
+}
+
+func TestManagedAccountCreateManagedAccount(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := CreateManagedAccountsResponse{
+		name: "TestManagedAccountCreateManagedAccount",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/ManagedSystems/5/ManagedAccounts":
+				_, err := w.Write([]byte(`{"ManagedSystemID":5, "ManagedAccountID":10, "AccountName": "Managed Account Name"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: &entities.CreateManagedAccountsResponse{
+			ManagedAccountID: 10,
+			ManagedSystemID:  5,
+			AccountName:      "Managed Account Name",
+		},
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+
+	accountAccountDetailsObj := entities.AccountDetails{
+		AccountName:         "Managed_account_name",
+		Password:            "MyPassword1707*!",
+		Description:         "Sample account for testing",
+		MaxReleaseDuration:  300000,
+		ReleaseDuration:     300000,
+		ISAReleaseDuration:  180,
+		ChangeFrequencyDays: 1,
+	}
+
+	ManagedAccountCreateManagedAccountUrl := authenticate.ApiUrl.JoinPath("ManagedSystems", fmt.Sprintf("%d", 5), "ManagedAccounts").String()
+
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+	response, err := managedAccountObj.ManagedAccountCreateManagedAccount(accountAccountDetailsObj, ManagedAccountCreateManagedAccountUrl)
+
+	if response != *testConfig.response {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestManagedAccountCreateManagedAccountExistingOne(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := ManagedAccountTestConfigStringResponse{
+		name: "TestManagedAccountCreateManagedAccountExistingOne",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/ManagedSystems/5/ManagedAccounts":
+				w.WriteHeader(http.StatusBadRequest)
+				_, err := w.Write([]byte(`Managed System/Account already exists: 1/ManagedAccount10`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "error - status code: 400 - Managed System/Account already exists: 1/ManagedAccount10",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	ManagedAccountCreateManagedAccountUrl := authenticate.ApiUrl.JoinPath("ManagedSystems", fmt.Sprintf("%d", 5), "ManagedAccounts").String()
+
+	accountAccountDetailsObj := entities.AccountDetails{
+		AccountName: "Managed_account_name",
+		Password:    "MyPassword1707*!",
+		Description: "Sample account for testing",
+	}
+
+	_, err := managedAccountObj.ManagedAccountCreateManagedAccount(accountAccountDetailsObj, ManagedAccountCreateManagedAccountUrl)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v} %v", err.Error(), testConfig.response)
+	}
+
+}
+
+func TestManagedAccountCreateManagedAccountFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := CreateManagedAccountsResponse{
+		name: "TestManagedAccountCreateManagedAccountFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/ManagedSystems/5/ManagedAccounts":
+				_, err := w.Write([]byte(`{"ManagedSystemID":5, "ManagedAccountID":10, "AccountName": "Managed_account_name"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/ManagedSystems":
+				_, err := w.Write([]byte(`[{"ManagedSystemID":5, "SystemName":"system01", "EntityTypeID": 4}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: &entities.CreateManagedAccountsResponse{
+			ManagedAccountID: 10,
+			ManagedSystemID:  5,
+			AccountName:      "Managed_account_name",
+		},
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+	accountAccountDetailsObj := entities.AccountDetails{
+		AccountName:         "Managed_account_name",
+		Password:            "MyPassword1707*!",
+		Description:         "Sample account for testing",
+		MaxReleaseDuration:  300000,
+		ReleaseDuration:     300000,
+		ISAReleaseDuration:  180,
+		ChangeFrequencyDays: 1,
+	}
+	response, err := managedAccountObj.ManageAccountCreateFlow("system01", accountAccountDetailsObj)
+
+	if response != *testConfig.response {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestManagedAccountCreateManagedAccountFlowSystemNotFound(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := ManagedAccountTestConfigStringResponse{
+		name: "TestManagedAccountCreateManagedAccountFlowSystemNotFound",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/ManagedSystems/5/ManagedAccounts":
+				_, err := w.Write([]byte(`{"ManagedSystemID":5, "ManagedAccountID":10, "AccountName": "Managed Account Name"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/ManagedSystems":
+				_, err := w.Write([]byte(`[{"ManagedSystemID":5, "SystemName":"system01", "EntityTypeID": 4}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "managed system system02 was not found in managed system list",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	accountAccountDetailsObj := entities.AccountDetails{
+		AccountName:         "Managed_account_name",
+		Password:            "MyPassword1707*!",
+		Description:         "Sample account for testing",
+		MaxReleaseDuration:  300000,
+		ReleaseDuration:     300000,
+		ISAReleaseDuration:  180,
+		ChangeFrequencyDays: 1,
+	}
+	_, err := managedAccountObj.ManageAccountCreateFlow("system02", accountAccountDetailsObj)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+}
+
+func TestManagedAccountCreateManagedAccountFlowEmptySystemList(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := ManagedAccountTestConfigStringResponse{
+		name: "TestManagedAccountCreateManagedAccountFlowEmptySystemList",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+			case "/ManagedSystems":
+				_, err := w.Write([]byte(`[]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "empty System Account List",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	accountAccountDetailsObj := entities.AccountDetails{
+		AccountName:         "Managed_account_name",
+		Password:            "MyPassword1707*!",
+		Description:         "Sample account for testing",
+		MaxReleaseDuration:  300000,
+		ReleaseDuration:     300000,
+		ISAReleaseDuration:  180,
+		ChangeFrequencyDays: 1,
+	}
+
+	_, err := managedAccountObj.ManageAccountCreateFlow("system02", accountAccountDetailsObj)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v} %v", err.Error(), testConfig.response)
+	}
+
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
+	"github.com/google/uuid"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
@@ -128,7 +129,7 @@ func TestSecretFlow(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -186,13 +187,13 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 
 	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := SecretTestConfigStringResponse{
-		name: "TestSecretFlow",
+		name: "TestSecretFlow_SecretNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Mocking Response according to the endpoint path
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -325,7 +326,7 @@ func TestSecretFlowTechnicalErrorFile(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -386,7 +387,7 @@ func TestSecretFlowBusinessErrorFile(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -447,7 +448,7 @@ func TestSecretFlowLongSecret(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -509,7 +510,7 @@ func TestSecretFlowTechnicalErrorCredential(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -564,7 +565,7 @@ func TestSecretFlowBusinessErrorCredential(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -619,7 +620,7 @@ func TestSecretFlowBadBody(t *testing.T) {
 			switch r.URL.Path {
 
 			case "/Auth/SignAppin":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -631,7 +632,7 @@ func TestSecretFlowBadBody(t *testing.T) {
 				}
 
 			case "/secrets-safe/secrets":
-				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
+				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
 				if err != nil {
 					t.Error("Test case Failed")
 				}
@@ -651,5 +652,672 @@ func TestSecretFlowBadBody(t *testing.T) {
 
 	if len(response) != 0 {
 		t.Errorf("Test case Failed")
+	}
+}
+
+func TestSecretCreateTextSecretFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateTextSecretFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets/text":
+				_, err := w.Write([]byte(`{"Id": "01ca9cf3-0751-4a90-4856-08dcf22d7472","Title": "Secret Title", "Description": "Title Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretTextDetails{
+		Title:       "Secret Title",
+		Description: "Title Description",
+		Text:        "PasswordTest",
+		OwnerType:   "User",
+		OwnerId:     1,
+		FolderId:    uuid.New(),
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if response.Title != "Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestSecretCreateCredentialSecretFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateCredentialSecretFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets":
+				_, err := w.Write([]byte(`{"Id": "01ca9cf3-0751-4a90-4856-08dcf22d7472","Title": "Secret Title", "Description": "Title Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretCredentialDetails{
+		Title:       "Secret Title",
+		Description: "Title Description",
+		Username:    "TestUserName",
+		Password:    "PasswordTest",
+		OwnerType:   "User",
+		OwnerId:     1,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if response.Title != "Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestSecretCreateFileSecretFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateFileSecretFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets/file":
+				_, err := w.Write([]byte(`{"Id": "01ca9cf3-0751-4a90-4856-08dcf22d7472","Title": "File Secret Title", "Description": "Title Description", "FileName": "textfile.txt"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretFileDetails{
+		Title:       "Secret Title",
+		Description: "File Title Description",
+		FileName:    "textfile.txt",
+		FileContent: "Secret Content",
+		OwnerType:   "User",
+		OwnerId:     1,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if response.Title != "File Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, "File Secret Title")
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, "Title Description")
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestSecretCreateFileSecretFlowError(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateFileSecretFlowError",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets/file":
+				w.WriteHeader(http.StatusConflict)
+				_, err := w.Write([]byte(`{"error":"Title name already exists"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "error - status code: 409 - {\"error\":\"Title name already exists\"}",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretFileDetails{
+		Title:       "Secret Title",
+		Description: "File Title Description",
+		FileName:    "textfile.txt",
+		FileContent: "Secret Content",
+		OwnerType:   "User",
+		OwnerId:     1,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	_, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestSecretCreateBadInput(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateBadInput",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets":
+				_, err := w.Write([]byte(`{"Id": "01ca9cf3-0751-4a90-4856-08dcf22d7472","Title": "Secret Title", "Description": "Title Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "The field 'Title' is required.",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretCredentialDetails{
+		Title:       "",
+		Description: "Title Description",
+		Username:    "TestUserName",
+		Password:    "PasswordTest",
+		OwnerType:   "User",
+		OwnerId:     1,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	_, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+}
+
+func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateSecretFlowFolderNotFound",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "folder folder_name was not found in folder list",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretTextDetails{
+		Title:       "Secret Title",
+		Description: "Title Description",
+		Text:        "PasswordTest",
+		OwnerType:   "User",
+		OwnerId:     1,
+		FolderId:    uuid.New(),
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	_, err := secretObj.CreateSecretFlow("folder_name", secretTextDetails)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+}
+
+func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretCreateSecretFlowEmptyFolderList",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/secrets-safe/folders/":
+				_, err := w.Write([]byte(`[]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+
+			default:
+				http.NotFound(w, r)
+			}
+		})),
+		response: "empty Folder List",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	secretTextDetails := entities.SecretTextDetails{
+		Title:       "Secret Title",
+		Description: "Title Description",
+		Text:        "PasswordTest",
+		OwnerType:   "User",
+		OwnerId:     1,
+		FolderId:    uuid.New(),
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	_, err := secretObj.CreateSecretFlow("folder_name", secretTextDetails)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+}
+
+func TestSecretFolderFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretFolderFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			// Mocking Response according to the endpoint path
+			if r.URL.Path == "/secrets-safe/folders/" && r.Method == "GET" {
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			}
+			if r.URL.Path == "/secrets-safe/folders/" && r.Method == "POST" {
+				_, err := w.Write([]byte(`{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "Folder Title", "Description": "Folder Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "FOLDER",
+	}
+
+	response, err := secretObj.CreateFolderFlow("folder1", folderDetails)
+
+	if response.Name != "Folder Title" {
+		t.Errorf("Test case Failed %v, %v", response.Name, "Folder Title")
+	}
+
+	if response.Description != "Folder Description" {
+		t.Errorf("Test case Failed %v, %v", response.Description, "Folder Description")
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSecretFolderFlowBadParentFolder(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretFolderFlowBadParentFolder",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			// Mocking Response according to the endpoint path
+			if r.URL.Path == "/secrets-safe/folders/" && r.Method == "GET" {
+				_, err := w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}, {"Id": "a4af73dc-4e89-41ec-eb9a-08dcf22d3aba","Name": "folder2"}]`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			} else if r.URL.Path == "/secrets-safe/folders/" && r.Method == "POST" {
+				w.WriteHeader(http.StatusBadRequest)
+				_, err := w.Write([]byte(`{"error": "InvalidFolderName"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			} else {
+				http.NotFound(w, r)
+			}
+
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "FOLDER",
+	}
+
+	_, err := secretObj.CreateFolderFlow("folder1", folderDetails)
+
+	expetedErrorMessage := `error - status code: 400 - {"error": "InvalidFolderName"}`
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSecretFolderFlowEmptyParentFolder(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "FOLDER",
+	}
+
+	_, err := secretObj.CreateFolderFlow("", folderDetails)
+
+	expetedErrorMessage := "parent folder name must not be empty"
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSecretSafeFlow(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.MaxElapsedTime = time.Second
+
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestSecretSafeFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+			// Mocking Response according to the endpoint path
+			if r.URL.Path == "/secrets-safe/safes/" && r.Method == "POST" {
+				_, err := w.Write([]byte(`{"Id": "5b6fc3fb-fa78-48f9-9796-08dd18b16b5b","Name": "Safe Title", "Description": "Safe Description"}`))
+				if err != nil {
+					t.Error("Test case Failed")
+				}
+			}
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	folderDetails := entities.FolderDetails{
+		Name:        "FOLDER_" + uuid.New().String(),
+		Description: "My Folder Description",
+		FolderType:  "SAFE",
+	}
+
+	response, err := secretObj.CreateFolderFlow("", folderDetails)
+
+	if response.Name != "Safe Title" {
+		t.Errorf("Test case Failed %v, %v", response.Name, "Safe Title")
+	}
+
+	if response.Description != "Safe Description" {
+		t.Errorf("Test case Failed %v, %v", response.Description, "Safe Description")
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
 	}
 }

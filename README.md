@@ -180,3 +180,12 @@ top
 # go inside of function memory usage
 list  main.callPasswordSafeAPI
 ```
+
+## Fuzzing Testing
+
+Run Fuzz Tests
+
+```bash
+go test -fuzz=FuzzGetManagedAccount -fuzztime=10s ./fuzzing//managed_accounts
+go test -fuzz=FuzzGetSecret -fuzztime=10s ./fuzzing/secrets
+```
