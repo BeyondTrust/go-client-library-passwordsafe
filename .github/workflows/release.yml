@@ -1,7 +1,7 @@
 name: Release
 
 env:
-  JFROG_CLI_BUILD_NAME: ${{ github.repository }}
+  JFROG_CLI_BUILD_NAME: ${{ github.event.repository.name }}
   JFROG_SERVER: eng-generic-dev-local
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
@@ -19,11 +19,42 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      full_version: ${{ steps.version.outputs.full_version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
+
+      - name: Get next version increment
+        id: increment
+        run: |
+          shopt -s nocasematch
+          commit_message=$(git log --format=%B -n 1)
+          if [[ $commit_message == "feat!:"* ]]; then
+            echo "INCREMENT=major" >> "$GITHUB_OUTPUT"
+          elif [[ $commit_message == "feat:"* ]]; then
+            echo "INCREMENT=minor" >> "$GITHUB_OUTPUT"
+          elif [[ $commit_message == "fix:"* ]]; then
+            echo "INCREMENT=patch" >> "$GITHUB_OUTPUT"
+          fi
+      
+      - name: Get next version numbers
+        uses: reecetech/version-increment@2024.10.1
+        id: version_number
+        with:
+          increment: ${{ steps.increment.outputs.increment }}
+
+      - name: Get full version name and version numbers
+        id: version
+        run: |
+          if [[ "${{ github.actor }}" == "beyondtrust-release-app" ]]; then
+            echo "full_version="$(git tag --sort "-committerdate" | cut -d$'\n' -f1)"" >> "$GITHUB_OUTPUT"
+          else
+            version=$(echo ${{ steps.version_number.outputs.version  }} | sed -e 's/-pre.*//g')
+            echo "full_version="${version}.${{ github.run_number }}"" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build library
         run: |
@@ -112,19 +143,23 @@ jobs:
         env:
           JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
 
+      - name: Configure JFrog CLI build number
+        run: |
+          echo "JFROG_CLI_BUILD_NUMBER=${{ needs.build.outputs.full_version }}" >> $GITHUB_ENV 
+
       - name: Setting up artifactory
         run: |
-          mkdir go-library-passwordsafe
+          mkdir -p go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Download library binary
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: library
-          path: go-library-passwordsafe
+          path: go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Send artifacts to Jfrog
         run: |
-          jfrog rt u "go-library-passwordsafe/*" ${{ env.JFROG_SERVER }}
+          jfrog rt u "go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }}
 
       - name: Publish Build Information
         run: |

@@ -1,0 +1,38 @@
+name: Build promotion
+
+on:
+  workflow_dispatch:
+
+jobs:
+  promotion:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Jfrog setup
+          uses: jfrog/setup-jfrog-cli@96153976e4e81b3701e9cc0a5b9597e80614af81 # v4.5.1
+          env:
+            JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+
+        - name: Extract version
+          uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+          id: version
+          with:
+            script: |
+              const version = context.ref.match(/[\d][\d*\.]*$/)[0];
+              core.setOutput("version", version);
+
+        - name: Promote artifact
+          run: |
+            VERSION="${{ steps.version.outputs.version }}"
+            BUILD_NAME="${{ github.event.repository.name }}"  
+            
+            BUILD_NUMBER="$(jfrog rt curl api/build/${BUILD_NAME} -s | jq -e -r '[.buildsNumbers[] | select(.uri | contains("'$VERSION'"))] | sort_by(.started) | reverse | .[0].uri[1:]')"
+
+            if [ -z "$BUILD_NUMBER" ]; then
+              echo "::error::Error retrieving build from Artifactory. No matching name/version. Name: $BUILD_NAME; Version: $VERSION"
+              exit 1
+            fi
+
+            echo "Promoting generic"
+            jfrog rt build-promote  "$BUILD_NAME" "$BUILD_NUMBER" eng-generic-prod-local --status released --copy=true
+
+
