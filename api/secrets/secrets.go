@@ -118,6 +118,10 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	params.Add("title", secretTitle)
 	params.Add("separator", separator)
 
+	if secretObj.authenticationObj.ApiVersion != "" {
+		params.Add("version", secretObj.authenticationObj.ApiVersion)
+	}
+
 	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String() + "?" + params.Encode()
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
@@ -161,14 +165,23 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 // SecretGetFileSecret call secrets-safe/secrets/<secret_id>/file/download enpoint
 // and returns file secret value.
 func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath string) (string, error) {
-	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	secretObj.log.Debug(messageLog + "file/download")
 
 	var body io.ReadCloser
 	var technicalError error
 	var businessError error
 
-	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath, secretId, "/file/download").String()
+	versionParam := ""
+	params := url.Values{}
+
+	if secretObj.authenticationObj.ApiVersion != "" {
+		params.Add("version", secretObj.authenticationObj.ApiVersion)
+		versionParam = "?" + params.Encode()
+	}
+
+	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath, secretId, "/file/download").String() + versionParam
+
+	messageLog := fmt.Sprintf("%v %v", "GET", url)
+	secretObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
 		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "", "", "application/json")
@@ -262,7 +275,16 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 		path = "secrets/file"
 	}
 
-	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", folderId, path).String()
+	versionParam := ""
+	params := url.Values{}
+
+	if secretObj.authenticationObj.ApiVersion != "" {
+		params.Add("version", secretObj.authenticationObj.ApiVersion)
+		versionParam = "?" + params.Encode()
+	}
+
+	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", folderId, path).String() + versionParam
+
 	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 
@@ -338,7 +360,15 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 	var technicalError error
 	var businessError error
 
-	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+	versionParam := ""
+	params := url.Values{}
+
+	if secretObj.authenticationObj.ApiVersion != "" {
+		params.Add("version", secretObj.authenticationObj.ApiVersion)
+		versionParam = "?" + params.Encode()
+	}
+
+	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String() + "?" + versionParam
 
 	var foldersObj []entities.FolderResponse
 
@@ -457,7 +487,15 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 
 	var createSecretResponse entities.CreateFolderResponse
 
-	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath(path).String()
+	versionParam := ""
+	params := url.Values{}
+
+	if secretObj.authenticationObj.ApiVersion != "" {
+		params.Add("version", secretObj.authenticationObj.ApiVersion)
+		versionParam = "?" + params.Encode()
+	}
+
+	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath(path).String() + versionParam
 	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 

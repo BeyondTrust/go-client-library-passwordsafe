@@ -19,6 +19,7 @@ import (
 // AuthenticationObj responsbile for authentication request data.
 type AuthenticationObj struct {
 	ApiUrl             url.URL
+	ApiVersion         string
 	clientId           string
 	clientSecret       string
 	apiKey             string
@@ -29,11 +30,12 @@ type AuthenticationObj struct {
 
 // Authenticate is responsible for Auth configuration using Client Id and Client secret.
 // Prerequisites - use input validation methods before using this class.
-func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
+func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
 
 	apiUrl, _ := url.Parse(endpointUrl)
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             *apiUrl,
+		ApiVersion:         apiVersion,
 		HttpClient:         httpClient,
 		clientId:           clientId,
 		clientSecret:       clientSecret,
@@ -48,11 +50,12 @@ func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.Exp
 
 // AuthenticateUsingApiKey is responsible for Auth configuration using API Key.
 // Prerequisites - use input validation methods before using this class.
-func AuthenticateUsingApiKey(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, logger logging.Logger, retryMaxElapsedTimeSeconds int, apiKey string) (*AuthenticationObj, error) {
+func AuthenticateUsingApiKey(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, logger logging.Logger, retryMaxElapsedTimeSeconds int, apiKey string) (*AuthenticationObj, error) {
 
 	apiUrl, _ := url.Parse(endpointUrl)
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             *apiUrl,
+		ApiVersion:         apiVersion,
 		HttpClient:         httpClient,
 		clientId:           "",
 		clientSecret:       "",
