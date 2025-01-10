@@ -28,14 +28,14 @@ func main() {
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
 
-	apiUrl := "https://linklabtest.ps-dev.beyondtrustcloud.com:443/BeyondTrust/api/public/v3/"
+	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
 
 	// the recommended version is 3.1. If no version is specified,
 	// the default API version 3.0 will be used
 	apiVersion := "3.1"
 
-	clientId := "6138d050-e266-4b05-9ced-35e7dd5093ae"
-	clientSecret := "W8dx3BMkkxe4OpdsJPMhmYTRSpeHJYA/NVmcnmPZv5s="
+	clientId := ""
+	clientSecret := ""
 	separator := "/"
 	certificate := ""
 	certificateKey := ""
