@@ -138,6 +138,7 @@ type SecretFileDetails struct {
 }
 
 type OwnerDetails struct {
+	GroupId int    `json:",omitempty" validate:"required,min=1,max=2147483647"`
 	OwnerId int    `json:",omitempty" validate:"required,min=1,max=2147483647"`
 	Owner   string `json:",omitempty" validate:"omitempty"`
 	Email   string `json:",omitempty" validate:"omitempty"`
