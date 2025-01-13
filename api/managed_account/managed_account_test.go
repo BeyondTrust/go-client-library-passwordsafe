@@ -39,6 +39,10 @@ type CreateManagedAccountsResponse struct {
 	response *entities.CreateManagedAccountsResponse
 }
 
+// the recommended version is 3.1. If no version is specified,
+// the default API version 3.0 will be used
+var apiVersion string = "3.1"
+
 func TestManagedAccountGet(t *testing.T) {
 
 	logger, _ := zap.NewDevelopment()
@@ -51,7 +55,7 @@ func TestManagedAccountGet(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 
 	testConfig := ManagedAccountTestConfig{
 		name: "TestManagedAccountGet",
@@ -93,7 +97,7 @@ func TestManagedAccountCreateRequest(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountCreateRequest",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +134,7 @@ func TestCredentialByRequestId(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestCredentialByRequestId",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +171,7 @@ func TestManagedAccountRequestCheckIn(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountRequestCheckIn",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -204,7 +208,7 @@ func TestManageAccountFlow(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -281,7 +285,7 @@ func TestManageAccountFlowNotFound(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlowNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -358,7 +362,7 @@ func TestSecretGetSecret(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestSecretGetSecret",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -433,7 +437,7 @@ func TestSecretGetSecrets(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestSecretGetSecrets",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -509,7 +513,7 @@ func TestManagedAccountFlowTechnicalErrorCreatingRequest(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowTechnicalErrorCreatingRequest",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -584,7 +588,7 @@ func TestManagedAccountFlowBusinesslErrorCreatingRequest(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowBusinesslErrorCreatingRequest",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -659,7 +663,7 @@ func TestManagedAccountFlowTechnicalErrorCredentialByRequestId(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowTechnicalErrorCredentialByRequestId",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -734,7 +738,7 @@ func TestManagedAccountFlowBusinessErrorCredentialByRequestId(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowBusinessErrorCredentialByRequestId",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -809,7 +813,7 @@ func TestManagedAccountFlowBusinessErrorAccountRequestCheckIn(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowBusinessErrorAccountRequestCheckIn",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -884,7 +888,7 @@ func TestManagedAccountFlowTechnicalErrorAccountRequestCheckIn(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowTechnicalErrorAccountRequestCheckIn",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -959,7 +963,7 @@ func TestManagedAccountFlowGetAccountTechnicalError(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountFlowGetAccountTechnicalError",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1015,7 +1019,7 @@ func TestManageAccountFlowGetAccountBadResponse(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManageAccountFlowGetAccountBadResponse",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1070,7 +1074,7 @@ func TestManagedAccountCreateManagedAccount(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := CreateManagedAccountsResponse{
 		name: "TestManagedAccountCreateManagedAccount",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1132,7 +1136,7 @@ func TestManagedAccountCreateManagedAccountExistingOne(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountCreateManagedAccountExistingOne",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1185,7 +1189,7 @@ func TestManagedAccountCreateManagedAccountFlow(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := CreateManagedAccountsResponse{
 		name: "TestManagedAccountCreateManagedAccountFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1251,7 +1255,7 @@ func TestManagedAccountCreateManagedAccountFlowSystemNotFound(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountCreateManagedAccountFlowSystemNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1310,7 +1314,7 @@ func TestManagedAccountCreateManagedAccountFlowEmptySystemList(t *testing.T) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
 	testConfig := ManagedAccountTestConfigStringResponse{
 		name: "TestManagedAccountCreateManagedAccountFlowEmptySystemList",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

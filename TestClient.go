@@ -29,6 +29,11 @@ func main() {
 	zapLogger := logging.NewZapLogger(logger)
 
 	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
+
+	// the recommended version is 3.1. If no version is specified,
+	// the default API version 3.0 will be used
+	apiVersion := "3.1"
+
 	clientId := ""
 	clientSecret := ""
 	separator := "/"
@@ -73,7 +78,7 @@ func main() {
 	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
 
 	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
+	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, apiVersion, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
 
 	// authenticating
 	userObject, err := authenticate.GetPasswordSafeAuthentication()
@@ -84,7 +89,7 @@ func main() {
 	// instantiating secret obj
 	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, maxFileSecretSizeBytes)
 
-	secretPaths := []string{"fake/Client", "fake/test_file_1"}
+	secretPaths := []string{"oauthgrp/credential8", "oauthgrp/file1"}
 
 	gotSecrets, _ := secretObj.GetSecrets(secretPaths, separator)
 
@@ -92,7 +97,7 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotSecrets))
 
 	// getting single secret
-	gotSecret, _ := secretObj.GetSecret("fake/Test1", separator)
+	gotSecret, _ := secretObj.GetSecret("oauthgrp/credential8", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("Secret Test: %v", gotSecret))
@@ -100,7 +105,7 @@ func main() {
 	// instantiating managed account obj
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
 
-	newSecretPaths := []string{"fake/account01", "fake/account01"}
+	newSecretPaths := []string{"system01/managed_account01", "system01/managed_account02"}
 
 	//managedAccountList := strings.Split(paths, ",")
 	gotManagedAccounts, _ := manageAccountObj.GetSecrets(newSecretPaths, separator)
@@ -109,13 +114,13 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccounts))
 
 	// getting single managed account
-	gotManagedAccount, _ := manageAccountObj.GetSecret("fake/account04", separator)
+	gotManagedAccount, _ := manageAccountObj.GetSecret("system01/managed_account01", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
 
 	account := entities.AccountDetails{
-		AccountName:                       "ManagedAccountTest",
+		AccountName:                       "ManagedAccountTest_" + uuid.New().String(),
 		Password:                          "Passw0rd101!*",
 		DomainName:                        "exampleDomain",
 		UserPrincipalName:                 "user@example.com",
@@ -167,6 +172,7 @@ func main() {
 		Notes:       "My note",
 		Owners: []entities.OwnerDetails{
 			{
+				GroupId: 1,
 				OwnerId: userObject.UserId,
 				Owner:   userObject.UserName,
 				Email:   userObject.EmailAddress,
@@ -200,6 +206,7 @@ func main() {
 		FolderId:    uuid.New(),
 		Owners: []entities.OwnerDetails{
 			{
+				GroupId: 1,
 				OwnerId: userObject.UserId,
 				Owner:   userObject.UserName,
 				Email:   userObject.EmailAddress,
@@ -231,6 +238,7 @@ func main() {
 		OwnerId:     userObject.UserId,
 		Owners: []entities.OwnerDetails{
 			{
+				GroupId: 1,
 				OwnerId: userObject.UserId,
 				Owner:   userObject.UserName,
 				Email:   userObject.EmailAddress,
