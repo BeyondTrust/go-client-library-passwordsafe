@@ -6,4 +6,6 @@ RUN git clone https://github.com/BeyondTrust/go-client-library-passwordsafe go-c
 
 WORKDIR go-client-library-passwordsafe
 
+RUN ls -alt
+
 COPY .clusterfuzzlite/build.sh $SRC/
