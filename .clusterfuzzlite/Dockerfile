@@ -6,6 +6,6 @@ COPY . $SRC/go-client-library-passwordsafe
 
 WORKDIR $SRC/go-client-library-passwordsafe
 
-RUN ls -alt
+RUN go mod tidy
 
 COPY ./.clusterfuzzlite/build.sh $SRC/
