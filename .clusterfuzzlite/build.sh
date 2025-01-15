@@ -24,5 +24,5 @@ function compile_fuzzer {
   $CXX $CXXFLAGS $LIB_FUZZING_ENGINE $fuzzer.a -lpthread -o $OUT/$fuzzer
 }
 
-compiler_fuzzer ./fuzzing//managed_accounts FuzzGetManagedAccount managed_account_fuzzer
+compile_fuzzer ./fuzzing/managed_accounts FuzzGetManagedAccount managed_account_fuzzer
 compile_fuzzer ./fuzzing/secrets FuzzGetSecret secrets_fuzzer
