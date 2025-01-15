@@ -18,11 +18,11 @@ function compile_fuzzer {
   fuzzer=$3
 
    # Instrument all Go files relevant to this fuzzer
-  go-fuzz-build -libfuzzer -func $function -o $fuzzer.a $path
+  compiler_go_fuzzer -libfuzzer -func $function -o $fuzzer.a $path
 
    # Instrumented, compiled Go ($fuzzer.a) + fuzzing engine = fuzzer binary
   $CXX $CXXFLAGS $LIB_FUZZING_ENGINE $fuzzer.a -lpthread -o $OUT/$fuzzer
 }
 
-compile_fuzzer ./fuzzing//managed_accounts FuzzGetManagedAccount managed_account_fuzzer
+compiler_fuzzer ./fuzzing//managed_accounts FuzzGetManagedAccount managed_account_fuzzer
 compile_fuzzer ./fuzzing/secrets FuzzGetSecret secrets_fuzzer
