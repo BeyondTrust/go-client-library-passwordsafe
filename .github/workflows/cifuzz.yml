@@ -20,14 +20,12 @@ jobs:
      id: build
      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@090e0d6771ecf3a765cda010ed369a4e67b71c19
      with:
-       oss-fuzz-project-name: 'go-client-library-passwordsafe'
-       language: go
+       oss-fuzz-project-name: '${{ github.event.repository.name }}'
 
    - name: Run Fuzzers
      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@090e0d6771ecf3a765cda010ed369a4e67b71c19
      with:
        oss-fuzz-project-name: '${{ github.event.repository.name }}'
-       language: go
        fuzz-seconds: 600
        output-sarif: true
 
