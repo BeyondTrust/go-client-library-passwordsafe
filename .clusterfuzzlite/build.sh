@@ -17,7 +17,7 @@ function compile_fuzzer {
   function=$2
   fuzzer=$3
 
-  compile_go_fuzzer $path $function $fuzzer
+  compile_native_go_fuzzer $path $function $fuzzer
 
   $CXX $CXXFLAGS $LIB_FUZZING_ENGINE $fuzzer.a -lpthread -o $OUT/$fuzzer
 }
