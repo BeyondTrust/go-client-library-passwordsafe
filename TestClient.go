@@ -57,6 +57,7 @@ func main() {
 		ClientID:                   clientId,
 		ClientSecret:               clientSecret,
 		ApiUrl:                     &apiUrl,
+		ApiVersion:                 apiVersion,
 		ClientTimeOutInSeconds:     clientTimeOutInSeconds,
 		Separator:                  &separator,
 		VerifyCa:                   verifyCa,
@@ -77,8 +78,20 @@ func main() {
 	// creating a http client
 	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
 
-	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, apiVersion, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
+	authParams := authentication.AuthenticationParametersObj{
+		HTTPClient:                 *httpClientObj,
+		BackoffDefinition:          backoffDefinition,
+		EndpointURL:                apiUrl,
+		APIVersion:                 apiVersion,
+		ClientID:                   clientId,
+		ClientSecret:               clientSecret,
+		ApiKey:                     "fakeone_a654+9sdf7+8we4f",
+		Logger:                     zapLogger,
+		RetryMaxElapsedTimeSeconds: 30,
+	}
+
+	// instantiating authenticate obj
+	authenticate, _ := authentication.AuthenticateUsingApiKey(authParams)
 
 	// authenticating
 	userObject, err := authenticate.GetPasswordSafeAuthentication()
