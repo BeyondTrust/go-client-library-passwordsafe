@@ -28,20 +28,36 @@ type AuthenticationObj struct {
 	log                logging.Logger
 }
 
+type AuthenticationParametersObj struct {
+	HTTPClient                 utils.HttpClientObj
+	BackoffDefinition          *backoff.ExponentialBackOff
+	EndpointURL                string
+	APIVersion                 string
+	ClientID                   string
+	ClientSecret               string
+	ApiKey                     string
+	Logger                     logging.Logger
+	RetryMaxElapsedTimeSeconds int
+}
+
 // Authenticate is responsible for Auth configuration using Client Id and Client secret.
 // Prerequisites - use input validation methods before using this class.
-func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
+func Authenticate(authenticationParametersObj AuthenticationParametersObj) (*AuthenticationObj, error) {
 
-	apiUrl, _ := url.Parse(endpointUrl)
+	apiUrl, err := url.Parse(authenticationParametersObj.EndpointURL)
+	if err != nil {
+		return nil, err
+	}
+
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             *apiUrl,
-		ApiVersion:         apiVersion,
-		HttpClient:         httpClient,
-		clientId:           clientId,
-		clientSecret:       clientSecret,
+		ApiVersion:         authenticationParametersObj.APIVersion,
+		HttpClient:         authenticationParametersObj.HTTPClient,
+		clientId:           authenticationParametersObj.ClientID,
+		clientSecret:       authenticationParametersObj.ClientSecret,
 		apiKey:             "",
-		ExponentialBackOff: backoffDefinition,
-		log:                logger,
+		ExponentialBackOff: authenticationParametersObj.BackoffDefinition,
+		log:                authenticationParametersObj.Logger,
 	}
 
 	authenticationObj.log.Debug("Signing in using Oauth")
@@ -50,18 +66,21 @@ func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.Exp
 
 // AuthenticateUsingApiKey is responsible for Auth configuration using API Key.
 // Prerequisites - use input validation methods before using this class.
-func AuthenticateUsingApiKey(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, logger logging.Logger, retryMaxElapsedTimeSeconds int, apiKey string) (*AuthenticationObj, error) {
+func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParametersObj) (*AuthenticationObj, error) {
 
-	apiUrl, _ := url.Parse(endpointUrl)
+	apiUrl, err := url.Parse(authenticationParametersObj.EndpointURL)
+	if err != nil {
+		return nil, err
+	}
 	authenticationObj := &AuthenticationObj{
 		ApiUrl:             *apiUrl,
-		ApiVersion:         apiVersion,
-		HttpClient:         httpClient,
+		ApiVersion:         authenticationParametersObj.APIVersion,
+		HttpClient:         authenticationParametersObj.HTTPClient,
 		clientId:           "",
 		clientSecret:       "",
-		apiKey:             apiKey,
-		ExponentialBackOff: backoffDefinition,
-		log:                logger,
+		apiKey:             authenticationParametersObj.ApiKey,
+		ExponentialBackOff: authenticationParametersObj.BackoffDefinition,
+		log:                authenticationParametersObj.Logger,
 	}
 	authenticationObj.log.Debug("Signing in using API Key")
 	return authenticationObj, nil
