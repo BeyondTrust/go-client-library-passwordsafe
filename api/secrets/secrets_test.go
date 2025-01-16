@@ -37,18 +37,38 @@ type SecretTestConfigStringResponse struct {
 // the default API version 3.0 will be used
 var apiVersion string = "3.1"
 
-func TestSecretGetSecretByPath(t *testing.T) {
+var authParams *authentication.AuthenticationParametersObj
+var zapLogger *logging.ZapLogger
+
+func InitializeGlobalConfig() {
+
 	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	zapLogger = logging.NewZapLogger(logger)
 
 	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	authParams = &authentication.AuthenticationParametersObj{
+		HTTPClient:                 *httpClientObj,
+		BackoffDefinition:          backoffDefinition,
+		EndpointURL:                "https://fake.api.com:443/BeyondTrust/api/public/v3/",
+		APIVersion:                 apiVersion,
+		ClientID:                   "fakeone_a654+9sdf7+8we4f",
+		ClientSecret:               "fakeone_a654+9sdf7+8we4f",
+		ApiKey:                     "",
+		Logger:                     zapLogger,
+		RetryMaxElapsedTimeSeconds: 300,
+	}
+}
+
+func TestSecretGetSecretByPath(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfig{
 		name: "TestSecretGetSecretByPath",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -80,16 +100,10 @@ func TestSecretGetSecretByPath(t *testing.T) {
 }
 
 func TestSecretGetFileSecret(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
+	InitializeGlobalConfig()
 
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfig{
 		name: "TestSecretGetFileSecret",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -115,17 +129,10 @@ func TestSecretGetFileSecret(t *testing.T) {
 }
 
 func TestSecretFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -179,17 +186,10 @@ func TestSecretFlow(t *testing.T) {
 }
 
 func TestSecretFlow_SecretNotFound(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlow_SecretNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -234,17 +234,10 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 }
 
 func TestSecretGetSecret(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretGetSecret",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -273,17 +266,10 @@ func TestSecretGetSecret(t *testing.T) {
 }
 
 func TestSecretGetSecrets(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretGetSecrets",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -312,17 +298,10 @@ func TestSecretGetSecrets(t *testing.T) {
 }
 
 func TestSecretFlowTechnicalErrorFile(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowTechnicalErrorFile",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -373,17 +352,10 @@ func TestSecretFlowTechnicalErrorFile(t *testing.T) {
 }
 
 func TestSecretFlowBusinessErrorFile(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowBusinessErrorFile",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -434,17 +406,10 @@ func TestSecretFlowBusinessErrorFile(t *testing.T) {
 }
 
 func TestSecretFlowLongSecret(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowLongSecret",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -496,17 +461,10 @@ func TestSecretFlowLongSecret(t *testing.T) {
 }
 
 func TestSecretFlowTechnicalErrorCredential(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowTechnicalErrorCredential",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -551,17 +509,10 @@ func TestSecretFlowTechnicalErrorCredential(t *testing.T) {
 }
 
 func TestSecretFlowBusinessErrorCredential(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowBusinessErrorCredential",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -606,17 +557,10 @@ func TestSecretFlowBusinessErrorCredential(t *testing.T) {
 }
 
 func TestSecretFlowBadBody(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFlowBadBody",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -660,17 +604,10 @@ func TestSecretFlowBadBody(t *testing.T) {
 }
 
 func TestSecretCreateTextSecretFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateTextSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -732,17 +669,10 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 }
 
 func TestSecretCreateCredentialSecretFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateCredentialSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -804,17 +734,10 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 }
 
 func TestSecretCreateFileSecretFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateFileSecretFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -876,17 +799,10 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 }
 
 func TestSecretCreateFileSecretFlowError(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateFileSecretFlowError",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -946,17 +862,10 @@ func TestSecretCreateFileSecretFlowError(t *testing.T) {
 }
 
 func TestSecretCreateBadInput(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateBadInput",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1011,17 +920,10 @@ func TestSecretCreateBadInput(t *testing.T) {
 }
 
 func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateSecretFlowFolderNotFound",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1070,17 +972,10 @@ func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
 }
 
 func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretCreateSecretFlowEmptyFolderList",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1129,17 +1024,10 @@ func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
 }
 
 func TestSecretFolderFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFolderFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1186,17 +1074,10 @@ func TestSecretFolderFlow(t *testing.T) {
 }
 
 func TestSecretFolderFlowBadParentFolder(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretFolderFlowBadParentFolder",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1243,17 +1124,10 @@ func TestSecretFolderFlowBadParentFolder(t *testing.T) {
 }
 
 func TestSecretFolderFlowEmptyParentFolder(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
@@ -1276,17 +1150,10 @@ func TestSecretFolderFlowEmptyParentFolder(t *testing.T) {
 }
 
 func TestSecretSafeFlow(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
 
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
+	InitializeGlobalConfig()
 
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
+	var authenticate, _ = authentication.Authenticate(*authParams)
 	testConfig := SecretTestConfigStringResponse{
 		name: "TestSecretSafeFlow",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
