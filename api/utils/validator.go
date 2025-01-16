@@ -36,7 +36,7 @@ type UserInputValidaton struct {
 	ApiKey                 string `validate:"omitempty,min=128,max=263"`
 	ClientId               string `validate:"omitempty,min=36,max=36,required_without=ApiKey"`
 	ClientSecret           string `validate:"omitempty,min=36,max=64,required_without=ApiKey"`
-	ApiVersion             string `validate:"omitempty,min=3,max=10"`
+	ApiVersion             string `validate:"omitempty,min=3,max=3"`
 	ApiUrl                 string `validate:"required,http_url"`
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
 	Separator              string `validate:"required,min=1,max=1"`
