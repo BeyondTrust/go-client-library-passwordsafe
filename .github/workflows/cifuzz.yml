@@ -25,3 +25,4 @@ jobs:
       uses: google/clusterfuzzlite/actions/run_fuzzers@v1
       with:
         fuzz-seconds: 10
+        mode: 'coverage'
