@@ -24,3 +24,4 @@ function compile_fuzzer {
 
 compile_fuzzer github.com/BeyondTrust/go-client-library-passwordsafe/fuzzing/managed_accounts FuzzGetManagedAccount FuzzGetManagedAccount
 compile_fuzzer github.com/BeyondTrust/go-client-library-passwordsafe/fuzzing/secrets FuzzGetSecret FuzzGetSecret
+
