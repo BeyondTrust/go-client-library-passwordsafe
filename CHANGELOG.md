@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.14.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.0...v0.14.1) / 2025-01-17
+
+#### Bug Fixes
+
+* improve authenticate method call parameters in fuzzing test ([#184](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/184))
+
 ### [0.14.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.13.0...v0.14.0) / 2025-01-16
 
 #### Features
