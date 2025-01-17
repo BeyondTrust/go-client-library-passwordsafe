@@ -1,4 +1,4 @@
-name: SonerQube Analysis
+name: SonarQube Analysis
 
 env:
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
