@@ -28,24 +28,6 @@ type AuthenticationObj struct {
 	log                logging.Logger
 }
 
-<<<<<<< HEAD
-// Authenticate is responsible for Auth configuration using Client Id and Client secret.
-// Prerequisites - use input validation methods before using this class.
-func Authenticate(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, clientId string, clientSecret string, logger logging.Logger, retryMaxElapsedTimeSeconds int) (*AuthenticationObj, error) {
-
-	apiUrl, _ := url.Parse(endpointUrl)
-	authenticationObj := &AuthenticationObj{
-		ApiUrl:             *apiUrl,
-		ApiVersion:         apiVersion,
-		HttpClient:         httpClient,
-		clientId:           clientId,
-		clientSecret:       clientSecret,
-		apiKey:             "",
-		ExponentialBackOff: backoffDefinition,
-		log:                logger,
-	}
-
-=======
 type AuthenticationParametersObj struct {
 	HTTPClient                 utils.HttpClientObj
 	BackoffDefinition          *backoff.ExponentialBackOff
@@ -78,27 +60,12 @@ func Authenticate(authenticationParametersObj AuthenticationParametersObj) (*Aut
 		log:                authenticationParametersObj.Logger,
 	}
 
->>>>>>> main
 	authenticationObj.log.Debug("Signing in using Oauth")
 	return authenticationObj, nil
 }
 
 // AuthenticateUsingApiKey is responsible for Auth configuration using API Key.
 // Prerequisites - use input validation methods before using this class.
-<<<<<<< HEAD
-func AuthenticateUsingApiKey(httpClient utils.HttpClientObj, backoffDefinition *backoff.ExponentialBackOff, endpointUrl string, apiVersion string, logger logging.Logger, retryMaxElapsedTimeSeconds int, apiKey string) (*AuthenticationObj, error) {
-
-	apiUrl, _ := url.Parse(endpointUrl)
-	authenticationObj := &AuthenticationObj{
-		ApiUrl:             *apiUrl,
-		ApiVersion:         apiVersion,
-		HttpClient:         httpClient,
-		clientId:           "",
-		clientSecret:       "",
-		apiKey:             apiKey,
-		ExponentialBackOff: backoffDefinition,
-		log:                logger,
-=======
 func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParametersObj) (*AuthenticationObj, error) {
 
 	apiUrl, err := url.Parse(authenticationParametersObj.EndpointURL)
@@ -114,7 +81,6 @@ func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParameter
 		apiKey:             authenticationParametersObj.ApiKey,
 		ExponentialBackOff: authenticationParametersObj.BackoffDefinition,
 		log:                authenticationParametersObj.Logger,
->>>>>>> main
 	}
 	authenticationObj.log.Debug("Signing in using API Key")
 	return authenticationObj, nil

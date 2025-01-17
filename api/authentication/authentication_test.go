@@ -41,16 +41,12 @@ type GetPasswordSafeAuthenticationConfig struct {
 // the default API version 3.0 will be used
 var apiVersion string = "3.1"
 
-<<<<<<< HEAD
-func TestSignOut(t *testing.T) {
-=======
 var authParamsOauth *AuthenticationParametersObj
 var authParamsKey *AuthenticationParametersObj
 var zapLogger *logging.ZapLogger
 
 func InitializeGlobalConfig() {
 
->>>>>>> main
 	logger, _ := zap.NewDevelopment()
 
 	zapLogger = logging.NewZapLogger(logger)
@@ -103,13 +99,9 @@ func TestSignOut(t *testing.T) {
 		response: nil,
 	}
 
-<<<<<<< HEAD
-	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, testConfig.server.URL, apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
-=======
 	var authenticate, _ = Authenticate(*authParamsOauth)
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
->>>>>>> main
 
 	err := authenticate.SignOut()
 	if err != nil {
@@ -121,16 +113,7 @@ func TestSignAppin(t *testing.T) {
 
 	InitializeGlobalConfig()
 
-<<<<<<< HEAD
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
-=======
 	var authenticate, _ = Authenticate(*authParamsOauth)
->>>>>>> main
 	testConfig := UserTestConfig{
 		name: "TestSignAppin",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -157,24 +140,10 @@ func TestSignAppin(t *testing.T) {
 }
 
 func TestSignAppinWithApiKey(t *testing.T) {
-<<<<<<< HEAD
-	logger, _ := zap.NewDevelopment()
-
-	// create a zap logger wrapper
-	zapLogger := logging.NewZapLogger(logger)
-
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = AuthenticateUsingApiKey(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, zapLogger, 300, "fake_api_key_")
-=======
 
 	InitializeGlobalConfig()
 
 	var authenticate, _ = AuthenticateUsingApiKey(*authParamsKey)
->>>>>>> main
 	testConfig := UserTestConfig{
 		name: "TestSignAppinWithApiKey",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -204,16 +173,7 @@ func TestGetToken(t *testing.T) {
 
 	InitializeGlobalConfig()
 
-<<<<<<< HEAD
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
-=======
 	var authenticate, _ = Authenticate(*authParamsOauth)
->>>>>>> main
 	testConfig := GetTokenConfig{
 		name: "TestGetToken",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -248,16 +208,7 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 
 	InitializeGlobalConfig()
 
-<<<<<<< HEAD
-	httpClientObj, _ := utils.GetHttpClient(5, false, "", "", zapLogger)
-
-	backoffDefinition := backoff.NewExponentialBackOff()
-	backoffDefinition.MaxElapsedTime = time.Second
-
-	var authenticate, _ = Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", apiVersion, "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
-=======
 	var authenticate, _ = Authenticate(*authParamsOauth)
->>>>>>> main
 	testConfig := GetPasswordSafeAuthenticationConfig{
 		name: "TestGetPasswordSafeAuthentication",
 		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

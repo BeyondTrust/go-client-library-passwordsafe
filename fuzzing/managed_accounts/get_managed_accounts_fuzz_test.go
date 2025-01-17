@@ -22,13 +22,10 @@ type TestConfig struct {
 	response string
 }
 
-<<<<<<< HEAD
-=======
 // the recommended version is 3.1. If no version is specified,
 // the default API version 3.0 will be used
 var apiVersion string = "3.1"
 
->>>>>>> main
 func FuzzGetManagedAccount(f *testing.F) {
 
 	testConfig := TestConfig{
@@ -90,10 +87,6 @@ func FuzzGetManagedAccount(f *testing.F) {
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.MaxElapsedTime = time.Second
 
-<<<<<<< HEAD
-	// instantiating authenticate obj, injecting httpClient object
-	var authenticate, _ = authentication.Authenticate(*httpClientObj, backoffDefinition, "https://fake.api.com:443/BeyondTrust/api/public/v3/", "fakeone_a654+9sdf7+8we4f", "fakeone_aasd156465sfdef", zapLogger, 300)
-=======
 	authParamsOauth := &authentication.AuthenticationParametersObj{
 		HTTPClient:                 *httpClientObj,
 		BackoffDefinition:          backoffDefinition,
@@ -108,7 +101,6 @@ func FuzzGetManagedAccount(f *testing.F) {
 
 	// instantiating authenticate obj, injecting httpClient object
 	var authenticate, _ = authentication.Authenticate(*authParamsOauth)
->>>>>>> main
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
