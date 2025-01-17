@@ -7,7 +7,12 @@ on:
 jobs:
   validate-pr:
     runs-on: ubuntu-latest
+<<<<<<< HEAD
 
+=======
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'beyondtrust-release-app[bot]' }}
+    
+>>>>>>> main
     steps:
       - name: Check PR Description
         id: validate
