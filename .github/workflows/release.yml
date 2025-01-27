@@ -162,7 +162,7 @@ jobs:
 
       - name: Send artifacts to Jfrog
         run: |
-          jfrog rt u "go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }}
+          jfrog rt u "go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }} --url ${{ env.JFROG_URL }}
 
       - name: Publish Build Information
         run: |
