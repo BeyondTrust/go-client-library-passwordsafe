@@ -68,7 +68,7 @@ jobs:
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
 
       - name: SonarQube Scan on branch
@@ -81,7 +81,7 @@ jobs:
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
 
       - name: SonarQube Quality Gate check
@@ -89,4 +89,4 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@d304d050d930b02a896b0f85935344f023928496 # v1.1.0
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
