@@ -27,7 +27,6 @@ jobs:
         uses: jfrog/setup-jfrog-cli@f748a0599171a192a2668afee8d0497f7c1069df # v4.5.6
         env:
           JF_ACCESS_TOKEN: ${{ secrets.JFROG_TOKEN }}
-          JF_CLI_LOG_LEVEL: DEBUG
 
       - name: Run XRay scan
         uses: jfrog/frogbot@004036218e8600cb17aa29fb975eb1d222c6a595 # v2.21.13
@@ -35,3 +34,4 @@ jobs:
           JF_URL: https://beyondtrust.jfrog.io
           JF_ACCESS_TOKEN: ${{ secrets.JFROG_TOKEN }}
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JF_CLI_LOG_LEVEL: DEBUG
