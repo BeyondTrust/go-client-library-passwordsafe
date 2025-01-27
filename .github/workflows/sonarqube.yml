@@ -1,7 +1,7 @@
 name: SonarQube Analysis
 
 env:
-  SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 on:
   pull_request:
@@ -25,6 +25,7 @@ jobs:
 
       - name: Build library
         run: |
+          go mod tidy
           go build
 
       - name: Run unit tests

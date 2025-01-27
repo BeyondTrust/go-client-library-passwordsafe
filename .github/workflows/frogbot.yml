@@ -25,11 +25,11 @@ jobs:
       - name: Set up JFrog
         uses: jfrog/setup-jfrog-cli@d82fe26823e1f25529250895d5673f65b02af085 # v4.0.1
         env:
-          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+          JF_ENV_1: ${{ secrets.JFROG_TOKEN }}
 
       - name: Run XRay scan
         uses: jfrog/frogbot@004036218e8600cb17aa29fb975eb1d222c6a595 # v2.21.13
         env:
           JF_URL: https://beyondtrust.jfrog.io
-          JF_ACCESS_TOKEN: ${{ secrets.ARTIFACTORY_FROGBOT_TOKEN }}
+          JF_ACCESS_TOKEN: ${{ secrets.JFROG_TOKEN }}
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}

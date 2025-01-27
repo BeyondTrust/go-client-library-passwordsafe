@@ -3,7 +3,7 @@ name: Release
 env:
   JFROG_CLI_BUILD_NAME: ${{ github.event.repository.name }}
   JFROG_SERVER: eng-generic-dev-local
-  SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
 on:
   pull_request:
@@ -58,6 +58,7 @@ jobs:
 
       - name: Build library
         run: |
+          go mod tidy
           go build
 
       - name: Run unit tests
@@ -141,7 +142,7 @@ jobs:
       - name: Jfrog setup
         uses: jfrog/setup-jfrog-cli@d82fe26823e1f25529250895d5673f65b02af085 # v4.0.1
         env:
-          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+          JF_ENV_1: ${{ secrets.JFROG_TOKEN }}
 
       - name: Configure JFrog CLI build number
         run: |
