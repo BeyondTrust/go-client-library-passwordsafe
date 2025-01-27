@@ -144,6 +144,7 @@ jobs:
       - name: Jfrog setup
         uses: jfrog/setup-jfrog-cli@f748a0599171a192a2668afee8d0497f7c1069df # v4.5.6
         env:
+          JF_URL: ${{ vars.JFROG_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JFROG_TOKEN }}
 
       - name: Configure JFrog CLI build number
