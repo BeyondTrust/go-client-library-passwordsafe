@@ -42,6 +42,7 @@ jobs:
 
   sonarqube:
     needs: unit-testing
+    environment: Configure frogbot
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
