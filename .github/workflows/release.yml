@@ -163,7 +163,7 @@ jobs:
 
       - name: Send artifacts to Jfrog
         run: |
-          jf config show
+          jfrog rt ping --server-id ${{ env.JFROG_SERVER }} --url ${{ vars.JFROG_URL }}
           jfrog rt u --url ${{ vars.JFROG_URL }} "go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }} 
 
       - name: Publish Build Information
