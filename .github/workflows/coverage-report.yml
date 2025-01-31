@@ -1,0 +1,45 @@
+name: Code coverage report on PR
+
+on:
+    pull_request:
+      types: [opened, reopened, synchronize]
+    push:
+      branches:
+        - 'main'
+
+permissions:
+  contents: write
+
+jobs:
+  unit_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+        with:
+          fetch-depth: 0
+
+      - name: Run unit tests
+        run: |
+          cd api
+          go test -cover -coverprofile=coverage.txt ./...
+      
+      - name: Save unit tests coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: api/coverage.txt        
+
+  code_coverage:
+    name: "Code coverage report"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: unit_test 
+    permissions:
+        actions:       read  
+        pull-requests: write 
+    steps:
+      - uses: fgrosse/go-coverage-report@v1.2.0
+        with:
+            coverage-artifact-name: "coverage" 
+            coverage-file-name: "coverage.txt"   
