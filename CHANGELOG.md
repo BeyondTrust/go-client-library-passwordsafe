@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.14.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.1...v0.14.2) / 2025-02-03
+
+#### Bug Fixes
+
+* fix wrong spanish error message in validator ([#190](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/190))
+
 ### [0.14.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.0...v0.14.1) / 2025-01-17
 
 #### Bug Fixes
