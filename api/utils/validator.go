@@ -283,8 +283,10 @@ func formatErrorMessage(err validator.FieldError) string {
 		return fmt.Sprintf("The field '%s' must be one of the following values: %s.", err.Field(), err.Param())
 	case "required_without":
 		return fmt.Sprintf("The field '%s' is required when the field '%s' is not provided.", err.Field(), err.Param())
+	case "max":
+		return fmt.Sprintf("Max length '%s' for '%s' field.", err.Param(), err.Field())
 	default:
-		return fmt.Sprintf("Error en el campo '%s': %s.", err.Field(), err.Tag())
+		return fmt.Sprintf("Error in field %s : %s / %s.", err.Field(), err.Tag(), err.Param())
 	}
 }
 
