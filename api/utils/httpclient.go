@@ -149,8 +149,11 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 	resp, err := client.HttpClient.Do(req)
 	if err != nil {
-		client.log.Error(fmt.Sprintf("%v %v", "Error Making request: ", err.Error()))
-		return nil, resp.StatusCode, err, nil
+		client.log.Debug(fmt.Sprintf("%v %v", "Error Making request: ", err.Error()))
+		if resp != nil {
+			return nil, resp.StatusCode, err, nil
+		}
+		return nil, 0, err, nil
 	}
 
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
