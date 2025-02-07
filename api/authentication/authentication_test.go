@@ -139,6 +139,24 @@ func TestSignAppin(t *testing.T) {
 	}
 }
 
+func TestSignAppinWithWrongAPIURL(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+	testConfig := UserTestConfig{
+		name:     "TestSignAppinWithWrongAPIURL",
+		server:   httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
+		response: &entities.SignApinResponse{},
+	}
+
+	_, err := authenticate.SignAppin("https://fakeUrl.com/BeyondTrust/"+"TestSignAppin", "", "")
+
+	if err.Error() != `Post "https://fakeUrl.com/BeyondTrust/TestSignAppin": dial tcp: lookup fakeUrl.com on 8.8.8.8:53: no such host` {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+}
+
 func TestSignAppinWithApiKey(t *testing.T) {
 
 	InitializeGlobalConfig()

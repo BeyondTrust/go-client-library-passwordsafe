@@ -798,6 +798,49 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 
 }
 
+func TestSecretCreateFileSecretFlowErrorFileContent(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfigStringResponse{
+		name:     "TestSecretCreateFileSecretFlowErrorFileContent",
+		server:   httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
+		response: "Max length '5000000' for 'FileContent' field.",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	// exceeds the max file size value (5MB)
+	n := 5_000_001
+	fileContent := strings.Repeat("A", n)
+
+	secretTextDetails := entities.SecretFileDetails{
+		Title:       "Secret Title",
+		Description: "File Title Description",
+		FileName:    "textfile.txt",
+		FileContent: fileContent,
+		OwnerType:   "User",
+		OwnerId:     1,
+		Owners: []entities.OwnerDetails{
+			{
+				OwnerId: 1,
+				Owner:   "administrator",
+				Email:   "test@beyondtrust.com",
+			},
+		},
+	}
+
+	_, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if err.Error() != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	}
+
+}
+
 func TestSecretCreateFileSecretFlowError(t *testing.T) {
 
 	InitializeGlobalConfig()
