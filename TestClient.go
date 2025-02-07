@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
@@ -244,6 +245,13 @@ func main() {
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Text secret: %v", createdSecret.Title))
 
+	// just for test purposes, file test_secret.txt should not be present in repo.
+	fileContent, err := os.ReadFile("test_secret.txt")
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+
 	objFile := entities.SecretFileDetails{
 		Title:       "FILE_" + uuid.New().String(),
 		Description: "My File Secret Description",
@@ -259,7 +267,7 @@ func main() {
 		},
 		Notes:       "Notes 1",
 		FileName:    "my_secret.txt",
-		FileContent: "my_p4ssword!*2024",
+		FileContent: string(fileContent),
 		Urls: []entities.UrlDetails{
 			{
 				Id:           uuid.New(),

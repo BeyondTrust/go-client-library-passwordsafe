@@ -133,7 +133,7 @@ type SecretFileDetails struct {
 	Owners      []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
 	Notes       string         `json:",omitempty" validate:"omitempty,max=4000"`
 	FileName    string         `json:",omitempty" validate:"required,max=256"`
-	FileContent string         `json:",omitempty" validate:"required,max=256"`
+	FileContent string         `json:",omitempty" validate:"required,max=5000000"`
 	Urls        []UrlDetails   `json:",omitempty" validate:"omitempty"`
 }
 

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -136,6 +137,21 @@ func TestSignAppin(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSignAppinWithWrongAPIURL(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	_, err := authenticate.SignAppin("https://fakeurl.com/BeyondTrust/"+"TestSignAppin", "", "")
+
+	expectedResponse := `Post "https://fakeurl.com/BeyondTrust/TestSignAppin": dial tcp: lookup fakeurl.com`
+
+	if !strings.Contains(err.Error(), expectedResponse) {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expectedResponse)
 	}
 }
 
