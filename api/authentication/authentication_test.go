@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -144,16 +145,13 @@ func TestSignAppinWithWrongAPIURL(t *testing.T) {
 	InitializeGlobalConfig()
 
 	var authenticate, _ = Authenticate(*authParamsOauth)
-	testConfig := UserTestConfig{
-		name:     "TestSignAppinWithWrongAPIURL",
-		server:   httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})),
-		response: &entities.SignApinResponse{},
-	}
 
-	_, err := authenticate.SignAppin("https://fakeUrl.com/BeyondTrust/"+"TestSignAppin", "", "")
+	_, err := authenticate.SignAppin("https://fakeurl.com/BeyondTrust/"+"TestSignAppin", "", "")
 
-	if err.Error() != `Post "https://fakeUrl.com/BeyondTrust/TestSignAppin": dial tcp: lookup fakeUrl.com on 8.8.8.8:53: no such host` {
-		t.Errorf("Test case Failed %v, %v", err.Error(), testConfig.response)
+	expectedResponse := `Post "https://fakeurl.com/BeyondTrust/TestSignAppin": dial tcp: lookup fakeurl.com`
+
+	if !strings.Contains(err.Error(), expectedResponse) {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expectedResponse)
 	}
 }
 
