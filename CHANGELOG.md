@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.14.3](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.2...v0.14.3) / 2025-02-07
+
+#### Bug Fixes
+
+* plugin crashed - with nonexistent API server ([#192](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/192))
+
 ### [0.14.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.1...v0.14.2) / 2025-02-03
 
 #### Bug Fixes
