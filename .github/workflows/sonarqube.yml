@@ -25,6 +25,7 @@ jobs:
 
       - name: Build library
         run: |
+          go mod tidy
           go build
 
       - name: Run unit tests
