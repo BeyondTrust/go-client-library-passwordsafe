@@ -26,11 +26,13 @@ jobs:
           go-version: stable
 
       - name: Go Lint
+        if: always()
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
 
       - name: Check code cognitive complexity
+        if: always()
         run: |
           go install github.com/uudashr/gocognit/cmd/gocognit@latest
           gocognit -ignore "_test|testdata" -over 10 .
