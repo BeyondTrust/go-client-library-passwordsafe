@@ -23,9 +23,16 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: stable
+          go-version: '1.23.6'
 
       - name: Go Lint
+        if: always()
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.60
+          version: latest
+
+      - name: Check code cognitive complexity
+        if: always()
+        run: |
+          go install github.com/uudashr/gocognit/cmd/gocognit@latest
+          gocognit -ignore "_test|testdata" -over 10 .
