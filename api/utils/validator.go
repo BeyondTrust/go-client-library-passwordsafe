@@ -260,16 +260,16 @@ func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (
 	return accountDetails, nil
 }
 
-// ValidateCreateSecretInput responsible for validating secret input.
-func ValidateCreateSecretInput(secretDetails interface{}) (interface{}, error) {
+// ValidateInputs responsible for validating objects Details (WorkGroupDetails, FolderDetails, SecretTextDetails...)
+func ValidateData(objDetails interface{}) error {
 	validate := validator.New()
-	err := validate.Struct(secretDetails)
+	err := validate.Struct(objDetails)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			return secretDetails, errors.New(formatErrorMessage(err))
+			return errors.New(formatErrorMessage(err))
 		}
 	}
-	return secretDetails, nil
+	return nil
 }
 
 // formatErrorMessage responsible for formating errors text.
@@ -288,16 +288,4 @@ func formatErrorMessage(err validator.FieldError) string {
 	default:
 		return fmt.Sprintf("Error in field %s : %s / %s.", err.Field(), err.Tag(), err.Param())
 	}
-}
-
-// ValidateCreateFolderInput responsible for validating folder input.
-func ValidateCreateFolderInput(folderDetails entities.FolderDetails) (entities.FolderDetails, error) {
-	validate := validator.New()
-	err := validate.Struct(folderDetails)
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			return folderDetails, errors.New(formatErrorMessage(err))
-		}
-	}
-	return folderDetails, nil
 }

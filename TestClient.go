@@ -15,6 +15,8 @@ import (
 
 	//"os"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
+
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
@@ -320,6 +322,24 @@ func main() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Safe: %v", createdSafe.Name))
+
+	// instantiating workgroup obj
+	workGroupObj, _ := workgroups.NewWorkGroupObj(*authenticate, zapLogger)
+
+	workGroupDetails := entities.WorkGroupDetails{
+		Name: "WORKGROUP_" + uuid.New().String(),
+	}
+
+	// creating a workgroup.
+	createdWorkGroup, err := workGroupObj.CreateWorkGroupFlow(workGroupDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Workgroup: %v", createdWorkGroup.ID))
 
 	// signing out
 	_ = authenticate.SignOut()
