@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.15.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.3...v0.15.0) / 2025-02-24
+
+#### Features
+
+* add creating Workgroups feature in terraform provider ([#196](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/196))
+
 ### [0.14.3](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.14.2...v0.14.3) / 2025-02-07
 
 #### Bug Fixes
