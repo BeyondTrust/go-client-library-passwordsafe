@@ -39,8 +39,8 @@ type UserInputValidaton struct {
 	ApiVersion             string `validate:"omitempty,min=3,max=3"`
 	ApiUrl                 string `validate:"required,http_url"`
 	ClientTimeOutinSeconds int    `validate:"gte=1,lte=300"`
-	Separator              string `validate:"required,min=1,max=1"`
-	MaxFileSecretSizeBytes int    `validate:"gte=1,lte=5000000"`
+	Separator              string `validate:"omitempty,required,min=1,max=1"`
+	MaxFileSecretSizeBytes int    `validate:"omitempty,gte=1,lte=5000000"`
 }
 
 var validate *validator.Validate
@@ -54,14 +54,6 @@ func ValidateInputs(params ValidationParams) error {
 
 	if *params.RetryMaxElapsedTimeMinutes == 0 {
 		*params.RetryMaxElapsedTimeMinutes = 2
-	}
-
-	if *params.MaxFileSecretSizeBytes == 0 {
-		*params.MaxFileSecretSizeBytes = 4000000
-	}
-
-	if strings.TrimSpace(*params.Separator) == "" {
-		*params.Separator = "/"
 	}
 
 	*params.ApiUrl = strings.TrimSpace(*params.ApiUrl)
@@ -81,8 +73,6 @@ func ValidateInputs(params ValidationParams) error {
 		ApiUrl:                 *params.ApiUrl,
 		ApiVersion:             params.ApiVersion,
 		ClientTimeOutinSeconds: params.ClientTimeOutInSeconds,
-		Separator:              *params.Separator,
-		MaxFileSecretSizeBytes: *params.MaxFileSecretSizeBytes,
 	}
 
 	if !params.VerifyCa {
@@ -92,6 +82,12 @@ func ValidateInputs(params ValidationParams) error {
 	err = validate.Struct(userInput)
 	if err != nil {
 		params.Logger.Error(err.Error())
+
+		// format error messages.
+		for _, err := range err.(validator.ValidationErrors) {
+			return errors.New(formatErrorMessage(err))
+		}
+
 		return err
 	}
 
@@ -129,7 +125,7 @@ func ValidateInputs(params ValidationParams) error {
 
 	}
 
-	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, Separator=%v, VerifyCa=%v, MaxFileSecretSizeBytes=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, userInput.Separator, params.VerifyCa, userInput.MaxFileSecretSizeBytes, params.Certificate != "")
+	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, VerifyCa=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, params.VerifyCa, params.Certificate != "")
 	params.Logger.Debug(message)
 	return nil
 }
@@ -260,16 +256,16 @@ func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (
 	return accountDetails, nil
 }
 
-// ValidateCreateSecretInput responsible for validating secret input.
-func ValidateCreateSecretInput(secretDetails interface{}) (interface{}, error) {
+// ValidateInputs responsible for validating objects Details (WorkGroupDetails, FolderDetails, SecretTextDetails...)
+func ValidateData(objDetails interface{}) error {
 	validate := validator.New()
-	err := validate.Struct(secretDetails)
+	err := validate.Struct(objDetails)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			return secretDetails, errors.New(formatErrorMessage(err))
+			return errors.New(formatErrorMessage(err))
 		}
 	}
-	return secretDetails, nil
+	return nil
 }
 
 // formatErrorMessage responsible for formating errors text.
@@ -288,16 +284,4 @@ func formatErrorMessage(err validator.FieldError) string {
 	default:
 		return fmt.Sprintf("Error in field %s : %s / %s.", err.Field(), err.Tag(), err.Param())
 	}
-}
-
-// ValidateCreateFolderInput responsible for validating folder input.
-func ValidateCreateFolderInput(folderDetails entities.FolderDetails) (entities.FolderDetails, error) {
-	validate := validator.New()
-	err := validate.Struct(folderDetails)
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			return folderDetails, errors.New(formatErrorMessage(err))
-		}
-	}
-	return folderDetails, nil
 }

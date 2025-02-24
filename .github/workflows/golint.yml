@@ -1,4 +1,4 @@
-name: Go Lint
+name: Go Lint and Code Complexity
 
 on:
   pull_request:

@@ -105,8 +105,20 @@ func callPasswordSafeAPI() {
 	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeMinutes) * time.Second
 	backoffDefinition.RandomizationFactor = 0.5
 
+	authParams := &authentication.AuthenticationParametersObj{
+		HTTPClient:                 *httpClientObj,
+		BackoffDefinition:          backoffDefinition,
+		EndpointURL:                apiUrl,
+		APIVersion:                 "3.1",
+		ClientID:                   clientId,
+		ClientSecret:               clientSecret,
+		ApiKey:                     "",
+		Logger:                     zapLogger,
+		RetryMaxElapsedTimeSeconds: retryMaxElapsedTimeMinutes,
+	}
+
 	// instantiating authenticate obj, injecting httpClient object
-	authenticate, _ := authentication.Authenticate(*httpClientObj, backoffDefinition, apiUrl, clientId, clientSecret, zapLogger, retryMaxElapsedTimeMinutes)
+	authenticate, _ := authentication.Authenticate(*authParams)
 
 	// authenticating
 	_, err := authenticate.GetPasswordSafeAuthentication()
