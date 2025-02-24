@@ -62,19 +62,18 @@ func main() {
 		ApiUrl:                     &apiUrl,
 		ApiVersion:                 apiVersion,
 		ClientTimeOutInSeconds:     clientTimeOutInSeconds,
-		Separator:                  &separator,
 		VerifyCa:                   verifyCa,
 		Logger:                     zapLogger,
 		Certificate:                certificate,
 		CertificateKey:             certificateKey,
 		RetryMaxElapsedTimeMinutes: &retryMaxElapsedTimeMinutes,
-		MaxFileSecretSizeBytes:     &maxFileSecretSizeBytes,
 	}
 
 	// validate inputs
 	errorsInInputs := utils.ValidateInputs(params)
 
 	if errorsInInputs != nil {
+		zapLogger.Error(fmt.Sprintf("Error: %v", errorsInInputs))
 		return
 	}
 
@@ -94,7 +93,7 @@ func main() {
 	}
 
 	// instantiating authenticate obj
-	authenticate, _ := authentication.AuthenticateUsingApiKey(authParams)
+	authenticate, _ := authentication.Authenticate(authParams)
 
 	// authenticating
 	userObject, err := authenticate.GetPasswordSafeAuthentication()
