@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -120,8 +121,18 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.ManagedAccountGet,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedAccountGet", "", "", "application/json")
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		if technicalError != nil {
 			return technicalError
 		}
@@ -167,8 +178,18 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "POST",
+		Body:        *b,
+		Method:      constants.ManagedAccountCreateRequest,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateRequest", "", "", "application/json")
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -203,8 +224,18 @@ func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId st
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.CredentialByRequestId,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "CredentialByRequestId", "", "", "application/json")
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -239,8 +270,18 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "PUT",
+		Body:        *b,
+		Method:      constants.ManagedAccountRequestCheckIn,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "PUT", *b, "ManagedAccountRequestCheckIn", "", "", "application/json")
+		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -314,8 +355,18 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "POST",
+		Body:        *b,
+		Method:      constants.ManagedAccountCreateManagedAccount,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "POST", *b, "ManagedAccountCreateManagedAccount", "", "", "application/json")
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -356,8 +407,18 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.ManagedSystemGetSystems,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "ManagedSystemGetSystems", "", "", "application/json")
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		if technicalError != nil {
 			return technicalError
 		}

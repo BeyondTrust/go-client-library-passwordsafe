@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -126,8 +127,18 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.SecretGetSecretByPath,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetSecretByPath", "", "", "application/json")
+		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -183,8 +194,18 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.SecretGetFileSecret,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFileSecret", "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -213,7 +234,7 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 	var folder *entities.FolderResponse
 	var createResponse entities.CreateSecretResponse
 
-	secretDetails, err := utils.ValidateCreateSecretInput(secretDetails)
+	err := utils.ValidateData(secretDetails)
 
 	if err != nil {
 		return createResponse, err
@@ -319,8 +340,18 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         SecretCreateSecretUrl,
+		HttpMethod:  "POST",
+		Body:        *b,
+		Method:      constants.SecretCreateSecret,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecretUrl, "POST", *b, "SecretCreateSecret", "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -372,8 +403,18 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 
 	var foldersObj []entities.FolderResponse
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.SecretGetFolders,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(url, "GET", bytes.Buffer{}, "SecretGetFolders", "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -446,7 +487,7 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 		folderDetails.ParentId = folderId
 	}
 
-	folderDetails, err = utils.ValidateCreateFolderInput(folderDetails)
+	err = utils.ValidateData(folderDetails)
 
 	if err != nil {
 		return createFolderesponse, err
@@ -469,11 +510,11 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
 
 	path := "secrets-safe/folders/"
-	function := "SecretCreateSecret"
+	method := constants.SecretCreateFolder
 
 	if folderDetails.FolderType == "SAFE" {
 		path = "secrets-safe/safes/"
-		function = "SecretCreateSafes"
+		method = constants.SecretCreateSafes
 	}
 
 	folderCredentialDetailsJson, err := json.Marshal(folderDetails)
@@ -503,8 +544,18 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	var technicalError error
 	var businessError error
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         SecretCreateSecretUrl,
+		HttpMethod:  "POST",
+		Body:        *b,
+		Method:      method,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(SecretCreateSecretUrl, "POST", *b, function, "", "", "application/json")
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 

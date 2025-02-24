@@ -3,6 +3,8 @@
 package entities
 
 import (
+	"bytes"
+
 	"github.com/google/uuid"
 )
 
@@ -164,4 +166,25 @@ type FolderDetails struct {
 	ParentId    uuid.UUID `json:",omitempty" validate:"required_if=FolderType FOLDER"`
 	UserGroupId int       `json:",omitempty" validate:"omitempty"`
 	FolderType  string    `json:",omitempty" validate:"required"`
+}
+
+type CallSecretSafeAPIObj struct {
+	Url         string
+	HttpMethod  string
+	Body        bytes.Buffer
+	Method      string
+	AccessToken string
+	ApiKey      string
+	ContentType string
+}
+
+type WorkGroupDetails struct {
+	OrganizationID string `json:",omitempty" validate:"omitempty"`
+	Name           string `json:",omitempty" validate:"required,max=256"`
+}
+
+type WorkGroupResponse struct {
+	ID             int    `json:"id"`
+	OrganizationID string `json:"organizationId"`
+	Name           string `json:"name"`
 }
