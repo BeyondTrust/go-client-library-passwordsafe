@@ -132,7 +132,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.SecretGetSecretByPath,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -199,7 +199,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.SecretGetFileSecret,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -345,7 +345,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 		HttpMethod:  "POST",
 		Body:        *b,
 		Method:      constants.SecretCreateSecret,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -408,7 +408,7 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.SecretGetFolders,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -549,7 +549,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 		HttpMethod:  "POST",
 		Body:        *b,
 		Method:      method,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}

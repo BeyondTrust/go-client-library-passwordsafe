@@ -15,6 +15,8 @@ const (
 	ManagedAccountCreateManagedAccount = "ManagedAccountCreateManagedAccount"
 	ManagedSystemGetSystems            = "ManagedSystemGetSystems"
 
+	CreateMultiPartRequest = "CreateMultiPartRequest"
+
 	SignOut   = "SignOut"
 	GetToken  = "GetToken"
 	SignAppin = "SignAppin"

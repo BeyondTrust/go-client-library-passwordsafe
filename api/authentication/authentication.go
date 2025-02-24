@@ -126,7 +126,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		HttpMethod:  "POST",
 		Body:        buffer,
 		Method:      constants.GetToken,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -181,7 +181,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		HttpMethod:  "POST",
 		Body:        bytes.Buffer{},
 		Method:      constants.SignAppin,
-		AccesToken:  accessToken,
+		AccessToken: accessToken,
 		ApiKey:      apiKey,
 		ContentType: "application/json",
 	}
@@ -236,7 +236,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 		HttpMethod:  "POST",
 		Body:        bytes.Buffer{},
 		Method:      constants.SignOut,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}

@@ -82,7 +82,7 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 		HttpMethod:  "POST",
 		Body:        *b,
 		Method:      method,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}

@@ -173,7 +173,7 @@ type CallSecretSafeAPIObj struct {
 	HttpMethod  string
 	Body        bytes.Buffer
 	Method      string
-	AccesToken  string
+	AccessToken string
 	ApiKey      string
 	ContentType string
 }

@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"golang.org/x/crypto/pkcs12"
@@ -117,14 +118,14 @@ func GetPFXContent(clientCertificatePath string, clientCertificateName string, c
 }
 
 // CallSecretSafeAPI prepares http call
-//func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accesToken string, apiKey string, contentType string) (io.ReadCloser, int, error, error) {
+//func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accessToken string, apiKey string, contentType string) (io.ReadCloser, int, error, error) {
 
 func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.CallSecretSafeAPIObj) (io.ReadCloser, int, error, error) {
 
 	response, scode, technicalError, businessError := client.HttpRequest(callSecretSafeAPIObj.Url,
 		callSecretSafeAPIObj.HttpMethod,
 		callSecretSafeAPIObj.Body,
-		callSecretSafeAPIObj.AccesToken,
+		callSecretSafeAPIObj.AccessToken,
 		callSecretSafeAPIObj.ApiKey,
 		callSecretSafeAPIObj.ContentType,
 	)
@@ -142,7 +143,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 }
 
 // HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accesToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
 
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
@@ -150,8 +151,8 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 	}
 	req.Header = http.Header{"Content-Type": []string{contentType}}
 
-	if accesToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accesToken)
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 
 	if apiKey != "" {
@@ -218,8 +219,8 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 		Url:         url,
 		HttpMethod:  "POST",
 		Body:        requestBody,
-		Method:      "CreateMultiPartRequest",
-		AccesToken:  "",
+		Method:      constants.CreateMultiPartRequest,
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: multipartWriter.FormDataContentType(),
 	}

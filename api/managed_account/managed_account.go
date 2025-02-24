@@ -126,7 +126,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.ManagedAccountGet,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -183,7 +183,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 		HttpMethod:  "POST",
 		Body:        *b,
 		Method:      constants.ManagedAccountCreateRequest,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -229,7 +229,7 @@ func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId st
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.CredentialByRequestId,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -275,7 +275,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 		HttpMethod:  "PUT",
 		Body:        *b,
 		Method:      constants.ManagedAccountRequestCheckIn,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -360,7 +360,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 		HttpMethod:  "POST",
 		Body:        *b,
 		Method:      constants.ManagedAccountCreateManagedAccount,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
@@ -412,7 +412,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.ManagedSystemGetSystems,
-		AccesToken:  "",
+		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
 	}
