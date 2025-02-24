@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -120,8 +121,18 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 	var buffer bytes.Buffer
 	buffer.WriteString(params.Encode())
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         endpointUrl,
+		HttpMethod:  "POST",
+		Body:        buffer,
+		Method:      constants.GetToken,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", buffer, "GetToken", "", "", "application/json")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
@@ -165,8 +176,18 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	var businessError error
 	var scode int
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         endpointUrl,
+		HttpMethod:  "POST",
+		Body:        bytes.Buffer{},
+		Method:      constants.SignAppin,
+		AccessToken: accessToken,
+		ApiKey:      apiKey,
+		ContentType: "application/json",
+	}
+
 	err := backoff.Retry(func() error {
-		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(endpointUrl, "POST", bytes.Buffer{}, "SignAppin", accessToken, apiKey, "application/json")
+		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		if scode == 0 {
 			return nil
 		}
@@ -210,8 +231,18 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	var businessError error
 	var body io.ReadCloser
 
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(),
+		HttpMethod:  "POST",
+		Body:        bytes.Buffer{},
+		Method:      constants.SignOut,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+	}
+
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(), "POST", bytes.Buffer{}, "SignOut", "", "", "application/json")
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
