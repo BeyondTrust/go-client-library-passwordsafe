@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -23,7 +24,7 @@ import (
 type UserTestConfig struct {
 	name     string
 	server   *httptest.Server
-	response *entities.SignApinResponse
+	response *entities.SignAppinResponse
 }
 
 type GetTokenConfig struct {
@@ -35,12 +36,12 @@ type GetTokenConfig struct {
 type GetPasswordSafeAuthenticationConfig struct {
 	name     string
 	server   *httptest.Server
-	response *entities.SignApinResponse
+	response *entities.SignAppinResponse
 }
 
 // the recommended version is 3.1. If no version is specified,
 // the default API version 3.0 will be used
-var apiVersion string = "3.1"
+var apiVersion string = constants.ApiVersion31
 
 var authParamsOauth *AuthenticationParametersObj
 var authParamsKey *AuthenticationParametersObj
@@ -61,10 +62,10 @@ func InitializeGlobalConfig() {
 	authParamsOauth = &AuthenticationParametersObj{
 		HTTPClient:                 *httpClientObj,
 		BackoffDefinition:          backoffDefinition,
-		EndpointURL:                "https://fake.api.com:443/BeyondTrust/api/public/v3/",
+		EndpointURL:                constants.FakeApiUrl,
 		APIVersion:                 apiVersion,
-		ClientID:                   "fakeone_a654+9sdf7+8we4f",
-		ClientSecret:               "fakeone_a654+9sdf7+8we4f",
+		ClientID:                   constants.FakeClientId,
+		ClientSecret:               constants.FakeClientSecret,
 		ApiKey:                     "",
 		Logger:                     zapLogger,
 		RetryMaxElapsedTimeSeconds: 300,
@@ -74,7 +75,7 @@ func InitializeGlobalConfig() {
 	authParamsKey = &AuthenticationParametersObj{
 		HTTPClient:                 *httpClientObj,
 		BackoffDefinition:          backoffDefinition,
-		EndpointURL:                "https://fake.api.com:443/BeyondTrust/api/public/v3/",
+		EndpointURL:                constants.FakeApiUrl,
 		APIVersion:                 apiVersion,
 		ClientID:                   "",
 		ClientSecret:               "",
@@ -123,7 +124,7 @@ func TestSignAppin(t *testing.T) {
 				t.Error("Test case Failed")
 			}
 		})),
-		response: &entities.SignApinResponse{
+		response: &entities.SignAppinResponse{
 			UserId:       1,
 			EmailAddress: "test@beyondtrust.com",
 		},
@@ -168,7 +169,7 @@ func TestSignAppinWithApiKey(t *testing.T) {
 				t.Error("Test case Failed")
 			}
 		})),
-		response: &entities.SignApinResponse{
+		response: &entities.SignAppinResponse{
 			UserId:       1,
 			EmailAddress: "test@beyondtrust.com",
 		},
@@ -248,7 +249,7 @@ func TestGetPasswordSafeAuthentication(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: &entities.SignApinResponse{
+		response: &entities.SignAppinResponse{
 			UserId:       1,
 			EmailAddress: "test@beyondtrust.com",
 		},

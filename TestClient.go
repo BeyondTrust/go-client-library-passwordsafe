@@ -11,11 +11,12 @@ import (
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
 	"github.com/google/uuid"
 
 	//"os"
 
-	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/assets"
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
@@ -339,6 +340,42 @@ func main() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Workgroup: %v", createdWorkGroup.ID))
+
+	// instantiating asset obj
+	assetObj, _ := assets.NewAssetObj(*authenticate, zapLogger)
+
+	assetDetails := entities.AssetDetails{
+		IPAddress:       "192.16.1.1",
+		AssetName:       "ASSET_" + uuid.New().String(),
+		DnsName:         "workstation01.local",
+		DomainName:      "example.com",
+		MacAddress:      "00:1A:2B:3C:4D:5E",
+		AssetType:       "Laptop",
+		Description:     "Asset Description",
+		OperatingSystem: "Windows 11",
+	}
+
+	// creating an asset by workgroup id
+	createdAsset, err := assetObj.CreateAssetByworkgroupIDFlow("6", assetDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Asset by workgroup id: %v", createdAsset.AssetName))
+
+	// creating an asset by workgroup name
+	createdAsset, err = assetObj.CreateAssetByWorkGroupNameFlow("test", assetDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Asset by workgroup name: %v", createdAsset.AssetName))
 
 	// signing out
 	_ = authenticate.SignOut()
