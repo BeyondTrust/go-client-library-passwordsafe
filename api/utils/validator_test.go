@@ -42,7 +42,7 @@ func TestValidateDataBadIP(t *testing.T) {
 		DomainName:      "example.com",
 		MacAddress:      "00:1A:2B:3C:4D:5E",
 		AssetType:       "Laptop",
-		Description:     "Equipo de desarrollo principal",
+		Description:     "Asset Description",
 		OperatingSystem: "Windows 11",
 	}
 
