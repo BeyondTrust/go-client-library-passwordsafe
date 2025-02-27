@@ -1,3 +1,5 @@
+// Copyright 2025 BeyondTrust. All rights reserved.
+// Package constants.
 package constants
 
 const (
@@ -22,4 +24,6 @@ const (
 	SignAppin = "SignAppin"
 
 	CreateWorkGroup = "CreateWorkGroup"
+
+	CreateAsset = "CreateAsset"
 )

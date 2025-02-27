@@ -88,20 +88,20 @@ func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParameter
 }
 
 // GetPasswordSafeAuthentication is responsible for getting a token and signing in.
-func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignApinResponse, error) {
+func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignAppinResponse, error) {
 	var accessToken string = ""
 	var err error
 
 	if authenticationObj.clientId != "" && authenticationObj.clientSecret != "" {
 		accessToken, err = authenticationObj.GetToken(authenticationObj.ApiUrl.JoinPath("Auth/connect/token").String(), authenticationObj.clientId, authenticationObj.clientSecret)
 		if err != nil {
-			return entities.SignApinResponse{}, err
+			return entities.SignAppinResponse{}, err
 		}
 	}
 
 	signApinResponse, err := authenticationObj.SignAppin(authenticationObj.ApiUrl.JoinPath("Auth/SignAppIn").String(), accessToken, authenticationObj.apiKey)
 	if err != nil {
-		return entities.SignApinResponse{}, err
+		return entities.SignAppinResponse{}, err
 	}
 	return signApinResponse, nil
 }
@@ -168,9 +168,9 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 }
 
 // SignAppin is responsible for creating a PS API session.
-func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string, apiKey string) (entities.SignApinResponse, error) {
+func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string, apiKey string) (entities.SignAppinResponse, error) {
 
-	var userObject entities.SignApinResponse
+	var userObject entities.SignAppinResponse
 	var body io.ReadCloser
 	var technicalError error
 	var businessError error
@@ -195,28 +195,28 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	}, authenticationObj.ExponentialBackOff)
 
 	if err != nil {
-		return entities.SignApinResponse{}, err
+		return entities.SignAppinResponse{}, err
 	}
 
 	if scode == 0 {
-		return entities.SignApinResponse{}, technicalError
+		return entities.SignAppinResponse{}, technicalError
 	}
 
 	if businessError != nil {
-		return entities.SignApinResponse{}, businessError
+		return entities.SignAppinResponse{}, businessError
 	}
 
 	defer body.Close()
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
-		return entities.SignApinResponse{}, err
+		return entities.SignAppinResponse{}, err
 	}
 
 	err = json.Unmarshal(bodyBytes, &userObject)
 
 	if err != nil {
 		authenticationObj.log.Error(err.Error())
-		return entities.SignApinResponse{}, err
+		return entities.SignAppinResponse{}, err
 	}
 	authenticationObj.log.Info("Successfully Signed App In")
 	return userObject, nil

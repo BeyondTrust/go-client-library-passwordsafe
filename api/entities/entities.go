@@ -4,12 +4,13 @@ package entities
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-// SignApinResponse responsbile for API sign in information.
-type SignApinResponse struct {
+// SignAppinResponse responsbile for API sign in information.
+type SignAppinResponse struct {
 	UserId       int    `json:"UserId"`
 	EmailAddress string `json:"EmailAddress"`
 	UserName     string `json:"UserName"`
@@ -187,4 +188,29 @@ type WorkGroupResponse struct {
 	ID             int    `json:"id"`
 	OrganizationID string `json:"organizationId"`
 	Name           string `json:"name"`
+}
+
+type AssetDetails struct {
+	IPAddress       string `json:",omitempty" validate:"required,ip,max=46"`
+	AssetName       string `json:",omitempty" validate:"omitempty,max=128"`
+	DnsName         string `json:",omitempty" validate:"omitempty,max=255"`
+	DomainName      string `json:",omitempty" validate:"omitempty,max=64"`
+	MacAddress      string `json:",omitempty" validate:"omitempty,max=128"`
+	AssetType       string `json:",omitempty" validate:"omitempty,max=64"`
+	Description     string `json:",omitempty" validate:"omitempty,max=255"`
+	OperatingSystem string `json:",omitempty" validate:"omitempty,max=255"`
+}
+
+type AssetResponse struct {
+	WorkgroupID     int       `json:"WorkgroupID"`
+	AssetID         int       `json:"AssetID"`
+	AssetName       string    `json:"AssetName"`
+	AssetType       string    `json:"AssetType"`
+	DnsName         string    `json:"DnsName"`
+	DomainName      string    `json:"DomainName"`
+	IPAddress       string    `json:"IPAddress"`
+	OperatingSystem string    `json:"OperatingSystem"`
+	CreateDate      time.Time `json:"CreateDate"`
+	LastUpdateDate  time.Time `json:"LastUpdateDate"`
+	Description     string    `json:"Description"`
 }
