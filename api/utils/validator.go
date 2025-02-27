@@ -85,7 +85,7 @@ func ValidateInputs(params ValidationParams) error {
 
 		// format error messages.
 		for _, err := range err.(validator.ValidationErrors) {
-			return errors.New(formatErrorMessage(err))
+			return errors.New(FormatErrorMessage(err))
 		}
 
 		return err
@@ -229,7 +229,7 @@ func ValidateCreateManagedAccountInput(accountDetails entities.AccountDetails) (
 
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			return accountDetails, errors.New(formatErrorMessage(err))
+			return accountDetails, errors.New(FormatErrorMessage(err))
 		}
 	}
 
@@ -262,14 +262,14 @@ func ValidateData(objDetails interface{}) error {
 	err := validate.Struct(objDetails)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			return errors.New(formatErrorMessage(err))
+			return errors.New(FormatErrorMessage(err))
 		}
 	}
 	return nil
 }
 
-// formatErrorMessage responsible for formating errors text.
-func formatErrorMessage(err validator.FieldError) string {
+// FormatErrorMessage responsible for formating errors text.
+func FormatErrorMessage(err validator.FieldError) string {
 	switch err.Tag() {
 	case "required":
 		return fmt.Sprintf("The field '%s' is required.", err.Field())
@@ -281,6 +281,8 @@ func formatErrorMessage(err validator.FieldError) string {
 		return fmt.Sprintf("The field '%s' is required when the field '%s' is not provided.", err.Field(), err.Param())
 	case "max":
 		return fmt.Sprintf("Max length '%s' for '%s' field.", err.Param(), err.Field())
+	case "ip":
+		return fmt.Sprintf("Bad IP value: '%s' in '%s' field", err.Value(), err.Field())
 	default:
 		return fmt.Sprintf("Error in field %s : %s / %s.", err.Field(), err.Tag(), err.Param())
 	}

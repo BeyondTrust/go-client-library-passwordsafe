@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -25,7 +26,7 @@ type TestConfig struct {
 
 // the recommended version is 3.1. If no version is specified,
 // the default API version 3.0 will be used
-var apiVersion string = "3.1"
+var apiVersion string = constants.ApiVersion31
 
 func FuzzGetSecret(f *testing.F) {
 
@@ -79,7 +80,7 @@ func FuzzGetSecret(f *testing.F) {
 	authParamsOauth := &authentication.AuthenticationParametersObj{
 		HTTPClient:                 *httpClientObj,
 		BackoffDefinition:          backoffDefinition,
-		EndpointURL:                "https://fake.api.com:443/BeyondTrust/api/public/v3/",
+		EndpointURL:                constants.FakeApiUrl,
 		APIVersion:                 apiVersion,
 		ClientID:                   "fakeone_a654+9sdf7+8we4f",
 		ClientSecret:               "fakeone_a654+9sdf7+8we4f",

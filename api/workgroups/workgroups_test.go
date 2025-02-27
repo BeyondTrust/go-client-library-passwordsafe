@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
@@ -21,7 +22,7 @@ import (
 
 var authParams *authentication.AuthenticationParametersObj
 var zapLogger *logging.ZapLogger
-var apiVersion string = "3.1"
+var apiVersion string = constants.ApiVersion31
 
 const workGroupName = "WORKGROUP_NAME"
 
@@ -39,7 +40,7 @@ func InitializeGlobalConfig() {
 	authParams = &authentication.AuthenticationParametersObj{
 		HTTPClient:                 *httpClientObj,
 		BackoffDefinition:          backoffDefinition,
-		EndpointURL:                "https://fake.api.com:443/BeyondTrust/api/public/v3/",
+		EndpointURL:                constants.FakeApiUrl,
 		APIVersion:                 apiVersion,
 		ClientID:                   "fakeone_a654+9sdf7+8we4f",
 		ClientSecret:               "fakeone_a654+9sdf7+8we4f",
