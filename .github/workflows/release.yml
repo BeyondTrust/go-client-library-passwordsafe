@@ -13,12 +13,15 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+      id-token: write
     outputs:
       full_version: ${{ steps.version.outputs.full_version }}
     steps:
@@ -39,7 +42,7 @@ jobs:
           elif [[ $commit_message == "fix:"* ]]; then
             echo "INCREMENT=patch" >> "$GITHUB_OUTPUT"
           fi
-      
+
       - name: Get next version numbers
         uses: reecetech/version-increment@2024.10.1
         id: version_number
@@ -82,6 +85,8 @@ jobs:
   sonarqube:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -132,6 +137,8 @@ jobs:
   x-ray:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -142,11 +149,13 @@ jobs:
       - name: Jfrog setup
         uses: jfrog/setup-jfrog-cli@d82fe26823e1f25529250895d5673f65b02af085 # v4.0.1
         env:
-          JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+          JF_URL: https://beyondtrust.jfrog.io
+        with:
+          oidc-provider-name: go-client-library-passwordsafe
 
       - name: Configure JFrog CLI build number
         run: |
-          echo "JFROG_CLI_BUILD_NUMBER=${{ needs.build.outputs.full_version }}" >> $GITHUB_ENV 
+          echo "JFROG_CLI_BUILD_NUMBER=${{ needs.build.outputs.full_version }}" >> $GITHUB_ENV
 
       - name: Setting up artifactory
         run: |
