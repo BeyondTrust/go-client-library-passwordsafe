@@ -185,9 +185,9 @@ type WorkGroupDetails struct {
 }
 
 type WorkGroupResponse struct {
-	ID             int    `json:"id"`
-	OrganizationID string `json:"organizationId"`
-	Name           string `json:"name"`
+	ID             int
+	OrganizationID string
+	Name           string
 }
 
 type AssetDetails struct {
@@ -202,15 +202,35 @@ type AssetDetails struct {
 }
 
 type AssetResponse struct {
-	WorkgroupID     int       `json:"WorkgroupID"`
-	AssetID         int       `json:"AssetID"`
-	AssetName       string    `json:"AssetName"`
-	AssetType       string    `json:"AssetType"`
-	DnsName         string    `json:"DnsName"`
-	DomainName      string    `json:"DomainName"`
-	IPAddress       string    `json:"IPAddress"`
-	OperatingSystem string    `json:"OperatingSystem"`
-	CreateDate      time.Time `json:"CreateDate"`
-	LastUpdateDate  time.Time `json:"LastUpdateDate"`
-	Description     string    `json:"Description"`
+	WorkgroupID     int
+	AssetID         int
+	AssetName       string
+	AssetType       string
+	DnsName         string
+	DomainName      string
+	IPAddress       string
+	OperatingSystem string
+	CreateDate      time.Time
+	LastUpdateDate  time.Time
+	Description     string
+}
+
+type DatabaseDetails struct {
+	PlatformID        int    `json:",omitempty" validate:"required"`
+	InstanceName      string `json:",omitempty" validate:"required,max=100"`
+	IsDefaultInstance bool   `json:",omitempty" `
+	Port              int    `json:",omitempty" validate:"required,min=1,max=65535"`
+	Version           string `json:",omitempty" validate:"omitempty,max=20"`
+	Template          string `json:",omitempty" validate:"omitempty"`
+}
+
+type DatabaseResponse struct {
+	AssetID           int
+	DatabaseID        int
+	PlatformID        int
+	InstanceName      string
+	IsDefaultInstance bool
+	Port              int
+	Version           string
+	Template          string
 }
