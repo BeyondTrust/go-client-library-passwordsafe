@@ -26,4 +26,6 @@ const (
 	CreateWorkGroup = "CreateWorkGroup"
 
 	CreateAsset = "CreateAsset"
+
+	CreateDatabase = "CreateDatabase"
 )
