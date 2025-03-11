@@ -38,37 +38,37 @@ func FuzzGetManagedAccount(f *testing.F) {
 			case "/Auth/SignAppin":
 				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/Auth/Signout":
 				_, err := w.Write([]byte(``))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/ManagedAccounts":
 				_, err := w.Write([]byte(`{"SystemId":1,"AccountId":10}`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/Requests":
 				_, err := w.Write([]byte(`124`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/Credentials/124":
 				_, err := w.Write([]byte(`"fake_credential"`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/Requests/124/checkin":
 				_, err := w.Write([]byte(``))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			default:

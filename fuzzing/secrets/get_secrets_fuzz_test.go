@@ -39,25 +39,25 @@ func FuzzGetSecret(f *testing.F) {
 			case "/Auth/SignAppin":
 				_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"Felipe"}`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/Auth/Signout":
 				_, err := w.Write([]byte(``))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/secrets-safe/secrets":
 				_, err := w.Write([]byte(`[{"SecretType": "TEXT", "Password": "credential_in_sub_3_password","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "credential_in_sub_3"}]`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			case "/secrets-safe/secrets/9152f5b6-07d6-4955-175a-08db047219ce/file/download":
 				_, err := w.Write([]byte(`fake_password`))
 				if err != nil {
-					f.Error("Test case Failed")
+					f.Error(err.Error())
 				}
 
 			default:
