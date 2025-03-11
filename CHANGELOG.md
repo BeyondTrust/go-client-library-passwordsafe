@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.17.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.16.0...v0.17.0) / 2025-03-11
+
+#### Features
+
+* add creating Databases feature in terraform provider ([#201](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/201))
+
 ### [0.16.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.15.0...v0.16.0) / 2025-02-27
 
 #### Features
