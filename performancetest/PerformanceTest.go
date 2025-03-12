@@ -65,12 +65,14 @@ func callPasswordSafeAPI() {
 	zapLogger := logging.NewZapLogger(logger)
 
 	zapLogger.Info("Starting Performance Test execution")
-	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
-	clientId := ""
-	clientSecret := ""
+
+	apiUrl := os.Getenv("PASSWORD_SAFE_API_URL")
+	clientId := os.Getenv("PASSWORD_SAFE_CLIENT_ID")
+	clientSecret := os.Getenv("PASSWORD_SAFE_CLIENT_SECRET")
+	certificate := os.Getenv("PASSWORD_SAFE_CERTIFICATE")
+	certificateKey := os.Getenv("PASSWORD_SAFE_CERTIFICATE_KEY")
+
 	separator := "/"
-	certificate := ""
-	certificateKey := ""
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 15

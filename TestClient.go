@@ -5,19 +5,17 @@ import (
 	"os"
 	"time"
 
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/assets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/databases"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
-	"github.com/google/uuid"
-
-	//"os"
-
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
-
 	backoff "github.com/cenkalti/backoff/v4"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -31,17 +29,16 @@ func main() {
 	// create a zap logger wrapper
 	zapLogger := logging.NewZapLogger(logger)
 
-	apiUrl := "https://example.com:443/BeyondTrust/api/public/v3/"
-
 	// the recommended version is 3.1. If no version is specified,
 	// the default API version 3.0 will be used
 	apiVersion := "3.1"
+	apiUrl := os.Getenv("PASSWORD_SAFE_API_URL")
+	clientId := os.Getenv("PASSWORD_SAFE_CLIENT_ID")
+	clientSecret := os.Getenv("PASSWORD_SAFE_CLIENT_SECRET")
+	certificate := os.Getenv("PASSWORD_SAFE_CERTIFICATE")
+	certificateKey := os.Getenv("PASSWORD_SAFE_CERTIFICATE_KEY")
 
-	clientId := ""
-	clientSecret := ""
 	separator := "/"
-	certificate := ""
-	certificateKey := ""
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
@@ -340,7 +337,73 @@ func main() {
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Workgroup: %v", createdWorkGroup.ID))
 
+	// instantiating asset obj
+	assetObj, _ := assets.NewAssetObj(*authenticate, zapLogger)
+
+	assetDetails := entities.AssetDetails{
+		IPAddress:       "192.16.1.1",
+		AssetName:       "ASSET_" + uuid.New().String(),
+		DnsName:         "workstation01.local",
+		DomainName:      "example.com",
+		MacAddress:      "00:1A:2B:3C:4D:5E",
+		AssetType:       "Laptop",
+		Description:     "Asset Description",
+		OperatingSystem: "Windows 11",
+	}
+
+	// creating an asset by workgroup id
+	createdAsset, err := assetObj.CreateAssetByworkgroupIDFlow("6", assetDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Asset by workgroup id: %v", createdAsset.AssetName))
+
+	// creating an asset by workgroup name
+	createdAsset, err = assetObj.CreateAssetByWorkGroupNameFlow("test", assetDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Asset by workgroup name: %v", createdAsset.AssetName))
+
+	// instantiating database obj
+	databaseObj, _ := databases.NewDatabaseObj(*authenticate, zapLogger)
+
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "DATABASE_" + uuid.New().String(),
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
+	}
+
+	// creating a database by asset
+	createdDatabase, err := databaseObj.CreateDatabaseFlow("28", databaseDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Database by Asset: %v", createdDatabase))
+
 	// signing out
-	_ = authenticate.SignOut()
+	err = authenticate.SignOut()
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	zapLogger.Debug(fmt.Sprintf("Signed out user: %v", userObject.UserName))
 
 }

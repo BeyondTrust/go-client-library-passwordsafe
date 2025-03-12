@@ -1,10 +1,9 @@
 // Copyright 2025 BeyondTrust. All rights reserved.
-// Package workgroups implements functions to manage workgroups in Password Safe
-// Unit tests for workgroups package.
-package workgroups
+// Package databases implements functions to manage databases in Password Safe
+// Unit tests for databases package.
+package databases
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -23,8 +22,6 @@ import (
 var authParams *authentication.AuthenticationParametersObj
 var zapLogger *logging.ZapLogger
 var apiVersion string = constants.ApiVersion31
-
-const workGroupName = "WORKGROUP_NAME"
 
 func InitializeGlobalConfig() {
 
@@ -50,7 +47,7 @@ func InitializeGlobalConfig() {
 	}
 }
 
-func TestCreateWorkgroupFlow(t *testing.T) {
+func TestCreateDatabaseFlow(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -71,8 +68,8 @@ func TestCreateWorkgroupFlow(t *testing.T) {
 				t.Error("Test case Failed")
 			}
 
-		case "/Workgroups":
-			_, err := w.Write([]byte(fmt.Sprintf(`{"Name": "%s"}`, workGroupName)))
+		case "/Assets/25/Databases":
+			_, err := w.Write([]byte(`{ "DatabaseID": 7, "AssetID": 28, "PlatformID": 9, "InstanceName": "PrimaryDB", "IsDefaultInstance": false, "Port": 5432, "Version": "15.2", "Template": "StandardTemplate" }`))
 			if err != nil {
 				t.Error("Test case Failed")
 			}
@@ -84,25 +81,37 @@ func TestCreateWorkgroupFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	workGroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
 
-	workGroupDetails := entities.WorkGroupDetails{
-		Name: workGroupName,
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "PrimaryDB",
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
 	}
 
-	response, err := workGroupObj.CreateWorkGroupFlow(workGroupDetails)
+	response, err := databaseObj.CreateDatabaseFlow("25", databaseDetails)
 
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
-	if response.Name != workGroupName {
-		t.Errorf("Test case Failed %v, %v", response, workGroupName)
+	expectedDataBaseId := 7
+	expectedInstanceName := "PrimaryDB"
+
+	if response.DatabaseID != expectedDataBaseId {
+		t.Errorf("Test case Failed %v, %v", response.DatabaseID, expectedDataBaseId)
+	}
+
+	if response.InstanceName != expectedInstanceName {
+		t.Errorf("Test case Failed %v, %v", response.DatabaseID, expectedInstanceName)
 	}
 
 }
 
-func TestCreateWorkgroupFlowBadRequest(t *testing.T) {
+func TestCreateDatabaseFlowBadRequest(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -123,9 +132,9 @@ func TestCreateWorkgroupFlowBadRequest(t *testing.T) {
 				t.Error("Test case Failed")
 			}
 
-		case "/Workgroups":
+		case "/Assets/25/Databases":
 			w.WriteHeader(http.StatusBadRequest)
-			_, err := w.Write([]byte("Workgroup Name is required"))
+			_, err := w.Write([]byte("PlatformID is required"))
 			if err != nil {
 				t.Error("Test case Failed")
 			}
@@ -137,15 +146,20 @@ func TestCreateWorkgroupFlowBadRequest(t *testing.T) {
 
 	apiUrl, _ := url.Parse(server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	workGroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
 
-	workGroupDetails := entities.WorkGroupDetails{
-		Name: workGroupName,
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "PrimaryDB",
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
 	}
 
-	_, err := workGroupObj.CreateWorkGroupFlow(workGroupDetails)
+	_, err := databaseObj.CreateDatabaseFlow("25", databaseDetails)
 
-	expetedErrorMessage := `error - status code: 400 - Workgroup Name is required`
+	expetedErrorMessage := `error - status code: 400 - PlatformID is required`
 
 	if err.Error() != expetedErrorMessage {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
@@ -156,7 +170,7 @@ func TestCreateWorkgroupFlowBadRequest(t *testing.T) {
 
 }
 
-func TestCreateWorkgroupFlowTechnicalError(t *testing.T) {
+func TestCreateDatabaseFlowTechnicalError(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -177,7 +191,7 @@ func TestCreateWorkgroupFlowTechnicalError(t *testing.T) {
 				t.Error("Test case Failed")
 			}
 
-		case "/Workgroups":
+		case "/Assets/25/Databases":
 			w.WriteHeader(http.StatusInternalServerError)
 			_, err := w.Write([]byte(""))
 			if err != nil {
@@ -191,13 +205,18 @@ func TestCreateWorkgroupFlowTechnicalError(t *testing.T) {
 
 	apiUrl, _ := url.Parse(server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	workGroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
 
-	workGroupDetails := entities.WorkGroupDetails{
-		Name: workGroupName,
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "PrimaryDB",
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
 	}
 
-	_, err := workGroupObj.CreateWorkGroupFlow(workGroupDetails)
+	_, err := databaseObj.CreateDatabaseFlow("25", databaseDetails)
 
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)

@@ -4,12 +4,13 @@ package entities
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-// SignApinResponse responsbile for API sign in information.
-type SignApinResponse struct {
+// SignAppinResponse responsbile for API sign in information.
+type SignAppinResponse struct {
 	UserId       int    `json:"UserId"`
 	EmailAddress string `json:"EmailAddress"`
 	UserName     string `json:"UserName"`
@@ -184,7 +185,52 @@ type WorkGroupDetails struct {
 }
 
 type WorkGroupResponse struct {
-	ID             int    `json:"id"`
-	OrganizationID string `json:"organizationId"`
-	Name           string `json:"name"`
+	ID             int
+	OrganizationID string
+	Name           string
+}
+
+type AssetDetails struct {
+	IPAddress       string `json:",omitempty" validate:"required,ip,max=46"`
+	AssetName       string `json:",omitempty" validate:"omitempty,max=128"`
+	DnsName         string `json:",omitempty" validate:"omitempty,max=255"`
+	DomainName      string `json:",omitempty" validate:"omitempty,max=64"`
+	MacAddress      string `json:",omitempty" validate:"omitempty,max=128"`
+	AssetType       string `json:",omitempty" validate:"omitempty,max=64"`
+	Description     string `json:",omitempty" validate:"omitempty,max=255"`
+	OperatingSystem string `json:",omitempty" validate:"omitempty,max=255"`
+}
+
+type AssetResponse struct {
+	WorkgroupID     int
+	AssetID         int
+	AssetName       string
+	AssetType       string
+	DnsName         string
+	DomainName      string
+	IPAddress       string
+	OperatingSystem string
+	CreateDate      time.Time
+	LastUpdateDate  time.Time
+	Description     string
+}
+
+type DatabaseDetails struct {
+	PlatformID        int    `json:",omitempty" validate:"required"`
+	InstanceName      string `json:",omitempty" validate:"required,max=100"`
+	IsDefaultInstance bool   `json:",omitempty" `
+	Port              int    `json:",omitempty" validate:"required,min=1,max=65535"`
+	Version           string `json:",omitempty" validate:"omitempty,max=20"`
+	Template          string `json:",omitempty" validate:"omitempty"`
+}
+
+type DatabaseResponse struct {
+	AssetID           int
+	DatabaseID        int
+	PlatformID        int
+	InstanceName      string
+	IsDefaultInstance bool
+	Port              int
+	Version           string
+	Template          string
 }
