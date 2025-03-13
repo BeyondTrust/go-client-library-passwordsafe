@@ -72,49 +72,49 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 	return httpClientObj, nil
 }
 
+// GetPFXContent decrypt pfx certificate.
 func GetPFXContent(clientCertificatePath string, clientCertificateName string, clientCertificatePassword string, logger logging.Logger) (string, string, error) {
 
-	if clientCertificateName != "" {
-		pfxFile, err := os.ReadFile(filepath.Join(clientCertificatePath, clientCertificateName))
-		if err != nil {
-			logger.Error(err.Error())
-			return "", "", err
-		}
-
-		pfxFileBlock, err := pkcs12.ToPEM(pfxFile, clientCertificatePassword)
-		if err != nil {
-			logger.Error(err.Error())
-			return "", "", err
-		}
-
-		var keyBlock, certificateBlock *pem.Block
-		for _, pemBlock := range pfxFileBlock {
-			if pemBlock.Type == "PRIVATE KEY" {
-				keyBlock = pemBlock
-			} else if pemBlock.Type == "CERTIFICATE" {
-				certificateBlock = pemBlock
-			}
-		}
-
-		if keyBlock == nil {
-			err = errors.New("error getting Key Block")
-			logger.Error(err.Error())
-			return "", "", err
-		}
-		if certificateBlock == nil {
-			err = errors.New("error getting Certificate Block")
-			logger.Error(err.Error())
-			return "", "", err
-		}
-
-		privateKeyData := pem.EncodeToMemory(keyBlock)
-		certData := pem.EncodeToMemory(certificateBlock)
-
-		return string(certData), string(privateKeyData), nil
+	if clientCertificateName == "" {
+		return "", "", errors.New("empty certificate path")
 	}
 
-	return "", "", errors.New("empty certificate path")
+	pfxFile, err := os.ReadFile(filepath.Join(clientCertificatePath, clientCertificateName))
+	if err != nil {
+		logger.Error(err.Error())
+		return "", "", err
+	}
 
+	pfxFileBlock, err := pkcs12.ToPEM(pfxFile, clientCertificatePassword)
+	if err != nil {
+		logger.Error(err.Error())
+		return "", "", err
+	}
+
+	var keyBlock, certificateBlock *pem.Block
+	for _, pemBlock := range pfxFileBlock {
+		if pemBlock.Type == "PRIVATE KEY" {
+			keyBlock = pemBlock
+		} else if pemBlock.Type == "CERTIFICATE" {
+			certificateBlock = pemBlock
+		}
+	}
+
+	if keyBlock == nil {
+		err = errors.New("error getting Key Block")
+		logger.Error(err.Error())
+		return "", "", err
+	}
+	if certificateBlock == nil {
+		err = errors.New("error getting Certificate Block")
+		logger.Error(err.Error())
+		return "", "", err
+	}
+
+	privateKeyData := pem.EncodeToMemory(keyBlock)
+	certData := pem.EncodeToMemory(certificateBlock)
+
+	return string(certData), string(privateKeyData), nil
 }
 
 // CallSecretSafeAPI prepares http call
@@ -142,6 +142,22 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 	return response, scode, technicalError, businessError
 }
 
+// GetAuthorizationHeader Get authorization header string
+func (client *HttpClientObj) GetAuthorizationHeader(accessToken string, apiKey string) string {
+
+	var authorizationHeader string = ""
+
+	if accessToken != "" {
+		authorizationHeader = "Bearer " + accessToken
+	}
+
+	if apiKey != "" {
+		authorizationHeader = "PS-Auth key=" + apiKey
+	}
+
+	return authorizationHeader
+}
+
 // HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
 
@@ -151,12 +167,10 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 	}
 	req.Header = http.Header{"Content-Type": []string{contentType}}
 
-	if accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+accessToken)
-	}
+	authorizationHeader := client.GetAuthorizationHeader(accessToken, apiKey)
 
-	if apiKey != "" {
-		req.Header.Set("Authorization", "PS-Auth key="+apiKey)
+	if authorizationHeader != "" {
+		req.Header.Set("Authorization", authorizationHeader)
 	}
 
 	resp, err := client.HttpClient.Do(req)

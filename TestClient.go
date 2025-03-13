@@ -1,3 +1,4 @@
+// This script is intended for testing purposes (go client library client) only and is not part of the project.
 package main
 
 import (
@@ -35,8 +36,15 @@ func main() {
 	apiUrl := os.Getenv("PASSWORD_SAFE_API_URL")
 	clientId := os.Getenv("PASSWORD_SAFE_CLIENT_ID")
 	clientSecret := os.Getenv("PASSWORD_SAFE_CLIENT_SECRET")
+
+	// Set when client certificate is required and pfx file was decrypted before.
 	certificate := os.Getenv("PASSWORD_SAFE_CERTIFICATE")
 	certificateKey := os.Getenv("PASSWORD_SAFE_CERTIFICATE_KEY")
+
+	// Set when client certificate is required and it has not been decrypted.
+	certificatePath := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PATH")
+	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
+	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
 	separator := "/"
 	clientTimeOutInSeconds := 30
@@ -48,9 +56,6 @@ func main() {
 	backoffDefinition.InitialInterval = 1 * time.Second
 	backoffDefinition.MaxElapsedTime = time.Duration(retryMaxElapsedTimeMinutes) * time.Second
 	backoffDefinition.RandomizationFactor = 0.5
-
-	//certificate = os.Getenv("CERTIFICATE")
-	//certificateKey = os.Getenv("CERTIFICATE_KEY")
 
 	// Create an instance of ValidationParams
 	params := utils.ValidationParams{
@@ -66,11 +71,19 @@ func main() {
 		RetryMaxElapsedTimeMinutes: &retryMaxElapsedTimeMinutes,
 	}
 
+	var err error
+
 	// validate inputs
 	errorsInInputs := utils.ValidateInputs(params)
 
 	if errorsInInputs != nil {
 		zapLogger.Error(fmt.Sprintf("Error: %v", errorsInInputs))
+		return
+	}
+
+	certificate, certificateKey, err = GetCertificateData(certificatePath, certificateName, certificatePassword, zapLogger)
+	if err != nil {
+		zapLogger.Error(fmt.Sprintf("Error: %v", err))
 		return
 	}
 
@@ -98,8 +111,75 @@ func main() {
 		return
 	}
 
+	err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateManagedAccount(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateWorkGroupFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateAssetWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateDatabaseFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	// signing out
+	err = authenticate.SignOut()
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	zapLogger.Debug(fmt.Sprintf("Signed out user: %v", userObject.UserName))
+
+}
+
+func GetCertificateData(certificatePath string, certificateName string, certificatePassword string, zapLogger *logging.ZapLogger) (string, string, error) {
+
+	if certificateName != "" {
+		// Decrypt pfx certificate when certificate is not empty to get certificate and certificate key values.
+		certificate, certificateKey, err := utils.GetPFXContent(certificatePath, certificateName, certificatePassword, zapLogger)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return os.Getenv("PASSWORD_SAFE_CERTIFICATE"), os.Getenv("PASSWORD_SAFE_CERTIFICATE_KEY"), err
+		}
+		return certificate, certificateKey, nil
+
+	}
+	// Return certificate and certificate key values from env vars.
+	return os.Getenv("PASSWORD_SAFE_CERTIFICATE"), os.Getenv("PASSWORD_SAFE_CERTIFICATE_KEY"), nil
+}
+
+// GetSecretAndManagedAccount test method to get managed accounts from PS API.
+func GetSecretAndManagedAccount(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse, separator string, maxFileSecretSizeBytes int) error {
+
 	// instantiating secret obj
-	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, maxFileSecretSizeBytes)
+	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
 
 	secretPaths := []string{"oauthgrp/credential8", "oauthgrp/file1"}
 
@@ -115,7 +195,7 @@ func main() {
 	zapLogger.Warn(fmt.Sprintf("Secret Test: %v", gotSecret))
 
 	// instantiating managed account obj
-	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticate, zapLogger)
+	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticationObj, zapLogger)
 
 	newSecretPaths := []string{"system01/managed_account01", "system01/managed_account02"}
 
@@ -130,6 +210,15 @@ func main() {
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
+
+	return nil
+}
+
+// CreateManagedAccount test method to create managed accounts in PS API.
+func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+
+	// instantiating managed account obj
+	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticationObj, zapLogger)
 
 	account := entities.AccountDetails{
 		AccountName:                       "ManagedAccountTest_" + uuid.New().String(),
@@ -175,6 +264,13 @@ func main() {
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Warn(fmt.Sprintf("Created Managed Account: %v", createResponse.AccountName))
 
+	return nil
+}
+
+// CreateSecretsAndFolders test method to create secrets/folders/safes in PS API.
+func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse, maxFileSecretSizeBytes int) error {
+
+	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
 	objCredential := entities.SecretCredentialDetails{
 		Title:       "CREDENTIAL_" + uuid.New().String(),
 		Description: "My Credential Secret Description",
@@ -204,7 +300,7 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Credential secret: %v", createdSecret.Title))
@@ -238,7 +334,7 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return nil
 	}
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Text secret: %v", createdSecret.Title))
@@ -247,7 +343,7 @@ func main() {
 	fileContent, err := os.ReadFile("test_secret.txt")
 	if err != nil {
 		fmt.Println("Error reading file:", err)
-		return
+		return nil
 	}
 
 	objFile := entities.SecretFileDetails{
@@ -280,7 +376,7 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
@@ -296,7 +392,7 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
@@ -313,14 +409,19 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Safe: %v", createdSafe.Name))
 
+	return nil
+}
+
+// CreateWorkGroupFlow test method to create workgroups in PS API.
+func CreateWorkGroupFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating workgroup obj
-	workGroupObj, _ := workgroups.NewWorkGroupObj(*authenticate, zapLogger)
+	workGroupObj, _ := workgroups.NewWorkGroupObj(*authenticationObj, zapLogger)
 
 	workGroupDetails := entities.WorkGroupDetails{
 		Name: "WORKGROUP_" + uuid.New().String(),
@@ -331,14 +432,19 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Workgroup: %v", createdWorkGroup.ID))
 
+	return nil
+}
+
+// CreateAssetWorkFlow test method to create assets in PS API.
+func CreateAssetWorkFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating asset obj
-	assetObj, _ := assets.NewAssetObj(*authenticate, zapLogger)
+	assetObj, _ := assets.NewAssetObj(*authenticationObj, zapLogger)
 
 	assetDetails := entities.AssetDetails{
 		IPAddress:       "192.16.1.1",
@@ -356,7 +462,7 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
@@ -367,14 +473,19 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Asset by workgroup name: %v", createdAsset.AssetName))
 
+	return nil
+}
+
+// CreateDatabaseFlow test method to create databases in PS API.
+func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating database obj
-	databaseObj, _ := databases.NewDatabaseObj(*authenticate, zapLogger)
+	databaseObj, _ := databases.NewDatabaseObj(*authenticationObj, zapLogger)
 
 	databaseDetails := entities.DatabaseDetails{
 		PlatformID:        9,
@@ -390,20 +501,11 @@ func main() {
 
 	if err != nil {
 		zapLogger.Error(err.Error())
-		return
+		return err
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Database by Asset: %v", createdDatabase))
 
-	// signing out
-	err = authenticate.SignOut()
-
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
-
-	zapLogger.Debug(fmt.Sprintf("Signed out user: %v", userObject.UserName))
-
+	return nil
 }
