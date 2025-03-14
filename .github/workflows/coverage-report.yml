@@ -23,6 +23,14 @@ jobs:
         run: |
           cd api
           go test -cover -coverprofile=coverage.txt ./...
+        env:
+          PASSWORD_SAFE_FAKE_CERTIFICATE_KEY: ${{ env.PASSWORD_SAFE_FAKE_CERTIFICATE_KEY }}
+          PASSWORD_SAFE_FAKE_CERTIFICATE: ${{ env.PASSWORD_SAFE_FAKE_CERTIFICATE }}
+          PASSWORD_SAFE_FAKE_CLIENT_ID: ${{ env.PASSWORD_SAFE_FAKE_CLIENT_ID }}
+          PASSWORD_SAFE_FAKE_CLIENT_SECRET: ${{ env.PASSWORD_SAFE_FAKE_CLIENT_SECRET }}
+          PASSWORD_SAFE_FAKE_API_KEY: ${{ env.PASSWORD_SAFE_FAKE_API_KEY }}
+          PASSWORD_SAFE_API_PATH: ${{ env.PASSWORD_SAFE_API_PATH }}
+          PASSWORD_SAFE_FAKE_API_URL: ${{ env.PASSWORD_SAFE_FAKE_API_URL }}
       
       - name: Save unit tests coverage
         uses: actions/upload-artifact@v4
