@@ -5,6 +5,7 @@ package databases
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -37,6 +38,10 @@ func NewDatabaseObj(authentication authentication.AuthenticationObj, logger logg
 func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetails entities.DatabaseDetails) (entities.DatabaseResponse, error) {
 
 	var databaseResponse entities.DatabaseResponse
+
+	if assetId == "" {
+		return databaseResponse, errors.New("asset Id is empty, please send a valid asset id")
+	}
 
 	err := utils.ValidateData(databaseDetails)
 

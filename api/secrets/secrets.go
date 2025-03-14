@@ -51,6 +51,51 @@ func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (stri
 	return secretValue, err
 }
 
+// GetFileSecret Get data of a file secret.
+func (secretObj *SecretObj) GetFileSecret(secret entities.Secret, secretPath string) (string, error) {
+	fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
+	if err != nil {
+		return "", err
+	}
+
+	secretInBytes := []byte(fileSecretContent)
+
+	if len(secretInBytes) > secretObj.maxFileSecretSizeBytes {
+		return "", fmt.Errorf("%v: %v %v %v %v", secretPath, "Secret file Size:", len(secretInBytes), "is greater than the maximum allowed size:", secretObj.maxFileSecretSizeBytes)
+	} else {
+		return fileSecretContent, nil
+	}
+}
+
+// GetGeneralSecret Get general data of a secret.
+func (secretObj *SecretObj) GetGeneralSecret(secretPath string, secretTitle string, separator string) (entities.Secret, error) {
+
+	var err error
+	secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
+
+	entireSecretPath := secretPath + separator + secretTitle
+
+	if err != nil {
+		saveLastErr := err
+		secretObj.log.Error(err.Error() + "secretPath:" + entireSecretPath)
+		return entities.Secret{}, saveLastErr
+	}
+
+	return secret, nil
+}
+
+// SplitGetSecretPathAndSecretTitle Split entire secret path and get path and title.
+func (secretObj *SecretObj) SplitGetSecretPathAndSecretTitle(secretToRetrieve string, separator string) (string, string) {
+	retrievalData := strings.Split(secretToRetrieve, separator)
+	secretTitle := retrievalData[len(retrievalData)-1]
+	secretPath := retrievalData[0]
+	if len(retrievalData) > 2 {
+		_, retrievalData = retrievalData[len(retrievalData)-1], retrievalData[:len(retrievalData)-1]
+		secretPath = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
+	}
+	return secretPath, secretTitle
+}
+
 // GetSecretFlow is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
 func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
 
@@ -64,39 +109,27 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 	}
 
 	for _, secretToRetrieve := range secretsToRetrieve {
-		retrievalData := strings.Split(secretToRetrieve, separator)
-		secretTitle := retrievalData[len(retrievalData)-1]
-		secretPath := retrievalData[0]
-		if len(retrievalData) > 2 {
-			_, retrievalData = retrievalData[len(retrievalData)-1], retrievalData[:len(retrievalData)-1]
-			secretPath = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
-		}
 
-		var err error
-		secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
+		secretPath, secretTitle := secretObj.SplitGetSecretPathAndSecretTitle(secretToRetrieve, separator)
+		entireSecretPath := secretPath + separator + secretTitle
+
+		secret, err := secretObj.GetGeneralSecret(secretPath, secretTitle, separator)
 
 		if err != nil {
 			saveLastErr = err
-			secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+			secretObj.log.Error(err.Error())
 			continue
 		}
 
 		// When secret type is FILE, it calls SecretGetFileSecret method.
 		if strings.ToUpper(secret.SecretType) == "FILE" {
-			fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
+			fileSecretContent, err := secretObj.GetFileSecret(secret, entireSecretPath)
 			if err != nil {
 				saveLastErr = err
-				secretObj.log.Error(err.Error() + "secretPath:" + secretPath + separator + secretTitle)
+				secretObj.log.Error(err.Error() + "secretPath:" + entireSecretPath)
 				continue
 			}
-
-			secretInBytes := []byte(fileSecretContent)
-
-			if len(secretInBytes) > secretObj.maxFileSecretSizeBytes {
-				secretObj.log.Error(fmt.Sprintf("%v%v%v: %v %v %v %v", secretPath, separator, secretTitle, "Secret file Size:", len(secretInBytes), "is greater than the maximum allowed size:", secretObj.maxFileSecretSizeBytes))
-			} else {
-				secretDictionary[secretToRetrieve] = fileSecretContent
-			}
+			secretDictionary[secretToRetrieve] = fileSecretContent
 
 		} else {
 			secretDictionary[secretToRetrieve] = secret.Password
@@ -270,6 +303,36 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 	return createResponse, nil
 }
 
+// SecretCreateFileSecret create a secret of type file.
+func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string, payload string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
+	var fileSecret entities.SecretFileDetails
+	var ok bool
+
+	var CreateSecretResponse entities.CreateSecretResponse
+
+	if fileSecret, ok = secretDetails.(entities.SecretFileDetails); ok {
+		body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileSecret.FileName, []byte(payload), fileSecret.FileContent)
+		if err != nil {
+			return entities.CreateSecretResponse{}, err
+		}
+
+		defer body.Close()
+		bodyBytes, err := io.ReadAll(body)
+
+		if err != nil {
+			return entities.CreateSecretResponse{}, err
+		}
+
+		err = json.Unmarshal([]byte(bodyBytes), &CreateSecretResponse)
+
+		if err != nil {
+			return entities.CreateSecretResponse{}, err
+		}
+	}
+	return CreateSecretResponse, nil
+
+}
+
 // SecretCreateSecret calls Secret Safe API Requests enpoint to create secrets in Password Safe.
 func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
@@ -309,31 +372,9 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	messageLog := fmt.Sprintf("%v %v", "POST", SecretCreateSecretUrl)
 	secretObj.log.Debug(messageLog)
 
-	var fileSecret entities.SecretFileDetails
-	var ok bool
-
 	// file secrets have a special behavior, they need to be created using multipart request.
 	if path == "secrets/file" {
-		if fileSecret, ok = secretDetails.(entities.SecretFileDetails); ok {
-			body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileSecret.FileName, []byte(payload), fileSecret.FileContent)
-			if err != nil {
-				return entities.CreateSecretResponse{}, err
-			}
-
-			defer body.Close()
-			bodyBytes, err := io.ReadAll(body)
-
-			if err != nil {
-				return entities.CreateSecretResponse{}, err
-			}
-
-			err = json.Unmarshal([]byte(bodyBytes), &CreateSecretResponse)
-
-			if err != nil {
-				return entities.CreateSecretResponse{}, err
-			}
-		}
-		return CreateSecretResponse, nil
+		return secretObj.SecretCreateFileSecret(SecretCreateSecretUrl, payload, secretDetails)
 	}
 
 	var body io.ReadCloser
@@ -447,10 +488,38 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 
 }
 
+// GetParentFolderId Get parent folder id using folder name.
+func (secretObj *SecretObj) GetParentFolderId(folderTarget string) (string, error) {
+
+	var parentFolder *entities.FolderResponse
+
+	if folderTarget == "" {
+		return "", fmt.Errorf("parent folder name must not be empty")
+	}
+
+	folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
+
+	if err != nil {
+		return "", err
+	}
+
+	for _, v := range folders {
+		if v.Name == strings.TrimSpace(folderTarget) {
+			parentFolder = &v
+			break
+		}
+	}
+
+	if parentFolder == nil {
+		return "", fmt.Errorf("folder %v was not found in folder list", folderTarget)
+	}
+
+	return parentFolder.Id, nil
+}
+
 // CreateFolderFlow is responsible for creating folders/safes in Password Safe.
 func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
 
-	var folder *entities.FolderResponse
 	var createFolderesponse entities.CreateFolderResponse
 	var err error
 
@@ -462,39 +531,18 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 
 	// if it is folder
 	if folderDetails.FolderType == "FOLDER" {
-		if folderTarget == "" {
-			return createFolderesponse, fmt.Errorf("parent folder name must not be empty")
-		}
-
-		folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
-
+		parentFolderId, err := secretObj.GetParentFolderId(folderTarget)
 		if err != nil {
 			return createFolderesponse, err
 		}
-
-		for _, v := range folders {
-			if v.Name == strings.TrimSpace(folderTarget) {
-				folder = &v
-				break
-			}
-		}
-
-		if folder == nil {
-			return createFolderesponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
-		}
-
-		folderId, _ := uuid.Parse(folder.Id)
-		folderDetails.ParentId = folderId
+		formattedParentFolderId, _ := uuid.Parse(parentFolderId)
+		folderDetails.ParentId = formattedParentFolderId
 	}
 
 	err = utils.ValidateData(folderDetails)
 
 	if err != nil {
 		return createFolderesponse, err
-	}
-
-	if err != nil {
-		return entities.CreateFolderResponse{}, err
 	}
 
 	createFolderesponse, err = secretObj.SecretCreateFolder(folderDetails)

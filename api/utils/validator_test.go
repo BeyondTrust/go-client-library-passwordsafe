@@ -5,14 +5,17 @@ package utils
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
-func TestValidateData(t *testing.T) {
+func TestValidateDataSucessCase(t *testing.T) {
 
 	assetDetails := entities.AssetDetails{
 		IPAddress:       "192.16.1.2",
@@ -25,6 +28,7 @@ func TestValidateData(t *testing.T) {
 		OperatingSystem: "Windows 11",
 	}
 
+	// Correct data, happy path.
 	err := ValidateData(assetDetails)
 
 	if err != nil {
@@ -46,6 +50,7 @@ func TestValidateDataBadIP(t *testing.T) {
 		OperatingSystem: "Windows 11",
 	}
 
+	// Bad IP case.
 	err := ValidateData(assetDetails)
 
 	expetedErrorMessage := "Bad IP value: '192.16.1' in 'IPAddress' field"
@@ -59,13 +64,14 @@ func TestValidateDataBadIP(t *testing.T) {
 
 }
 
-func TestValidateCreateManagedAccountInput(t *testing.T) {
+func TestValidateCreateManagedAccountInputEmptyPassword(t *testing.T) {
 
 	accountDetails := entities.AccountDetails{
 		AccountName: "ManagedAccountTest_" + uuid.New().String(),
 		Password:    "",
 	}
 
+	// Empty password case.
 	_, err := ValidateCreateManagedAccountInput(accountDetails)
 
 	expetedErrorMessage := "Field 'Password' is mandatory when AutoManagementFlag false"
@@ -80,7 +86,7 @@ func TestValidateCreateManagedAccountInput(t *testing.T) {
 
 }
 
-func TestValidateCreateManagedAccountInputEmptyPassword(t *testing.T) {
+func TestValidateCreateManagedAccountInput(t *testing.T) {
 
 	accountDetails := entities.AccountDetails{
 		AccountName:                       "ManagedAccountTest_" + uuid.New().String(),
@@ -118,6 +124,7 @@ func TestValidateCreateManagedAccountInputEmptyPassword(t *testing.T) {
 		ChangeFrequencyType:               "",
 	}
 
+	// Correct data, happy path.
 	_, err := ValidateCreateManagedAccountInput(accountDetails)
 
 	if err != nil {
@@ -128,14 +135,14 @@ func TestValidateCreateManagedAccountInputEmptyPassword(t *testing.T) {
 
 func TestValidateURL(t *testing.T) {
 
-	// happy path
+	// Happy path.
 	err := ValidateURL(constants.FakeApiUrl)
 
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
-	// invalid protocol
+	// Invalid protocol.
 	err = ValidateURL("http://fakeurl:443/BeyondTrust/api/public/v3/")
 	expetedErrorMessage := "http is not support. Use https"
 
@@ -143,8 +150,8 @@ func TestValidateURL(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 
-	// invalid path
-	err = ValidateURL("https://fakeurl:443/BeyondTrust/api/private/v3/")
+	// Invalid path.
+	err = ValidateURL("https://fakeurl:443/BeyondTrust/api/private/wrongpath/")
 	expetedErrorMessage = "invalid API URL, it must contains /BeyondTrust/api/public/v as part of the path"
 
 	if err.Error() != expetedErrorMessage {
@@ -155,7 +162,7 @@ func TestValidateURL(t *testing.T) {
 
 func TestValidatePaths(t *testing.T) {
 
-	// validate paths for secrets.
+	// Validate paths for secrets.
 	response := ValidatePaths([]string{"path/title", "path/title2"}, false, "/", nil)
 
 	expetedResponse := []string{"path/title", "path/title2"}
@@ -164,13 +171,146 @@ func TestValidatePaths(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", response, expetedResponse)
 	}
 
-	// validate paths for managed accounts.
+	// Validate paths for managed accounts.
 	response = ValidatePaths([]string{"account/system1", "account/system2"}, true, "/", nil)
 
 	expetedResponse = []string{"account/system1", "account/system2"}
 
 	if !reflect.DeepEqual(response, expetedResponse) {
 		t.Errorf("Test case Failed %v, %v", response, expetedResponse)
+	}
+
+}
+
+func TestValidateValidateSinglePath(t *testing.T) {
+
+	secretToRetrieve := "example_path/example_title"
+	separator := "/"
+	retrievalData := strings.Split(secretToRetrieve, separator)
+
+	// Happy path.
+	response, err := ValidateSinglePath(1792, 256, "path", "title", 7, retrievalData, separator)
+
+	expetedResponse := "example_path/example_title"
+
+	if err != nil {
+		t.Errorf("Test case Failed ")
+	}
+
+	if expetedResponse != response {
+		t.Errorf("Test case Failed %v, %v", response, expetedResponse)
+	}
+
+}
+
+func TestValidateValidateSinglePathError(t *testing.T) {
+
+	secretToRetrieve := "long_long_long_path_/long_long_secret_long_secret"
+	separator := "/"
+	retrievalData := strings.Split(secretToRetrieve, separator)
+
+	// Long path case.
+	_, err := ValidateSinglePath(5, 10, "path", "title", 7, retrievalData, separator)
+
+	expetedErrorMessage := "invalid path length=20, valid length between 1 and 10, this secret will be skipped"
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestValidateInputs(t *testing.T) {
+
+	clientId := constants.FakeClientId
+	clientSecret := constants.FakeClientSecret
+	apiUrl := constants.FakeApiUrl
+	apiVersion := constants.ApiVersion31
+	clientTimeOutInSeconds := 30
+	verifyCa := true
+	retryMaxElapsedTimeMinutes := 5
+
+	logger, _ := zap.NewDevelopment()
+
+	zapLogger := logging.NewZapLogger(logger)
+
+	params := ValidationParams{
+		ClientID:                   clientId,
+		ClientSecret:               clientSecret,
+		ApiUrl:                     &apiUrl,
+		ApiVersion:                 apiVersion,
+		ClientTimeOutInSeconds:     clientTimeOutInSeconds,
+		VerifyCa:                   verifyCa,
+		Logger:                     zapLogger,
+		Certificate:                "",
+		CertificateKey:             "",
+		RetryMaxElapsedTimeMinutes: &retryMaxElapsedTimeMinutes,
+	}
+
+	// Correct parameters.
+	err := ValidateInputs(params)
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	// Wrong certificate.
+	params.Certificate = "-----invalid certificate content-----END CERTIFICATE-----"
+	params.CertificateKey = constants.FakecertificateKey
+
+	err = ValidateInputs(params)
+	expetedErrorMessage := "invalid certificate content, must contain BEGIN and END CERTIFICATE"
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestValidateCertificateInfo(t *testing.T) {
+
+	logger, _ := zap.NewDevelopment()
+
+	zapLogger := logging.NewZapLogger(logger)
+
+	params := ValidationParams{
+		Certificate:    constants.Fakecertificate,
+		CertificateKey: constants.FakecertificateKey,
+		Logger:         zapLogger,
+	}
+
+	// Correct certificate info.
+	err := ValidateCertificateInfo(params)
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	// Wrong certificate key.
+	params.Certificate = constants.Fakecertificate
+	params.CertificateKey = "-----BEGIN \n-----"
+
+	err = ValidateCertificateInfo(params)
+	expetedErrorMessage := "invalid certificate key content, must contain BEGIN and END PRIVATE KEY"
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+	// Wrong certificate, exceeds max length size.
+	params.Certificate = strings.Repeat("fake_certificate_content", 1000)
+	params.CertificateKey = constants.FakecertificateKey
+
+	err = ValidateCertificateInfo(params)
+	expetedErrorMessage = "invalid length for certificate, the maximum size is 32768 bits"
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+	// Wrong certificate key, exceeds max length size.
+	params.Certificate = constants.Fakecertificate
+	params.CertificateKey = strings.Repeat("fake_certificate_key_content", 1000)
+
+	err = ValidateCertificateInfo(params)
+	expetedErrorMessage = "invalid length for certificate key, the maximum size is 32768 bits"
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 
 }
