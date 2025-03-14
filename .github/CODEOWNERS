@@ -1,5 +1,0 @@
-* @beyondtrust/secrets-safe @beyondtrust/password-safe-integrations-contractors
-
-# global codeowners: only git admins can modify these
-.github/settings.yml @beyondtrust/lumberjacks
-.github/CODEOWNERS @beyondtrust/lumberjacks
