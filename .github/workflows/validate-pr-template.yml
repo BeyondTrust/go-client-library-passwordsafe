@@ -1,5 +1,7 @@
 name: Validate PR Template
 
+permissions: {}
+
 on:
   pull_request:
     types: [opened, edited, reopened]

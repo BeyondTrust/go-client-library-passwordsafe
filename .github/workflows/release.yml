@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: Get next version numbers
-        uses: reecetech/version-increment@2024.10.1
+        uses: reecetech/version-increment@a29aa752dc3b8118a2dc2ed93faf0e95a73a9c7e # 2024.10.1
         id: version_number
         with:
           increment: ${{ steps.increment.outputs.increment }}
