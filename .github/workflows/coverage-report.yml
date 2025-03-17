@@ -25,7 +25,7 @@ jobs:
           go test -cover -coverprofile=coverage.txt ./...
       
       - name: Save unit tests coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: coverage
           path: api/coverage.txt        
@@ -39,7 +39,7 @@ jobs:
         actions:       read  
         pull-requests: write 
     steps:
-      - uses: fgrosse/go-coverage-report@v1.2.0
+      - uses: fgrosse/go-coverage-report@8c1d1a09864211d258937b1b1a5b849f7e4f2682 # v1.2.0
         with:
             coverage-artifact-name: "coverage" 
             coverage-file-name: "coverage.txt"   
