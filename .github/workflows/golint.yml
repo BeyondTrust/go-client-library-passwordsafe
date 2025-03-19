@@ -34,5 +34,5 @@ jobs:
       - name: Check code cognitive complexity
         if: always()
         run: |
-          go install github.com/uudashr/gocognit/cmd/gocognit@latest
+          go install github.com/uudashr/gocognit/cmd/gocognit@2881c26c90e3bb5cc9a17c60109b39f6b485ed2d # v1.2.0
           gocognit -ignore "_test|testdata" -over 10 .
