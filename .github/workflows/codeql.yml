@@ -7,10 +7,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write
-  actions: read
+permissions: {}
 
 jobs:
   analyze_on_PR:
@@ -21,7 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         language: ["go"]
-
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -49,7 +49,10 @@ jobs:
       fail-fast: false
       matrix:
         language: ["go"]
-
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7

@@ -7,8 +7,7 @@ on:
       branches:
         - 'main'
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   unit_test:

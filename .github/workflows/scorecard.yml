@@ -13,8 +13,11 @@ on:
     - cron: "23 6 * * 1"
   push:
     branches: [main]
-  workflow_dispatch: 
-
+  workflow_dispatch:
+  pull_request: 
+    types: 
+      - opened
+      - synchronize
 # Declare default permissions as read only.
 permissions: read-all
 
