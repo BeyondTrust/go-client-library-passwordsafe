@@ -43,7 +43,39 @@ type UserInputValidaton struct {
 	MaxFileSecretSizeBytes int    `validate:"omitempty,gte=1,lte=5000000"`
 }
 
-var validate *validator.Validate
+// ValidateCertificateInfo validate certificate data.
+func ValidateCertificateInfo(params ValidationParams) error {
+	message := ""
+	certificateLengthInBits := utf8.RuneCountInString(params.Certificate) * 8
+
+	if certificateLengthInBits > 32768 {
+		message = "invalid length for certificate, the maximum size is 32768 bits"
+		params.Logger.Error(message)
+		return errors.New(message)
+	}
+
+	certificateKeyLengthInBits := utf8.RuneCountInString(params.CertificateKey) * 8
+
+	if certificateKeyLengthInBits > 32768 {
+		message = "invalid length for certificate key, the maximum size is 32768 bits"
+		params.Logger.Error(message)
+		return errors.New(message)
+	}
+
+	if !strings.HasPrefix(params.Certificate, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(params.Certificate, "-----END CERTIFICATE-----") {
+		message = "invalid certificate content, must contain BEGIN and END CERTIFICATE"
+		params.Logger.Error(message)
+		return errors.New(message)
+	}
+
+	if !strings.HasPrefix(params.CertificateKey, "-----BEGIN PRIVATE KEY-----") || !strings.HasSuffix(params.CertificateKey, "-----END PRIVATE KEY-----") {
+		message = "invalid certificate key content, must contain BEGIN and END PRIVATE KEY"
+		params.Logger.Error(message)
+		return errors.New(message)
+	}
+
+	return nil
+}
 
 // ValidateInputs is responsible for validating end-user inputs.
 func ValidateInputs(params ValidationParams) error {
@@ -64,8 +96,6 @@ func ValidateInputs(params ValidationParams) error {
 		return err
 	}
 
-	validate = validator.New(validator.WithRequiredStructEnabled())
-
 	userInput := &UserInputValidaton{
 		ApiKey:                 params.ApiKey,
 		ClientId:               params.ClientID,
@@ -79,55 +109,56 @@ func ValidateInputs(params ValidationParams) error {
 		params.Logger.Warn("verifyCa=false is insecure, instructs not to verify the certificate authority.")
 	}
 
-	err = validate.Struct(userInput)
+	err = ValidateData(userInput)
 	if err != nil {
 		params.Logger.Error(err.Error())
-
-		// format error messages.
-		for _, err := range err.(validator.ValidationErrors) {
-			return errors.New(FormatErrorMessage(err))
-		}
-
 		return err
 	}
 
 	message := ""
 
 	if params.Certificate != "" && params.CertificateKey != "" {
-
-		certificateLengthInBits := utf8.RuneCountInString(params.Certificate) * 8
-
-		if certificateLengthInBits > 32768 {
-			message = "invalid length for certificate, the maximum size is 32768 bits"
-			params.Logger.Error(message)
-			return errors.New(message)
+		err = ValidateCertificateInfo(params)
+		if err != nil {
+			return err
 		}
-
-		certificateKeyLengthInBits := utf8.RuneCountInString(params.CertificateKey) * 8
-
-		if certificateKeyLengthInBits > 32768 {
-			message = "invalid length for certificate key, the maximum size is 32768 bits"
-			params.Logger.Error(message)
-			return errors.New(message)
-		}
-
-		if !strings.HasPrefix(params.Certificate, "-----BEGIN CERTIFICATE-----") || !strings.HasSuffix(params.Certificate, "-----END CERTIFICATE-----") {
-			message = "invalid certificate content, must contain BEGIN and END CERTIFICATE"
-			params.Logger.Error(message)
-			return errors.New(message)
-		}
-
-		if !strings.HasPrefix(params.CertificateKey, "-----BEGIN PRIVATE KEY-----") || !strings.HasSuffix(params.CertificateKey, "-----END PRIVATE KEY-----") {
-			message = "invalid certificate key content, must contain BEGIN and END PRIVATE KEY"
-			params.Logger.Error(message)
-			return errors.New(message)
-		}
-
 	}
 
 	message = fmt.Sprintf("Library settings: ClientId=%v, ApiUrl=%v, ClientTimeOutinSeconds=%v, VerifyCa=%v, UsingCertificate=%v", userInput.ClientId, userInput.ApiUrl, userInput.ClientTimeOutinSeconds, params.VerifyCa, params.Certificate != "")
 	params.Logger.Debug(message)
 	return nil
+}
+
+// ValidateSinglePath responsbile for validating that one path and one name are valid.
+func ValidateSinglePath(maxPath int, maxName int, invalidPathName string, invalidName string, maxPathDepth int, retrievalData []string, separator string) (string, error) {
+
+	titleDepth := 1
+	// validate max depth
+	if len(retrievalData) > maxPathDepth+titleDepth {
+		return "", fmt.Errorf("invalid %s PathDepth=%v, valid path depth is %v, this secret will be skipped", invalidPathName, len(retrievalData)-titleDepth, maxPathDepth)
+	}
+
+	name := retrievalData[len(retrievalData)-1]
+	path := retrievalData[0]
+	if len(retrievalData) > 2 {
+		retrievalData[len(retrievalData)-1] = ""
+		path = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
+	}
+
+	// trim all the leading and trailing white space
+	path = strings.TrimSpace(path)
+	name = strings.TrimSpace(name)
+
+	// validate max path and name length
+	if len(path) > maxPath || path == "" {
+		return "", fmt.Errorf("invalid %s length=%v, valid length between 1 and %v, this secret will be skipped", invalidPathName, len(path), maxName)
+
+	} else if len(name) > maxName || name == "" {
+		return "", fmt.Errorf("%s=%s but found invalid %s length=%v, valid length between 1 and %v, this secret will be skipped", invalidPathName, path, invalidName, len(name), maxName)
+	} else {
+		secretPath := fmt.Sprintf("%s%s%s", path, separator, name)
+		return secretPath, nil
+	}
 }
 
 // This method is responsbile for validating that the paths and names are valid.
@@ -153,7 +184,6 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 		invalidPathName := "path"
 		invalidName := "title"
 		maxPathDepth := 7
-		titleDepth := 1
 
 		if isManagedAccount {
 			maxPath = maxSystemNameLength
@@ -165,37 +195,13 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 		retrievalData := strings.Split(secretToRetrieve, separator)
 
-		// validate max depth
-		if len(retrievalData) > maxPathDepth+titleDepth {
-			message := fmt.Sprintf("Invalid %s PathDepth=%v, valid path depth is %v, this secret will be skipped.", invalidPathName, len(retrievalData)-titleDepth, maxPathDepth)
-			logger.Error(message)
-			continue
+		newSecretPath, err := ValidateSinglePath(maxPath, maxName, invalidPathName, invalidName, maxPathDepth, retrievalData, separator)
+		if err != nil {
+			logger.Error(err.Error())
+			return newSecretPaths
 		}
 
-		name := retrievalData[len(retrievalData)-1]
-		path := retrievalData[0]
-		if len(retrievalData) > 2 {
-			retrievalData[len(retrievalData)-1] = ""
-			path = strings.TrimSuffix(strings.Join(retrievalData, separator), separator)
-		}
-
-		// trim all the leading and trailing white space
-		path = strings.TrimSpace(path)
-		name = strings.TrimSpace(name)
-
-		// validate max path and name length
-		if len(path) > maxPath || path == "" {
-			message := fmt.Sprintf("Invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, len(path), maxName)
-			logger.Error(message)
-			continue
-		} else if len(name) > maxName || name == "" {
-			message := fmt.Sprintf("%s=%s but found invalid %s length=%v, valid length between 1 and %v, this secret will be skipped.", invalidPathName, path, invalidName, len(name), maxName)
-			logger.Error(message)
-			continue
-		} else {
-			secretPath := fmt.Sprintf("%s%s%s", path, separator, name)
-			newSecretPaths = append(newSecretPaths, secretPath)
-		}
+		newSecretPaths = append(newSecretPaths, newSecretPath)
 	}
 
 	return newSecretPaths

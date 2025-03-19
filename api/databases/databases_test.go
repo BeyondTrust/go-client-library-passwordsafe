@@ -161,11 +161,11 @@ func TestCreateDatabaseFlowBadRequest(t *testing.T) {
 
 	expetedErrorMessage := `error - status code: 400 - PlatformID is required`
 
-	if err.Error() != expetedErrorMessage {
-		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
-	}
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)
+	}
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 
 }
@@ -220,6 +220,34 @@ func TestCreateDatabaseFlowTechnicalError(t *testing.T) {
 
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestCreateDatabaseEmptyAssetId(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "Instance Name",
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
+	}
+
+	// Empty Asset Id case
+	_, err := databaseObj.CreateDatabaseFlow("", databaseDetails)
+
+	expetedErrorMessage := `asset Id is empty, please send a valid asset id`
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 
 }
