@@ -170,17 +170,17 @@ jobs:
 
       - name: Setting up artifactory
         run: |
-          mkdir -p go-library-passwordsafe/${{ needs.build.outputs.full_version }}
+          mkdir -p passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Download library binary
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
           name: library
-          path: go-library-passwordsafe/${{ needs.build.outputs.full_version }}
+          path: passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Send artifacts to Jfrog
         run: |
-          jfrog rt u "go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }}
+          jfrog rt u "passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}/*" ${{ env.JFROG_SERVER }}
 
       - name: Publish Build Information
         run: |
