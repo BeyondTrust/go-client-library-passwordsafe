@@ -129,6 +129,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -184,6 +185,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		AccessToken: accessToken,
 		ApiKey:      apiKey,
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	err := backoff.Retry(func() error {
@@ -239,6 +241,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {

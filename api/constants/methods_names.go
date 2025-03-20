@@ -28,4 +28,6 @@ const (
 	CreateAsset = "CreateAsset"
 
 	CreateDatabase = "CreateDatabase"
+
+	CreateManagedSystemByAssedId = "CreateManagedSystemByAssedId"
 )

@@ -94,6 +94,7 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {

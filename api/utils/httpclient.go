@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	urlnet "net/url"
+
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
@@ -128,6 +130,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 		callSecretSafeAPIObj.AccessToken,
 		callSecretSafeAPIObj.ApiKey,
 		callSecretSafeAPIObj.ContentType,
+		callSecretSafeAPIObj.ApiVersion,
 	)
 
 	if technicalError != nil {
@@ -158,9 +161,27 @@ func (client *HttpClientObj) GetAuthorizationHeader(accessToken string, apiKey s
 	return authorizationHeader
 }
 
-// HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+// SetApiVersionToApiUrl Set API Version to URL.
+func (client *HttpClientObj) SetApiVersionToApiUrl(url string, apiVersion string) string {
 
+	// Append API Version to URL
+	if apiVersion != "" {
+		params := urlnet.Values{}
+		params.Add("version", apiVersion)
+
+		parsedUrl, _ := urlnet.Parse(url)
+		parsedUrl.RawQuery = params.Encode()
+
+		url = parsedUrl.String()
+	}
+
+	return url
+}
+
+// HttpRequest makes http request to the server.
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+
+	url = client.SetApiVersionToApiUrl(url, apiVersion)
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil

@@ -12,6 +12,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_systems"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
@@ -46,11 +47,11 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	separator := "/"
+	//separator := "/"
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	maxFileSecretSizeBytes := 5000000
+	//maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -111,37 +112,45 @@ func main() {
 		return
 	}
 
-	err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+	/*
+		err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
 
-	err = CreateManagedAccount(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+		err = CreateManagedAccount(authenticate, zapLogger)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
 
-	err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+		err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
 
-	err = CreateWorkGroupFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+		err = CreateWorkGroupFlow(authenticate, zapLogger)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
 
-	err = CreateAssetWorkFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+		err = CreateAssetWorkFlow(authenticate, zapLogger)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
 
-	err = CreateDatabaseFlow(authenticate, zapLogger)
+		err = CreateDatabaseFlow(authenticate, zapLogger)
+		if err != nil {
+			zapLogger.Error(err.Error())
+			return
+		}
+	*/
+
+	err = CreateManagedSystemFlow(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -246,7 +255,7 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 		ResetPasswordOnMismatchFlag:       false,
 		ChangePasswordAfterAnyReleaseFlag: true,
 		ChangeFrequencyDays:               1,
-		ChangeTime:                        "",
+		ChangeTime:                        "22:25",
 		NextChangeDate:                    "2023-12-01",
 		UseOwnCredentials:                 true,
 		ChangeWindowsAutoLogonFlag:        true,
@@ -506,6 +515,53 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Database by Asset: %v", createdDatabase))
+
+	return nil
+}
+
+// CreateManagedSystemFlow test method to create managed systems in PS API.
+func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating managed system obj
+	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsDetailsConfig3_2{
+		ManagedSystemsDetailsBaseConfig: entities.ManagedSystemsDetailsBaseConfig{
+
+			PlatformID:                        2,
+			ContactEmail:                      "admin@example.com",
+			Description:                       "Sistema gestionado principal",
+			Port:                              8080,
+			Timeout:                           50,
+			SshKeyEnforcementMode:             1,
+			PasswordRuleID:                    0,
+			DSSKeyRuleID:                      0,
+			LoginAccountID:                    0,
+			ReleaseDuration:                   60,
+			MaxReleaseDuration:                120,
+			ISAReleaseDuration:                30,
+			AutoManagementFlag:                false,
+			FunctionalAccountID:               20,
+			ElevationCommand:                  "sudo su",
+			CheckPasswordFlag:                 true,
+			ChangePasswordAfterAnyReleaseFlag: false,
+			ResetPasswordOnMismatchFlag:       true,
+			ChangeFrequencyType:               "first",
+			ChangeFrequencyDays:               7,
+			ChangeTime:                        "23:00",
+		},
+		RemoteClientType: "EPM",
+	}
+
+	// creating a managed system by asset
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemFlow("55", managedSystemDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Managed Syste, by Asset: %v", createdManagedSystem))
 
 	return nil
 }
