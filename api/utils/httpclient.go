@@ -124,7 +124,7 @@ func GetPFXContent(clientCertificatePath string, clientCertificateName string, c
 
 func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.CallSecretSafeAPIObj) (io.ReadCloser, int, error, error) {
 
-	response, scode, technicalError, businessError := client.HttpRequest(callSecretSafeAPIObj.Url,
+	response, scode, tError, businessError := client.HttpRequest(callSecretSafeAPIObj.Url,
 		callSecretSafeAPIObj.HttpMethod,
 		callSecretSafeAPIObj.Body,
 		callSecretSafeAPIObj.AccessToken,
@@ -133,8 +133,8 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 		callSecretSafeAPIObj.ApiVersion,
 	)
 
-	if technicalError != nil {
-		messageLog := fmt.Sprintf("Error in %v %v \n", callSecretSafeAPIObj.Method, technicalError)
+	if tError != nil {
+		messageLog := fmt.Sprintf("Error in %v %v \n", callSecretSafeAPIObj.Method, tError)
 		client.log.Error(messageLog)
 	}
 
@@ -142,7 +142,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 		messageLog := fmt.Sprintf("Error in %v: %v \n", callSecretSafeAPIObj.Method, businessError)
 		client.log.Debug(messageLog)
 	}
-	return response, scode, technicalError, businessError
+	return response, scode, tError, businessError
 }
 
 // GetAuthorizationHeader Get authorization header string
