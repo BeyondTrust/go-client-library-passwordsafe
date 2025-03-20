@@ -83,8 +83,8 @@ func TestCreateManagedSystemFlow(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsDetailsConfig3_1{
-		ManagedSystemsDetailsBaseConfig: entities.ManagedSystemsDetailsBaseConfig{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:                        1001,
 			ContactEmail:                      "admin@example.com",
 			Description:                       "Sistema gestionado principal",
@@ -159,8 +159,8 @@ func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsDetailsConfig3_1{
-		ManagedSystemsDetailsBaseConfig: entities.ManagedSystemsDetailsBaseConfig{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:   1001,
 			ContactEmail: "admin@example.com",
 			Description:  "Sistema gestionado principal",
@@ -220,8 +220,8 @@ func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsDetailsConfig3_1{
-		ManagedSystemsDetailsBaseConfig: entities.ManagedSystemsDetailsBaseConfig{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        1001,
 			ContactEmail:                      "admin@example.com",

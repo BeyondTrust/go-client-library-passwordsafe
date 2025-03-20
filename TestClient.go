@@ -82,11 +82,7 @@ func main() {
 		return
 	}
 
-	certificate, certificateKey, err = GetCertificateData(certificatePath, certificateName, certificatePassword, zapLogger)
-	if err != nil {
-		zapLogger.Error(fmt.Sprintf("Error: %v", err))
-		return
-	}
+	certificate, certificateKey, _ = GetCertificateData(certificatePath, certificateName, certificatePassword, zapLogger)
 
 	// creating a http client
 	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
