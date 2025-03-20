@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
@@ -76,8 +75,7 @@ func (assetObj *AssetObj) CreateAssetByWorkGroupNameFlow(workGroupName string, a
 // createAsset calls Password Safe API enpoint to create assets.
 func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
-	path := "workgroups/{parameter}/assets"
-	newPath := strings.Replace(path, "{parameter}", parameter, 1)
+	path := fmt.Sprintf("workgroups/%s/assets", parameter)
 
 	assetsJson, err := json.Marshal(assetDetails)
 
@@ -91,7 +89,7 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 
 	var assetResponse entities.AssetResponse
 
-	createAssetUrl := assetObj.authenticationObj.ApiUrl.JoinPath(newPath).String()
+	createAssetUrl := assetObj.authenticationObj.ApiUrl.JoinPath(path).String()
 	messageLog := fmt.Sprintf("%v %v", "POST", createAssetUrl)
 	assetObj.log.Debug(messageLog)
 
@@ -107,6 +105,7 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  assetObj.authenticationObj.ApiVersion,
 	}
 
 	technicalError = backoff.Retry(func() error {

@@ -12,6 +12,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_systems"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
@@ -81,11 +82,7 @@ func main() {
 		return
 	}
 
-	certificate, certificateKey, err = GetCertificateData(certificatePath, certificateName, certificatePassword, zapLogger)
-	if err != nil {
-		zapLogger.Error(fmt.Sprintf("Error: %v", err))
-		return
-	}
+	certificate, certificateKey, _ = GetCertificateData(certificatePath, certificateName, certificatePassword, zapLogger)
 
 	// creating a http client
 	httpClientObj, _ := utils.GetHttpClient(clientTimeOutInSeconds, verifyCa, certificate, certificateKey, zapLogger)
@@ -142,6 +139,12 @@ func main() {
 	}
 
 	err = CreateDatabaseFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateManagedSystemFlow(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -246,7 +249,7 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 		ResetPasswordOnMismatchFlag:       false,
 		ChangePasswordAfterAnyReleaseFlag: true,
 		ChangeFrequencyDays:               1,
-		ChangeTime:                        "",
+		ChangeTime:                        "22:25",
 		NextChangeDate:                    "2023-12-01",
 		UseOwnCredentials:                 true,
 		ChangeWindowsAutoLogonFlag:        true,
@@ -506,6 +509,52 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Database by Asset: %v", createdDatabase))
+
+	return nil
+}
+
+// CreateManagedSystemFlow test method to create managed systems in PS API.
+func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating managed system obj
+	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_0{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
+
+			PlatformID:                        2,
+			ContactEmail:                      "admin@example.com",
+			Description:                       "Main Managed System",
+			Port:                              8080,
+			Timeout:                           50,
+			SshKeyEnforcementMode:             1,
+			PasswordRuleID:                    0,
+			DSSKeyRuleID:                      0,
+			LoginAccountID:                    0,
+			ReleaseDuration:                   60,
+			MaxReleaseDuration:                120,
+			ISAReleaseDuration:                30,
+			AutoManagementFlag:                false,
+			FunctionalAccountID:               20,
+			ElevationCommand:                  "sudo su",
+			CheckPasswordFlag:                 true,
+			ChangePasswordAfterAnyReleaseFlag: false,
+			ResetPasswordOnMismatchFlag:       true,
+			ChangeFrequencyType:               "first",
+			ChangeFrequencyDays:               7,
+			ChangeTime:                        "23:00",
+		},
+	}
+
+	// creating a managed system by asset
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemFlow("55", managedSystemDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
 
 	return nil
 }
