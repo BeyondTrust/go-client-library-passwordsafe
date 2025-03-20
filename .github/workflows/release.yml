@@ -2,7 +2,7 @@ name: Release
 
 env:
   JFROG_CLI_BUILD_NAME: ${{ github.event.repository.name }}
-  JFROG_SERVER: eng-generic-dev-local
+  JFROG_SERVER: eng-go-dev-local
   SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
 on:
