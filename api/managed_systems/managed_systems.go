@@ -5,6 +5,7 @@ package managed_systems
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -38,26 +39,29 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemFlow(assetId string
 	var managedSystemJson string
 	var err error
 
-	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
-
-	// validate request body according to he API Version.
-	case entities.ManagedSystemsDetailsConfig3_0, // v3.0
-		entities.ManagedSystemsDetailsConfig3_1, // v3.1
-		entities.ManagedSystemsDetailsConfig3_2: // v3.2
-		err = utils.ValidateData(managedSystemDetails)
-		if err == nil {
-			var buffer []byte
-
-			// Convert object to json string.
-			buffer, err = json.Marshal(managedSystemDetails)
-			if err == nil {
-				managedSystemJson = string(buffer)
-			}
-		}
+	if assetId == "" {
+		return managedSystemResponse, errors.New("asset id is empty, please send a valid asset id")
 	}
 
-	if err != nil {
-		return managedSystemResponse, err
+	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
+
+	// validate request body according to the API Version.
+	case entities.ManagedSystemsByAssetIdDetailsConfig3_0, // v3.0
+		entities.ManagedSystemsByAssetIdDetailsConfig3_1, // v3.1
+		entities.ManagedSystemsByAssetIdDetailsConfig3_2: // v3.2
+		err = utils.ValidateData(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+
+		var bytes []byte
+
+		// Convert object to json string.
+		bytes, err = json.Marshal(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+		managedSystemJson = string(bytes)
 	}
 
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(assetId, managedSystemJson)

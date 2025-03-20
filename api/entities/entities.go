@@ -236,41 +236,41 @@ type DatabaseResponse struct {
 	Template          string
 }
 
-type ManagedSystemsDetailsBaseConfig struct {
+type ManagedSystemsByAssetIdDetailsBaseConfig struct {
 	PlatformID                        int    `json:"PlatformID" validate:"required"`
 	ContactEmail                      string `json:"ContactEmail" validate:"max=1000"`
 	Description                       string `json:"Description" validate:"max=255"`
 	Port                              int    `json:"Port,omitempty"`
-	Timeout                           int16  `json:"Timeout"` // ojo
+	Timeout                           int16  `json:"Timeout,omitempty"`
 	SshKeyEnforcementMode             int    `json:"SshKeyEnforcementMode,omitempty" validate:"oneof=0 1 2"`
-	PasswordRuleID                    int    `json:"PasswordRuleID"`
+	PasswordRuleID                    int    `json:"PasswordRuleID,omitempty"`
 	DSSKeyRuleID                      int    `json:"DSSKeyRuleID,omitempty"`
 	LoginAccountID                    int    `json:"LoginAccountID,omitempty"`
 	ReleaseDuration                   int    `json:"ReleaseDuration" validate:"min=1,max=525600"`
 	MaxReleaseDuration                int    `json:"MaxReleaseDuration" validate:"min=1,max=525600"`
 	ISAReleaseDuration                int    `json:"ISAReleaseDuration" validate:"min=1,max=525600"`
-	AutoManagementFlag                bool   `json:"AutoManagementFlag"`
-	FunctionalAccountID               int    `json:"FunctionalAccountID,omitempty"`
+	AutoManagementFlag                bool   `json:"AutoManagementFlag,omitempty"`
+	FunctionalAccountID               int    `json:"FunctionalAccountID" validate:"required_if=AutoManagementFlag true"`
 	ElevationCommand                  string `json:"ElevationCommand,omitempty"`
-	CheckPasswordFlag                 bool   `json:"CheckPasswordFlag"`
-	ChangePasswordAfterAnyReleaseFlag bool   `json:"ChangePasswordAfterAnyReleaseFlag"`
-	ResetPasswordOnMismatchFlag       bool   `json:"ResetPasswordOnMismatchFlag"`
+	CheckPasswordFlag                 bool   `json:"CheckPasswordFlag,omitempty"`
+	ChangePasswordAfterAnyReleaseFlag bool   `json:"ChangePasswordAfterAnyReleaseFlag,omitempty"`
+	ResetPasswordOnMismatchFlag       bool   `json:"ResetPasswordOnMismatchFlag,omitempty"`
 	ChangeFrequencyType               string `json:"ChangeFrequencyType" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"min=1,max=999"`
+	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
 	ChangeTime                        string `json:"ChangeTime" validate:"datetime=15:04"`
 }
 
-type ManagedSystemsDetailsConfig3_0 struct {
-	ManagedSystemsDetailsBaseConfig
+type ManagedSystemsByAssetIdDetailsConfig3_0 struct {
+	ManagedSystemsByAssetIdDetailsBaseConfig
 }
 
-type ManagedSystemsDetailsConfig3_1 struct {
-	ManagedSystemsDetailsBaseConfig
+type ManagedSystemsByAssetIdDetailsConfig3_1 struct {
+	ManagedSystemsByAssetIdDetailsBaseConfig
 	RemoteClientType string `json:"RemoteClientType" validate:"oneof=None EPM"`
 }
 
-type ManagedSystemsDetailsConfig3_2 struct {
-	ManagedSystemsDetailsBaseConfig
+type ManagedSystemsByAssetIdDetailsConfig3_2 struct {
+	ManagedSystemsByAssetIdDetailsBaseConfig
 	RemoteClientType  string `json:"RemoteClientType" validate:"oneof=None EPM"`
 	ApplicationHostID *int   `json:"ApplicationHostID,omitempty"`
 	IsApplicationHost bool   `json:"IsApplicationHost"`

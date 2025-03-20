@@ -47,11 +47,11 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	//separator := "/"
-	clientTimeOutInSeconds := 30
+	separator := "/"
+	clientTimeOutInSeconds := 120
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	//maxFileSecretSizeBytes := 5000000
+	maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -112,43 +112,41 @@ func main() {
 		return
 	}
 
-	/*
-		err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateManagedAccount(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateManagedAccount(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateWorkGroupFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateWorkGroupFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateAssetWorkFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateAssetWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateDatabaseFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
-	*/
+	err = CreateDatabaseFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
 	err = CreateManagedSystemFlow(authenticate, zapLogger)
 	if err != nil {
@@ -524,12 +522,12 @@ func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj
 	// instantiating managed system obj
 	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsDetailsConfig3_2{
-		ManagedSystemsDetailsBaseConfig: entities.ManagedSystemsDetailsBaseConfig{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_0{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        2,
 			ContactEmail:                      "admin@example.com",
-			Description:                       "Sistema gestionado principal",
+			Description:                       "Main Managed System",
 			Port:                              8080,
 			Timeout:                           50,
 			SshKeyEnforcementMode:             1,
@@ -549,7 +547,6 @@ func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj
 			ChangeFrequencyDays:               7,
 			ChangeTime:                        "23:00",
 		},
-		RemoteClientType: "EPM",
 	}
 
 	// creating a managed system by asset
@@ -561,7 +558,7 @@ func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Debug(fmt.Sprintf("Created Managed Syste, by Asset: %v", createdManagedSystem))
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
 
 	return nil
 }

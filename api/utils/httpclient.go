@@ -161,8 +161,8 @@ func (client *HttpClientObj) GetAuthorizationHeader(accessToken string, apiKey s
 	return authorizationHeader
 }
 
-// SetApiVersionToApiUrl Set API Version to URL.
-func (client *HttpClientObj) SetApiVersionToApiUrl(url string, apiVersion string) string {
+// SetApiVersion Set API Version to URL.
+func (client *HttpClientObj) SetApiVersion(url string, apiVersion string) string {
 
 	// Append API Version to URL
 	if apiVersion != "" {
@@ -181,7 +181,10 @@ func (client *HttpClientObj) SetApiVersionToApiUrl(url string, apiVersion string
 // HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
 
-	url = client.SetApiVersionToApiUrl(url, apiVersion)
+	url = client.SetApiVersion(url, apiVersion)
+
+	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
+
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil
