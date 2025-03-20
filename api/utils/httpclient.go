@@ -134,12 +134,12 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 	)
 
 	if tError != nil {
-		messageLog := fmt.Sprintf("Error in %v %v \n", callSecretSafeAPIObj.Method, tError)
+		messageLog := fmt.Sprintf("Error in %s %s \n", callSecretSafeAPIObj.Method, tError.Error())
 		client.log.Error(messageLog)
 	}
 
 	if businessError != nil {
-		messageLog := fmt.Sprintf("Error in %v: %v \n", callSecretSafeAPIObj.Method, businessError)
+		messageLog := fmt.Sprintf("Error in %s: %s \n", callSecretSafeAPIObj.Method, businessError.Error())
 		client.log.Debug(messageLog)
 	}
 	return response, scode, tError, businessError
