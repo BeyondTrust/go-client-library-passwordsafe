@@ -87,7 +87,7 @@ func TestCreateManagedSystemFlow(t *testing.T) {
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:                        1001,
 			ContactEmail:                      "admin@example.com",
-			Description:                       "Sistema gestionado principal",
+			Description:                       "Main Managed System",
 			Port:                              8080,
 			Timeout:                           30,
 			SshKeyEnforcementMode:             1,
@@ -163,7 +163,7 @@ func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:   1001,
 			ContactEmail: "admin@example.com",
-			Description:  "Sistema gestionado principal",
+			Description:  "Main Managed System",
 			Port:         8080,
 		},
 		RemoteClientType: "EPM",
@@ -225,7 +225,7 @@ func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
 
 			PlatformID:                        1001,
 			ContactEmail:                      "admin@example.com",
-			Description:                       "Sistema gestionado principal",
+			Description:                       "Main Managed System",
 			Port:                              8080,
 			Timeout:                           30,
 			SshKeyEnforcementMode:             1,
