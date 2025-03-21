@@ -57,6 +57,7 @@ func TestCallSecretSafeAPI(t *testing.T) {
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	body, _, technicalError, businessError = httpClientObj.CallSecretSafeAPI(*callSecretSafeAPIObj)
@@ -126,6 +127,7 @@ func TestCallSecretSafeAPIError500(t *testing.T) {
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	// Technical error case - Error 500.
@@ -176,6 +178,7 @@ func TestCallSecretSafeAPIError400(t *testing.T) {
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	// Business error case - Error 400.

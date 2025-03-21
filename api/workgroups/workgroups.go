@@ -85,6 +85,7 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
