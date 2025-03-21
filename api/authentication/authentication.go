@@ -5,6 +5,7 @@ package authentication
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
@@ -129,7 +130,11 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
+
+	messageLog := fmt.Sprintf("%v %v", "POST", endpointUrl)
+	authenticationObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
 		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
@@ -184,7 +189,11 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		AccessToken: accessToken,
 		ApiKey:      apiKey,
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
+
+	messageLog := fmt.Sprintf("%v %v", "POST", endpointUrl)
+	authenticationObj.log.Debug(messageLog)
 
 	err := backoff.Retry(func() error {
 		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
@@ -231,15 +240,21 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	var businessError error
 	var body io.ReadCloser
 
+	signOutUrl := authenticationObj.ApiUrl.JoinPath("Auth/Signout").String()
+
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         authenticationObj.ApiUrl.JoinPath("Auth/Signout").String(),
+		Url:         signOutUrl,
 		HttpMethod:  "POST",
 		Body:        bytes.Buffer{},
 		Method:      constants.SignOut,
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
+
+	messageLog := fmt.Sprintf("%v %v", "POST", signOutUrl)
+	authenticationObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
 		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)

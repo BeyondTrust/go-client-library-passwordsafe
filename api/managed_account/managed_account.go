@@ -129,6 +129,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -186,6 +187,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -232,6 +234,7 @@ func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId st
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -278,6 +281,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -363,6 +367,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -415,6 +420,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {

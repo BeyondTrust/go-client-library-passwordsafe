@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	urlnet "net/url"
+
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
@@ -128,15 +130,16 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 		callSecretSafeAPIObj.AccessToken,
 		callSecretSafeAPIObj.ApiKey,
 		callSecretSafeAPIObj.ContentType,
+		callSecretSafeAPIObj.ApiVersion,
 	)
 
 	if technicalError != nil {
-		messageLog := fmt.Sprintf("Error in %v %v \n", callSecretSafeAPIObj.Method, technicalError)
+		messageLog := fmt.Sprintf("Error in %s %s \n", callSecretSafeAPIObj.Method, technicalError.Error())
 		client.log.Error(messageLog)
 	}
 
 	if businessError != nil {
-		messageLog := fmt.Sprintf("Error in %v: %v \n", callSecretSafeAPIObj.Method, businessError)
+		messageLog := fmt.Sprintf("Error in %s: %s \n", callSecretSafeAPIObj.Method, businessError.Error())
 		client.log.Debug(messageLog)
 	}
 	return response, scode, technicalError, businessError
@@ -158,8 +161,29 @@ func (client *HttpClientObj) GetAuthorizationHeader(accessToken string, apiKey s
 	return authorizationHeader
 }
 
+// SetApiVersion Set API Version to URL.
+func (client *HttpClientObj) SetApiVersion(url string, apiVersion string) string {
+
+	// Append API Version to URL
+	if apiVersion != "" {
+		params := urlnet.Values{}
+		params.Add("version", apiVersion)
+
+		parsedUrl, _ := urlnet.Parse(url)
+		parsedUrl.RawQuery = params.Encode()
+
+		url = parsedUrl.String()
+	}
+
+	return url
+}
+
 // HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
+
+	url = client.SetApiVersion(url, apiVersion)
+
+	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
 
 	req, err := http.NewRequest(method, url, &body)
 	if err != nil {
