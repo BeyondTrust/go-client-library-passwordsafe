@@ -82,7 +82,7 @@ type AccountDetails struct {
 	ChangeTime                        string `validate:"omitempty,datetime=15:04"`
 	NextChangeDate                    string `validate:"omitempty,datetime=2006-01-02"`
 	UseOwnCredentials                 bool   `validate:"omitempty"`
-	WorkgroupID                       *int   `validate:"omitempty"`
+	WorkgroupID                       int    `json:",omitempty" validate:"omitempty"`
 	ChangeWindowsAutoLogonFlag        bool   `validate:"omitempty"`
 	ChangeComPlusFlag                 bool   `validate:"omitempty"`
 	ChangeDComFlag                    bool   `validate:"omitempty"`
@@ -241,7 +241,7 @@ type ManagedSystemsByAssetIdDetailsBaseConfig struct {
 	ContactEmail                      string `json:"ContactEmail" validate:"max=1000"`
 	Description                       string `json:"Description" validate:"max=255"`
 	Port                              int    `json:"Port,omitempty"`
-	Timeout                           int16  `json:"Timeout,omitempty"`
+	Timeout                           int    `json:"Timeout,omitempty"`
 	SshKeyEnforcementMode             int    `json:"SshKeyEnforcementMode,omitempty" validate:"oneof=0 1 2"`
 	PasswordRuleID                    int    `json:"PasswordRuleID,omitempty"`
 	DSSKeyRuleID                      int    `json:"DSSKeyRuleID,omitempty"`
@@ -272,54 +272,54 @@ type ManagedSystemsByAssetIdDetailsConfig3_1 struct {
 type ManagedSystemsByAssetIdDetailsConfig3_2 struct {
 	ManagedSystemsByAssetIdDetailsBaseConfig
 	RemoteClientType  string `json:"RemoteClientType" validate:"oneof=None EPM"`
-	ApplicationHostID *int   `json:"ApplicationHostID,omitempty"`
+	ApplicationHostID int    `json:"ApplicationHostID,omitempty"`
 	IsApplicationHost bool   `json:"IsApplicationHost"`
 }
 
 type ManagedSystemResponseCreate struct {
-	ManagedSystemID                    int     `json:"ManagedSystemID"`
-	EntityTypeID                       int     `json:"EntityTypeID"`
-	AssetID                            int     `json:"AssetID"`
-	DatabaseID                         *int    `json:"DatabaseID,omitempty"`
-	DirectoryID                        *int    `json:"DirectoryID,omitempty"`
-	CloudID                            *int    `json:"CloudID,omitempty"`
-	WorkgroupID                        int     `json:"WorkgroupID"`
-	HostName                           string  `json:"HostName"`
-	DnsName                            string  `json:"DnsName"`
-	IPAddress                          string  `json:"IPAddress"`
-	InstanceName                       *string `json:"InstanceName,omitempty"`
-	IsDefaultInstance                  *bool   `json:"IsDefaultInstance,omitempty"`
-	Template                           *string `json:"Template,omitempty"`
-	ForestName                         *string `json:"ForestName,omitempty"`
-	UseSSL                             *bool   `json:"UseSSL,omitempty"`
-	OracleInternetDirectoryID          *int    `json:"OracleInternetDirectoryID,omitempty"`
-	OracleInternetDirectoryServiceName *string `json:"OracleInternetDirectoryServiceName,omitempty"`
-	SystemName                         string  `json:"SystemName"`
-	PlatformID                         int     `json:"PlatformID"`
-	NetBiosName                        *string `json:"NetBiosName,omitempty"`
-	Port                               *int    `json:"Port,omitempty"`
-	Timeout                            int     `json:"Timeout"`
-	Description                        string  `json:"Description"`
-	ContactEmail                       string  `json:"ContactEmail"`
-	PasswordRuleID                     int     `json:"PasswordRuleID"`
-	DSSKeyRuleID                       int     `json:"DSSKeyRuleID"`
-	ReleaseDuration                    int     `json:"ReleaseDuration"`
-	MaxReleaseDuration                 int     `json:"MaxReleaseDuration"`
-	ISAReleaseDuration                 int     `json:"ISAReleaseDuration"`
-	AutoManagementFlag                 bool    `json:"AutoManagementFlag"`
-	FunctionalAccountID                *int    `json:"FunctionalAccountID,omitempty"`
-	LoginAccountID                     *int    `json:"LoginAccountID,omitempty"`
-	ElevationCommand                   *string `json:"ElevationCommand,omitempty"`
-	SshKeyEnforcementMode              int     `json:"SshKeyEnforcementMode"`
-	CheckPasswordFlag                  bool    `json:"CheckPasswordFlag"`
-	ChangePasswordAfterAnyReleaseFlag  bool    `json:"ChangePasswordAfterAnyReleaseFlag"`
-	ResetPasswordOnMismatchFlag        bool    `json:"ResetPasswordOnMismatchFlag"`
-	ChangeFrequencyType                string  `json:"ChangeFrequencyType"`
-	ChangeFrequencyDays                int     `json:"ChangeFrequencyDays"`
-	ChangeTime                         string  `json:"ChangeTime"`
-	AccountNameFormat                  int     `json:"AccountNameFormat"`
-	RemoteClientType                   string  `json:"RemoteClientType"`
-	ApplicationHostID                  *int    `json:"ApplicationHostID,omitempty"`
-	IsApplicationHost                  bool    `json:"IsApplicationHost"`
-	AccessURL                          *string `json:"AccessURL,omitempty"`
+	ManagedSystemID                    int    `json:"ManagedSystemID"`
+	EntityTypeID                       int    `json:"EntityTypeID"`
+	AssetID                            int    `json:"AssetID"`
+	DatabaseID                         int    `json:"DatabaseID,omitempty"`
+	DirectoryID                        int    `json:"DirectoryID,omitempty"`
+	CloudID                            int    `json:"CloudID,omitempty"`
+	WorkgroupID                        int    `json:"WorkgroupID"`
+	HostName                           string `json:"HostName"`
+	DnsName                            string `json:"DnsName"`
+	IPAddress                          string `json:"IPAddress"`
+	InstanceName                       string `json:"InstanceName,omitempty"`
+	IsDefaultInstance                  bool   `json:"IsDefaultInstance,omitempty"`
+	Template                           string `json:"Template,omitempty"`
+	ForestName                         string `json:"ForestName,omitempty"`
+	UseSSL                             bool   `json:"UseSSL,omitempty"`
+	OracleInternetDirectoryID          int    `json:"OracleInternetDirectoryID,omitempty"`
+	OracleInternetDirectoryServiceName string `json:"OracleInternetDirectoryServiceName,omitempty"`
+	SystemName                         string `json:"SystemName"`
+	PlatformID                         int    `json:"PlatformID"`
+	NetBiosName                        string `json:"NetBiosName,omitempty"`
+	Port                               int    `json:"Port,omitempty"`
+	Timeout                            int    `json:"Timeout"`
+	Description                        string `json:"Description"`
+	ContactEmail                       string `json:"ContactEmail"`
+	PasswordRuleID                     int    `json:"PasswordRuleID"`
+	DSSKeyRuleID                       int    `json:"DSSKeyRuleID"`
+	ReleaseDuration                    int    `json:"ReleaseDuration"`
+	MaxReleaseDuration                 int    `json:"MaxReleaseDuration"`
+	ISAReleaseDuration                 int    `json:"ISAReleaseDuration"`
+	AutoManagementFlag                 bool   `json:"AutoManagementFlag"`
+	FunctionalAccountID                int    `json:"FunctionalAccountID,omitempty"`
+	LoginAccountID                     int    `json:"LoginAccountID,omitempty"`
+	ElevationCommand                   string `json:"ElevationCommand,omitempty"`
+	SshKeyEnforcementMode              int    `json:"SshKeyEnforcementMode"`
+	CheckPasswordFlag                  bool   `json:"CheckPasswordFlag"`
+	ChangePasswordAfterAnyReleaseFlag  bool   `json:"ChangePasswordAfterAnyReleaseFlag"`
+	ResetPasswordOnMismatchFlag        bool   `json:"ResetPasswordOnMismatchFlag"`
+	ChangeFrequencyType                string `json:"ChangeFrequencyType"`
+	ChangeFrequencyDays                int    `json:"ChangeFrequencyDays"`
+	ChangeTime                         string `json:"ChangeTime"`
+	AccountNameFormat                  int    `json:"AccountNameFormat"`
+	RemoteClientType                   string `json:"RemoteClientType"`
+	ApplicationHostID                  int    `json:"ApplicationHostID,omitempty"`
+	IsApplicationHost                  bool   `json:"IsApplicationHost"`
+	AccessURL                          string `json:"AccessURL,omitempty"`
 }
