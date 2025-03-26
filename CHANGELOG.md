@@ -1,5 +1,16 @@
 # Changelog
 
+### [0.18.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.17.0...v0.18.0) / 2025-03-26
+
+#### Features
+
+* add creating Managed System feature associated with Assets ([#209](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/209))
+
+#### Bug Fixes
+
+* code cognitive complexity in go library repo ([#204](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/204))
+* improve README.md file and update dependencies ([#211](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/211))
+
 ### [0.17.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.16.0...v0.17.0) / 2025-03-11
 
 #### Features
