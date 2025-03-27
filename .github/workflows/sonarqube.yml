@@ -74,7 +74,7 @@ jobs:
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
             -Dsonar.go.coverage.reportPaths=coverage.out
-            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go
+            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
@@ -87,7 +87,7 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.go.coverage.reportPaths=coverage.out
-            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go
+            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
         env:
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
