@@ -11,5 +11,21 @@ on:
       - synchronize
 
 jobs:
-  call-workflow:
-    uses: BeyondTrust/beyondinsight-actions/.github/workflows/enforce-pr-issue-link.yml@main
+  enforce-link:
+    runs-on: ubuntu-latest
+    name: Enforce PR link to Jira
+    steps:
+      - name: Check linkage
+        run: |
+          re="[A-Za-z]+-[0-9]+"
+          err=0
+          [[ $TITLE =~ $re || $BODY =~ $re || $HEAD_REF =~ $re ]] && echo "Match found: ${BASH_REMATCH[0]}" || err=1
+
+          if (( err == 1)); then
+            echo "Invalid pull request: missing JIRA ID in title, body, or branch."
+            exit 1
+          fi
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          BODY: ${{ github.event.pull_request.body }}
+          HEAD_REF: ${{ github.head_ref}}
