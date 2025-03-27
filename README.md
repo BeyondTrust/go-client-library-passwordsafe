@@ -75,6 +75,19 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
 
 ## Example of usage
 
+Before running TestClient.go, make sure you have configured required environment variables:
+
+```bash
+export PASSWORD_SAFE_CLIENT_ID="<client_id>";
+export PASSWORD_SAFE_CLIENT_SECRET="<client_secret>";
+export PASSWORD_SAFE_CERTIFICATE="<certificate_content_if_api_user_needs_it>";
+export PASSWORD_SAFE_CERTIFICATE_KEY="<certificate_key_if_api_user_needs_it>";
+export PASSWORD_SAFE_CERTIFICATE_PATH="<certificate_path_if_api_user_needs_it>";
+export PASSWORD_SAFE_CERTIFICATE_NAME="<certificate_name_if_api_user_needs_it>";
+export PASSWORD_SAFE_CERTIFICATE_PASSWORD="<certificate_password_if_api_user_needs_it>";
+export PASSWORD_SAFE_API_URL="<Test_URL_of_your_password_safe_instance>";
+```
+
 The TestClient.go provides example usage of the library.
 
 and execute:
@@ -125,10 +138,35 @@ zapLogger := logging.NewZapLogger(logger)
 
 ## Unit Tests
 
+Before running the unit tests, make sure you have configured required environment variables:
+
+```sh
+export PASSWORD_SAFE_FAKE_CERTIFICATE="<fake_certificate_content>";
+export PASSWORD_SAFE_FAKE_CERTIFICATE_KEY="<fake_certificate_key>";
+export PASSWORD_SAFE_FAKE_CLIENT_ID="<fake_client_secret>";
+export PASSWORD_SAFE_FAKE_CLIENT_SECRET="<fake_client_secret>";
+export PASSWORD_SAFE_FAKE_API_KEY="<fake_api_key>";
+export PASSWORD_SAFE_API_PATH="<fake_api_path>"
+export PASSWORD_SAFE_FAKE_API_URL="<fake_test_URL>";
+```
+
+and execute:
+
 ```bash
 go-client-library-passwordsafe\api\authentication> go test
 go-client-library-passwordsafe\api\managed_account> go test
 go-client-library-passwordsafe\api\secrets> go test
+go-client-library-passwordsafe\api\databases> go test
+go-client-library-passwordsafe\api\logging> go test
+go-client-library-passwordsafe\api\managed_systems> go test
+go-client-library-passwordsafe\api\utils> go test
+go-client-library-passwordsafe\api\workgroups> go test
+```
+
+or run all unit tests in just one go:
+
+```bash
+go-client-library-passwordsafe\api> go test ./... -cover
 ```
 
 ## License
