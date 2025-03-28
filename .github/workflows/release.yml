@@ -162,7 +162,7 @@ jobs:
         env:
           JF_URL: https://beyondtrust.jfrog.io
         with:
-          oidc-provider-name: go-client-library-passwordsafe
+          oidc-provider-name: nonprod-go-client-library-passwordsafe
 
       - name: Configure JFrog CLI build number
         run: |
