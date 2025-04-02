@@ -47,11 +47,11 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	//separator := "/"
+	separator := "/"
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	//maxFileSecretSizeBytes := 5000000
+	maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
