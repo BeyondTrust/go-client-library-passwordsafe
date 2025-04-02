@@ -144,13 +144,7 @@ func main() {
 		return
 	}
 
-	err = CreateManagedSystemByAssetIdFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
-
-	err = CreateManagedSystemByWorkGroupIdFlow(authenticate, zapLogger)
+	err = CreateManagedSystem(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -519,12 +513,13 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 	return nil
 }
 
-// CreateManagedSystemByAssetIdFlow test method to create managed systems by Asset Id in PS API.
-func CreateManagedSystemByAssetIdFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+// CreateManagedSystem test method to create managed systems in PS API.
+func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating managed system obj
 	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig30{
+	// creating a managed system using Asset Id
+	managedSystemByAssetDetails := entities.ManagedSystemsByAssetIdDetailsConfig30{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        2,
@@ -552,7 +547,7 @@ func CreateManagedSystemByAssetIdFlow(authenticationObj *authentication.Authenti
 	}
 
 	// creating a managed system by asset
-	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("55", managedSystemDetails)
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("55", managedSystemByAssetDetails)
 
 	if err != nil {
 		zapLogger.Error(err.Error())
@@ -562,15 +557,8 @@ func CreateManagedSystemByAssetIdFlow(authenticationObj *authentication.Authenti
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
 
-	return nil
-}
-
-// CreateManagedSystemByWorkGroupIdFlow test method to create managed systems by Workgroup Id in PS API.
-func CreateManagedSystemByWorkGroupIdFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
-	// instantiating managed system obj
-	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
-
-	managedSystemDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
+	// creating a managed system by workgroup Id
+	managedSystemByWorkGroupDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
 		ManagedSystemsByWorkGroupIdDetailsBaseConfig: entities.ManagedSystemsByWorkGroupIdDetailsBaseConfig{
 			EntityTypeID:                       1,
 			HostName:                           "example.com",
@@ -610,8 +598,8 @@ func CreateManagedSystemByWorkGroupIdFlow(authenticationObj *authentication.Auth
 		},
 	}
 
-	// creating a managed system by workgroup
-	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("55", managedSystemDetails)
+	// creating a managed system by workgroup Id
+	createdManagedSystem, err = managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("55", managedSystemByWorkGroupDetails)
 
 	if err != nil {
 		zapLogger.Error(err.Error())
