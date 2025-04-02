@@ -47,11 +47,11 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	separator := "/"
+	//separator := "/"
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	maxFileSecretSizeBytes := 5000000
+	//maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -144,7 +144,13 @@ func main() {
 		return
 	}
 
-	err = CreateManagedSystemFlow(authenticate, zapLogger)
+	err = CreateManagedSystemByAssetIdFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateManagedSystemByWorkGroupIdFlow(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -513,12 +519,12 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 	return nil
 }
 
-// CreateManagedSystemFlow test method to create managed systems in PS API.
-func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+// CreateManagedSystemByAssetIdFlow test method to create managed systems by Asset Id in PS API.
+func CreateManagedSystemByAssetIdFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating managed system obj
 	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_0{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig30{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        2,
@@ -546,7 +552,66 @@ func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj
 	}
 
 	// creating a managed system by asset
-	createdManagedSystem, err := managedSystemObj.CreateManagedSystemFlow("55", managedSystemDetails)
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("55", managedSystemDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
+
+	return nil
+}
+
+// CreateManagedSystemByWorkGroupIdFlow test method to create managed systems by Workgroup Id in PS API.
+func CreateManagedSystemByWorkGroupIdFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating managed system obj
+	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
+		ManagedSystemsByWorkGroupIdDetailsBaseConfig: entities.ManagedSystemsByWorkGroupIdDetailsBaseConfig{
+			EntityTypeID:                       1,
+			HostName:                           "example.com",
+			IPAddress:                          "192.168.1.1",
+			DnsName:                            "example.local",
+			InstanceName:                       "Instance1",
+			IsDefaultInstance:                  true,
+			Template:                           "DefaultTemplate",
+			ForestName:                         "exampleForest",
+			UseSSL:                             false,
+			PlatformID:                         2,
+			NetBiosName:                        "EXAMPLE",
+			ContactEmail:                       "admin@example.com",
+			Description:                        "Example system",
+			Port:                               443,
+			Timeout:                            30,
+			SshKeyEnforcementMode:              1,
+			PasswordRuleID:                     0,
+			DSSKeyRuleID:                       0,
+			LoginAccountID:                     0,
+			AccountNameFormat:                  1,
+			OracleInternetDirectoryID:          uuid.New().String(),
+			OracleInternetDirectoryServiceName: "OracleService",
+			ReleaseDuration:                    60,
+			MaxReleaseDuration:                 120,
+			ISAReleaseDuration:                 180,
+			AutoManagementFlag:                 false,
+			FunctionalAccountID:                0,
+			ElevationCommand:                   "sudo su",
+			CheckPasswordFlag:                  true,
+			ChangePasswordAfterAnyReleaseFlag:  true,
+			ResetPasswordOnMismatchFlag:        false,
+			ChangeFrequencyType:                "first",
+			ChangeFrequencyDays:                7,
+			ChangeTime:                         "02:00",
+			AccessURL:                          "https://example.com",
+		},
+	}
+
+	// creating a managed system by workgroup
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("55", managedSystemDetails)
 
 	if err != nil {
 		zapLogger.Error(err.Error())
