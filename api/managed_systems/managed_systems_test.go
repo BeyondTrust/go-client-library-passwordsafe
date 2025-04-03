@@ -16,6 +16,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 	backoff "github.com/cenkalti/backoff/v4"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +48,7 @@ func InitializeGlobalConfig() {
 	}
 }
 
-func TestCreateManagedSystemFlow(t *testing.T) {
+func TestCreateManagedSystemByAssetIdFlow(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -83,7 +84,7 @@ func TestCreateManagedSystemFlow(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig31{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:                        1001,
 			ContactEmail:                      "admin@example.com",
@@ -110,19 +111,19 @@ func TestCreateManagedSystemFlow(t *testing.T) {
 		RemoteClientType: "EPM",
 	}
 
-	response, err := managedSystemObj.CreateManagedSystemFlow("1", managedSystemDetails)
+	response, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("1", managedSystemDetails)
 
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
 	if response.ManagedSystemID != 13 {
-		t.Errorf("Test case Failed %v, %v", response, 13)
+		t.Errorf("Test case Failed %v, %v", response.ManagedSystemID, 13)
 	}
 
 }
 
-func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
+func TestCreateManagedSystemByAssetIdFlowBadPayload(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -159,7 +160,7 @@ func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig31{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 			PlatformID:   1001,
 			ContactEmail: "admin@example.com",
@@ -169,7 +170,7 @@ func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
 		RemoteClientType: "EPM",
 	}
 
-	_, err := managedSystemObj.CreateManagedSystemFlow("1", managedSystemDetails)
+	_, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("1", managedSystemDetails)
 
 	expetedErrorMessage := "Error in field ReleaseDuration : min / 1."
 
@@ -183,7 +184,7 @@ func TestCreateManagedSystemFlowBadPayload(t *testing.T) {
 
 }
 
-func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
+func TestCreateManagedSystemByAssetIdFlowTechnicalError(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -220,7 +221,7 @@ func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_1{
+	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig31{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        1001,
@@ -248,7 +249,7 @@ func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
 		RemoteClientType: "EPM",
 	}
 
-	_, err := managedSystemObj.CreateManagedSystemFlow("1", managedSystemDetails)
+	_, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("1", managedSystemDetails)
 
 	expetedErrorMessage := "error - status code: 400 - Bad Request"
 
@@ -258,6 +259,94 @@ func TestCreateManagedSystemFlowTechnicalError(t *testing.T) {
 
 	if err.Error() != expetedErrorMessage {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestCreateManagedSystemByWorkGroupIdFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Workgroups/1/ManagedSystems":
+			_, err := w.Write([]byte(`{"ManagedSystemID": 15, "EntityTypeID": 1, "AssetID": 1}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
+		ManagedSystemsByWorkGroupIdDetailsBaseConfig: entities.ManagedSystemsByWorkGroupIdDetailsBaseConfig{
+			EntityTypeID:                       1,
+			HostName:                           "example.com",
+			IPAddress:                          "192.168.1.1",
+			DnsName:                            "example.local",
+			InstanceName:                       "Instance1",
+			IsDefaultInstance:                  true,
+			Template:                           "DefaultTemplate",
+			ForestName:                         "exampleForest",
+			UseSSL:                             false,
+			PlatformID:                         2,
+			NetBiosName:                        "EXAMPLE",
+			ContactEmail:                       "admin@example.com",
+			Description:                        "Example system",
+			Port:                               443,
+			Timeout:                            30,
+			SshKeyEnforcementMode:              1,
+			PasswordRuleID:                     0,
+			DSSKeyRuleID:                       0,
+			LoginAccountID:                     0,
+			AccountNameFormat:                  1,
+			OracleInternetDirectoryID:          uuid.New().String(),
+			OracleInternetDirectoryServiceName: "OracleService",
+			ReleaseDuration:                    60,
+			MaxReleaseDuration:                 120,
+			ISAReleaseDuration:                 180,
+			AutoManagementFlag:                 false,
+			FunctionalAccountID:                0,
+			ElevationCommand:                   "sudo su",
+			CheckPasswordFlag:                  true,
+			ChangePasswordAfterAnyReleaseFlag:  true,
+			ResetPasswordOnMismatchFlag:        false,
+			ChangeFrequencyType:                "first",
+			ChangeFrequencyDays:                7,
+			ChangeTime:                         "02:00",
+			AccessURL:                          "https://example.com",
+		},
+	}
+
+	response, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("1", managedSystemDetails)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if response.ManagedSystemID != 15 {
+		t.Errorf("Test case Failedd %v, %v", response.ManagedSystemID, 15)
 	}
 
 }

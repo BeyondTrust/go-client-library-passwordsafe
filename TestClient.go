@@ -144,7 +144,7 @@ func main() {
 		return
 	}
 
-	err = CreateManagedSystemFlow(authenticate, zapLogger)
+	err = CreateManagedSystem(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -513,12 +513,13 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 	return nil
 }
 
-// CreateManagedSystemFlow test method to create managed systems in PS API.
-func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+// CreateManagedSystem test method to create managed systems in PS API.
+func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
 	// instantiating managed system obj
 	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
 
-	managedSystemDetails := entities.ManagedSystemsByAssetIdDetailsConfig3_0{
+	// creating a managed system using Asset Id
+	managedSystemByAssetDetails := entities.ManagedSystemsByAssetIdDetailsConfig30{
 		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
 
 			PlatformID:                        2,
@@ -546,7 +547,59 @@ func CreateManagedSystemFlow(authenticationObj *authentication.AuthenticationObj
 	}
 
 	// creating a managed system by asset
-	createdManagedSystem, err := managedSystemObj.CreateManagedSystemFlow("55", managedSystemDetails)
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("55", managedSystemByAssetDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
+
+	// creating a managed system by workgroup Id
+	managedSystemByWorkGroupDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
+		ManagedSystemsByWorkGroupIdDetailsBaseConfig: entities.ManagedSystemsByWorkGroupIdDetailsBaseConfig{
+			EntityTypeID:                       1,
+			HostName:                           "example.com",
+			IPAddress:                          "192.168.1.1",
+			DnsName:                            "example.local",
+			InstanceName:                       "Instance1",
+			IsDefaultInstance:                  true,
+			Template:                           "DefaultTemplate",
+			ForestName:                         "exampleForest",
+			UseSSL:                             false,
+			PlatformID:                         2,
+			NetBiosName:                        "EXAMPLE",
+			ContactEmail:                       "admin@example.com",
+			Description:                        "Example system",
+			Port:                               443,
+			Timeout:                            30,
+			SshKeyEnforcementMode:              1,
+			PasswordRuleID:                     0,
+			DSSKeyRuleID:                       0,
+			LoginAccountID:                     0,
+			AccountNameFormat:                  1,
+			OracleInternetDirectoryID:          uuid.New().String(),
+			OracleInternetDirectoryServiceName: "OracleService",
+			ReleaseDuration:                    60,
+			MaxReleaseDuration:                 120,
+			ISAReleaseDuration:                 180,
+			AutoManagementFlag:                 false,
+			FunctionalAccountID:                0,
+			ElevationCommand:                   "sudo su",
+			CheckPasswordFlag:                  true,
+			ChangePasswordAfterAnyReleaseFlag:  true,
+			ResetPasswordOnMismatchFlag:        false,
+			ChangeFrequencyType:                "first",
+			ChangeFrequencyDays:                7,
+			ChangeTime:                         "02:00",
+			AccessURL:                          "https://example.com",
+		},
+	}
+
+	// creating a managed system by workgroup Id
+	createdManagedSystem, err = managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("55", managedSystemByWorkGroupDetails)
 
 	if err != nil {
 		zapLogger.Error(err.Error())
