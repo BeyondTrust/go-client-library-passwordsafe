@@ -32,8 +32,8 @@ func NewManagedSystem(authentication authentication.AuthenticationObj, logger lo
 	return managedSystemObj, nil
 }
 
-// createManagedSystemFlow is responsible for creating managed_systems in Password Safe.
-func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemFlow(assetId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+// CreateManagedSystemByAssetIdFlow is responsible for creating managed_systems by Asset Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(assetId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
@@ -46,9 +46,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemFlow(assetId string
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
 
 	// validate request body according to the API Version.
-	case entities.ManagedSystemsByAssetIdDetailsConfig3_0, // v3.0
-		entities.ManagedSystemsByAssetIdDetailsConfig3_1, // v3.1
-		entities.ManagedSystemsByAssetIdDetailsConfig3_2: // v3.2
+	case entities.ManagedSystemsByAssetIdDetailsConfig30, // v3.0
+		entities.ManagedSystemsByAssetIdDetailsConfig31, // v3.1
+		entities.ManagedSystemsByAssetIdDetailsConfig32: // v3.2
 		err = utils.ValidateData(managedSystemDetails)
 		if err != nil {
 			return managedSystemResponse, err
@@ -64,7 +64,53 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemFlow(assetId string
 		managedSystemJson = string(bytes)
 	}
 
-	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(assetId, managedSystemJson)
+	path := fmt.Sprintf("/Assets/%s/ManagedSystems", assetId)
+
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByAssetId, path, managedSystemJson)
+
+	if err != nil {
+		return managedSystemResponse, err
+	}
+
+	return managedSystemResponse, nil
+
+}
+
+// CreateManagedSystemByWorkGroupIdFlow is responsible for creating managed_systems by WorkGroup Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+
+	var managedSystemResponse entities.ManagedSystemResponseCreate
+	var managedSystemJson string
+	var err error
+
+	if workGroupId == "" {
+		return managedSystemResponse, errors.New("workGroup Id is empty, please send a valid workGroup Id id")
+	}
+
+	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
+
+	// validate request body according to the API Version.
+	case entities.ManagedSystemsByWorkGroupIdDetailsConfig30, // v3.0
+		entities.ManagedSystemsByWorkGroupIdDetailsConfig31, // v3.1
+		entities.ManagedSystemsByWorkGroupIdDetailsConfig32, // v3.2
+		entities.ManagedSystemsByWorkGroupIdDetailsConfig33: // v3.3
+		err = utils.ValidateData(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+
+		var bytes []byte
+
+		// Convert object to json string.
+		bytes, err = json.Marshal(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+		managedSystemJson = string(bytes)
+	}
+
+	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", workGroupId)
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
 
 	if err != nil {
 		return managedSystemResponse, err
@@ -75,10 +121,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemFlow(assetId string
 }
 
 // createManagedSystem calls Password Safe API enpoint to create managed_systems.
-func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(assetId string, payload string) (entities.ManagedSystemResponseCreate, error) {
+func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, path string, payload string) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
-	path := fmt.Sprintf("/Assets/%s/ManagedSystems", assetId)
 
 	b := bytes.NewBufferString(payload)
 
@@ -94,7 +139,7 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(assetId string, pa
 		Url:         createManagedSystemUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
-		Method:      constants.CreateManagedSystemByAssetId,
+		Method:      method,
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",

@@ -260,16 +260,16 @@ type ManagedSystemsByAssetIdDetailsBaseConfig struct {
 	ChangeTime                        string `json:"ChangeTime" validate:"datetime=15:04"`
 }
 
-type ManagedSystemsByAssetIdDetailsConfig3_0 struct {
+type ManagedSystemsByAssetIdDetailsConfig30 struct {
 	ManagedSystemsByAssetIdDetailsBaseConfig
 }
 
-type ManagedSystemsByAssetIdDetailsConfig3_1 struct {
+type ManagedSystemsByAssetIdDetailsConfig31 struct {
 	ManagedSystemsByAssetIdDetailsBaseConfig
 	RemoteClientType string `json:"RemoteClientType" validate:"oneof=None EPM"`
 }
 
-type ManagedSystemsByAssetIdDetailsConfig3_2 struct {
+type ManagedSystemsByAssetIdDetailsConfig32 struct {
 	ManagedSystemsByAssetIdDetailsBaseConfig
 	RemoteClientType  string `json:"RemoteClientType" validate:"oneof=None EPM"`
 	ApplicationHostID int    `json:"ApplicationHostID,omitempty"`
@@ -322,4 +322,65 @@ type ManagedSystemResponseCreate struct {
 	ApplicationHostID                  int    `json:"ApplicationHostID,omitempty"`
 	IsApplicationHost                  bool   `json:"IsApplicationHost"`
 	AccessURL                          string `json:"AccessURL,omitempty"`
+}
+
+type ManagedSystemsByWorkGroupIdDetailsBaseConfig struct {
+	EntityTypeID                       int    `json:",omitempty" validate:"required"`
+	HostName                           string `json:",omitempty" validate:"required,max=128"`
+	IPAddress                          string `json:",omitempty" validate:"required,ip,max=46"`
+	DnsName                            string `json:",omitempty" validate:"max=225"`
+	InstanceName                       string `json:",omitempty" validate:"required_if=IsDefaultInstance true,max=100"`
+	IsDefaultInstance                  bool   `json:",omitempty"`
+	Template                           string `json:",omitempty"`
+	ForestName                         string `json:",omitempty" validate:"max=64"`
+	UseSSL                             bool   `json:",omitempty"`
+	PlatformID                         int    `json:",omitempty" validate:"required"`
+	NetBiosName                        string `json:",omitempty" validate:"max=15"`
+	ContactEmail                       string `json:",omitempty" validate:"email,max=1000"`
+	Description                        string `json:",omitempty" validate:"max=255"`
+	Port                               int    `json:",omitempty"`
+	Timeout                            int    `json:",omitempty"`
+	SshKeyEnforcementMode              int    `json:",omitempty" validate:"oneof=0 1 2"`
+	PasswordRuleID                     int    `json:",omitempty"`
+	DSSKeyRuleID                       int    `json:",omitempty"`
+	LoginAccountID                     int    `json:",omitempty"`
+	AccountNameFormat                  int    `json:",omitempty" validate:"oneof=0 1 2"`
+	OracleInternetDirectoryID          string `json:",omitempty"`
+	OracleInternetDirectoryServiceName string `json:",omitempty" validate:"max=200"`
+	ReleaseDuration                    int    `json:",omitempty" validate:"min=1,max=525600"`
+	MaxReleaseDuration                 int    `json:",omitempty" validate:"min=1,max=525600"`
+	ISAReleaseDuration                 int    `json:",omitempty" validate:"min=1,max=525600"`
+	AutoManagementFlag                 bool   `json:",omitempty"`
+	FunctionalAccountID                int    `json:",omitempty" validate:"required_if=AutoManagementFlag true"`
+	ElevationCommand                   string `json:",omitempty"`
+	CheckPasswordFlag                  bool   `json:",omitempty"`
+	ChangePasswordAfterAnyReleaseFlag  bool   `json:",omitempty"`
+	ResetPasswordOnMismatchFlag        bool   `json:",omitempty"`
+	ChangeFrequencyType                string `json:",omitempty" validate:"oneof=first last xdays"`
+	ChangeFrequencyDays                int    `json:",omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
+	ChangeTime                         string `json:",omitempty" validate:"datetime=15:04"`
+	AccessURL                          string `json:",omitempty" validate:"required,url"`
+}
+
+type ManagedSystemsByWorkGroupIdDetailsConfig30 struct {
+	ManagedSystemsByWorkGroupIdDetailsBaseConfig
+}
+
+type ManagedSystemsByWorkGroupIdDetailsConfig31 struct {
+	ManagedSystemsByWorkGroupIdDetailsBaseConfig
+	RemoteClientType string `json:"RemoteClientType" validate:"oneof=None EPM"`
+}
+
+type ManagedSystemsByWorkGroupIdDetailsConfig32 struct {
+	ManagedSystemsByWorkGroupIdDetailsBaseConfig
+	RemoteClientType  string `json:"RemoteClientType" validate:"oneof=None EPM"`
+	ApplicationHostID int    `json:"ApplicationHostID,omitempty"`
+	IsApplicationHost bool   `json:"IsApplicationHost"`
+}
+
+type ManagedSystemsByWorkGroupIdDetailsConfig33 struct {
+	ManagedSystemsByWorkGroupIdDetailsBaseConfig
+	RemoteClientType  string `json:"RemoteClientType" validate:"oneof=None EPM"`
+	ApplicationHostID int    `json:"ApplicationHostID,omitempty"`
+	IsApplicationHost bool   `json:"IsApplicationHost"`
 }
