@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.19.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.18.0...v0.19.0) / 2025-04-03
+
+#### Features
+
+* add creating Managed System feature associated with Workgroups ([#223](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/223))
+
 ### [0.18.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.17.0...v0.18.0) / 2025-03-26
 
 #### Features
