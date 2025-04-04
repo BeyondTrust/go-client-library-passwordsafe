@@ -1,14 +1,13 @@
 module github.com/BeyondTrust/go-client-library-passwordsafe
 
 go 1.24.1
-
 require (
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/go-logr/logr v1.4.1
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-logr/logr v1.4.2
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.36.0
 )
