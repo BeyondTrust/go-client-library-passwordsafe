@@ -84,7 +84,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 	var err error
 
 	if workGroupId == "" {
-		return managedSystemResponse, errors.New("workGroup Id is empty, please send a valid workGroup Id id")
+		return managedSystemResponse, errors.New("workGroup Id is empty, please send a valid workGroup Id")
 	}
 
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
@@ -111,6 +111,46 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 
 	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", workGroupId)
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
+
+	if err != nil {
+		return managedSystemResponse, err
+	}
+
+	return managedSystemResponse, nil
+
+}
+
+// CreateManagedSystemByDataBaseIdFlow is responsible for creating managed_systems by Database Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+
+	var managedSystemResponse entities.ManagedSystemResponseCreate
+	var managedSystemJson string
+	var err error
+
+	if workGroupId == "" {
+		return managedSystemResponse, errors.New("Database Id is empty, please send a valid Database Id")
+	}
+
+	// just one payload
+	managedSystemDetails, ok := managedSystemDetailsInterface.(entities.ManagedSystemsByDatabaseIdDetailsBaseConfig)
+	if ok {
+		err = utils.ValidateData(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+
+		var bytes []byte
+
+		// Convert object to json string.
+		bytes, err = json.Marshal(managedSystemDetails)
+		if err != nil {
+			return managedSystemResponse, err
+		}
+		managedSystemJson = string(bytes)
+	}
+
+	path := fmt.Sprintf("/Databases/%s/ManagedSystems", workGroupId)
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
 
 	if err != nil {
 		return managedSystemResponse, err

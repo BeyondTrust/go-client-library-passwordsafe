@@ -350,3 +350,69 @@ func TestCreateManagedSystemByWorkGroupIdFlow(t *testing.T) {
 	}
 
 }
+
+func TestCreateManagedSystemByDataBaseIdFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Databases/1/ManagedSystems":
+			_, err := w.Write([]byte(`{"ManagedSystemID": 15, "EntityTypeID": 1, "AssetID": 1}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{
+		ContactEmail:                      "admin@example.com",
+		Description:                       "Base config for managed system by DB ID",
+		Timeout:                           30,
+		PasswordRuleID:                    0,
+		ReleaseDuration:                   120,
+		MaxReleaseDuration:                525600,
+		ISAReleaseDuration:                120,
+		AutoManagementFlag:                true,
+		FunctionalAccountID:               123,
+		CheckPasswordFlag:                 true,
+		ChangePasswordAfterAnyReleaseFlag: false,
+		ResetPasswordOnMismatchFlag:       true,
+		ChangeFrequencyType:               "xdays",
+		ChangeFrequencyDays:               30,
+		ChangeTime:                        "23:30",
+	}
+
+	response, err := managedSystemObj.CreateManagedSystemByDataBaseIdFlow("1", managedSystemDetails)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if response.ManagedSystemID != 15 {
+		t.Errorf("Test case Failedd %v, %v", response.ManagedSystemID, 15)
+	}
+
+}
