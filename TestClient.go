@@ -47,11 +47,11 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	//separator := "/"
+	separator := "/"
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	//maxFileSecretSizeBytes := 5000000
+	maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -108,43 +108,42 @@ func main() {
 		return
 	}
 
-	/*
-		err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateManagedAccount(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateManagedAccount(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateWorkGroupFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateWorkGroupFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateAssetWorkFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
+	err = CreateAssetWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
 
-		err = CreateDatabaseFlow(authenticate, zapLogger)
-		if err != nil {
-			zapLogger.Error(err.Error())
-			return
-		}
-	*/
+	err = CreateDatabaseFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
 	err = CreateManagedSystem(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
