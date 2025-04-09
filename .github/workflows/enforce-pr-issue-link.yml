@@ -12,7 +12,7 @@ on:
 
 jobs:
   enforce-link:
-    if: ${{  !startsWith('chore(main)', github.event.pull_request.title) && !startsWith('Build(deps)', github.event.pull_request.title) }}
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'beyondtrust-release-app[bot]' }}
     runs-on: ubuntu-latest
     name: Enforce PR link to Jira
     steps:

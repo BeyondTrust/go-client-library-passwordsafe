@@ -9,7 +9,7 @@ on:
 jobs:
   validate-pr:
     runs-on: ubuntu-latest
-    if: ${{  !startsWith('chore(main)', github.event.pull_request.title) && !startsWith('Build(deps)', github.event.pull_request.title) }}
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'beyondtrust-release-app[bot]' }}
     steps:
       - name: Check PR Description
         id: validate
