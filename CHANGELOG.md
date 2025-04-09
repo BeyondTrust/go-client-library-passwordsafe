@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.20.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.19.0...v0.20.0) / 2025-04-09
+
+#### Features
+
+* add creating Managed System feature associated with Databases ([#228](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/228))
+
 ### [0.19.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.18.0...v0.19.0) / 2025-04-03
 
 #### Features
