@@ -547,7 +547,7 @@ func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, za
 	}
 
 	// creating a managed system by asset
-	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("55", managedSystemByAssetDetails)
+	createdManagedSystem, err := managedSystemObj.CreateManagedSystemByAssetIdFlow("1", managedSystemByAssetDetails)
 
 	if err != nil {
 		zapLogger.Error(err.Error())
@@ -607,7 +607,37 @@ func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, za
 	}
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Debug(fmt.Sprintf("Created Managed System by Asset: %v", createdManagedSystem))
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Workgroup: %v", createdManagedSystem))
+
+	// creating a managed system by database Id
+	managedSystemByDatabaseDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{
+		ContactEmail:                      "admin@example.com",
+		Description:                       "Base config for managed system by DB ID",
+		Timeout:                           30,
+		PasswordRuleID:                    0,
+		ReleaseDuration:                   120,
+		MaxReleaseDuration:                525600,
+		ISAReleaseDuration:                120,
+		AutoManagementFlag:                false,
+		FunctionalAccountID:               0,
+		CheckPasswordFlag:                 true,
+		ChangePasswordAfterAnyReleaseFlag: false,
+		ResetPasswordOnMismatchFlag:       true,
+		ChangeFrequencyType:               "xdays",
+		ChangeFrequencyDays:               30,
+		ChangeTime:                        "23:30",
+	}
+
+	// creating a managed system by database Id
+	createdManagedSystem, err = managedSystemObj.CreateManagedSystemByDataBaseIdFlow("55", managedSystemByDatabaseDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Managed System by Database: %v", createdManagedSystem))
 
 	return nil
 }
