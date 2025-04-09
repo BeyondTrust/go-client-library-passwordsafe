@@ -351,6 +351,31 @@ func TestCreateManagedSystemByWorkGroupIdFlow(t *testing.T) {
 
 }
 
+// workGroup Id is empty, please send a valid workGroup Id
+func TestCreateManagedSystemByWorkGroupIdFlowEmptyWorkGroupId(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{}
+
+	_, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("", managedSystemDetails)
+
+	expetedErrorMessage := "workGroup Id is empty, please send a valid workGroup Id"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
 func TestCreateManagedSystemByDataBaseIdFlow(t *testing.T) {
 
 	InitializeGlobalConfig()
@@ -413,6 +438,58 @@ func TestCreateManagedSystemByDataBaseIdFlow(t *testing.T) {
 
 	if response.ManagedSystemID != 15 {
 		t.Errorf("Test case Failedd %v, %v", response.ManagedSystemID, 15)
+	}
+
+}
+
+// Database Id is empty
+func TestCreateManagedSystemByDataBaseIdFlowEmptyDatabaseId(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{}
+
+	_, err := managedSystemObj.CreateManagedSystemByDataBaseIdFlow("", managedSystemDetails)
+
+	expetedErrorMessage := "Database Id is empty, please send a valid Database Id"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+// Error in field Timeout : min / 1.
+func TestCreateManagedSystemByDataBaseIdFlowBadData(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{
+		ContactEmail: "very_long_email_bad_email_bad_email@very_long_email_bad_email_bad_email.com",
+	}
+
+	_, err := managedSystemObj.CreateManagedSystemByDataBaseIdFlow("1", managedSystemDetails)
+
+	expetedErrorMessage := "Error in field Timeout : min / 1."
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 
 }
