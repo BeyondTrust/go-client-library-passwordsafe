@@ -384,3 +384,21 @@ type ManagedSystemsByWorkGroupIdDetailsConfig33 struct {
 	ApplicationHostID int    `json:"ApplicationHostID,omitempty"`
 	IsApplicationHost bool   `json:"IsApplicationHost"`
 }
+
+type ManagedSystemsByDatabaseIdDetailsBaseConfig struct {
+	ContactEmail                      string `json:",omitempty" validate:"max=1000"`
+	Description                       string `json:",omitempty" validate:"max=255"`
+	Timeout                           int    `json:",omitempty" validate:"min=1"`
+	PasswordRuleID                    int    `json:",omitempty"`
+	ReleaseDuration                   int    `json:",omitempty" validate:"min=1,max=525600"`
+	MaxReleaseDuration                int    `json:",omitempty" validate:"min=1,max=525600"`
+	ISAReleaseDuration                int    `json:",omitempty" validate:"min=1,max=525600"`
+	AutoManagementFlag                bool   `json:",omitempty"`
+	FunctionalAccountID               int    `json:",omitempty" validate:"required_if=AutoManagementFlag true"`
+	CheckPasswordFlag                 bool   `json:",omitempty"`
+	ChangePasswordAfterAnyReleaseFlag bool   `json:",omitempty"`
+	ResetPasswordOnMismatchFlag       bool   `json:",omitempty"`
+	ChangeFrequencyType               string `json:",omitempty" validate:"oneof=first last xdays"`
+	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays,min=1,max=999"`
+	ChangeTime                        string `json:",omitempty" validate:"datetime=15:04"`
+}
