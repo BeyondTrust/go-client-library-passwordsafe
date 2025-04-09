@@ -32,4 +32,6 @@ const (
 	CreateManagedSystemByAssetId = "CreateManagedSystemByAssetId"
 
 	CreateManagedSystemByWorkGroupId = "CreateManagedSystemByWorkGroupId"
+
+	CreateManagedSystemByDataBaseId = "CreateManagedSystemByDataBaseId"
 )
