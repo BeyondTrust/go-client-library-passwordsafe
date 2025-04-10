@@ -12,6 +12,7 @@ on:
 
 jobs:
   enforce-link:
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'beyondtrust-release-app[bot]' }}
     runs-on: ubuntu-latest
     name: Enforce PR link to Jira
     steps:
