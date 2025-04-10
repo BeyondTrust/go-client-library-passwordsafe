@@ -5,12 +5,12 @@ go 1.24.1
 require (
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/go-logr/logr v1.4.1
-	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-logr/logr v1.4.2
+	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/uuid v1.6.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.37.0
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
