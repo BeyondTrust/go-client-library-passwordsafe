@@ -420,7 +420,7 @@ type FunctionalAccountDetails struct {
 	AzureInstance       string `validate:"omitempty,oneof=AzurePublic AzureUsGovernment"`
 }
 
-type FunctionalAccountResponseCreate struct {
+type FunctionalAccountResponse struct {
 	FunctionalAccountID  int
 	PlatformID           int
 	DomainName           string

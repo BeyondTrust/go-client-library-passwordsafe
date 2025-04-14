@@ -1,5 +1,5 @@
 // Copyright 2025 BeyondTrust. All rights reserved.
-// Package managed_systems implements functions to manage functional accounts in Password Safe
+// Package functional_accounts implements functions to manage functional accounts in Password Safe
 // Unit tests for functional_accounts package.
 package functional_accounts
 
