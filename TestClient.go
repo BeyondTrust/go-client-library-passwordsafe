@@ -10,6 +10,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/databases"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/functional_accounts"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_systems"
@@ -145,6 +146,18 @@ func main() {
 	}
 
 	err = CreateManagedSystem(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = CreateFunctionalAccountWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
+	err = GetFunctionalAccountWorkFlow(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -638,6 +651,61 @@ func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, za
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Managed System by Database: %v", createdManagedSystem))
+
+	return nil
+}
+
+// CreateFunctionalAccountWorkFlow test method to create functional accounts in PS API.
+func CreateFunctionalAccountWorkFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating asset obj
+	functionalAccountObj, _ := functional_accounts.NewFuncionalAccount(*authenticationObj, zapLogger)
+
+	functionalAccountDetails := entities.FunctionalAccountDetails{
+		PlatformID:          1,
+		DomainName:          "corp.example.com",
+		AccountName:         "svc-monitoring",
+		DisplayName:         "Monitoring Service Account 10",
+		Password:            "P@ssw0rd123!",
+		PrivateKey:          "private key value",
+		Passphrase:          "my-passphrase",
+		Description:         "Used for monitoring agents to access the platform",
+		ElevationCommand:    "sudo",
+		TenantID:            "123e4567-e89b-12d3-a456-426614174000",
+		ObjectID:            "abc12345-def6-7890-gh12-ijklmnopqrst",
+		Secret:              "super-secret-value",
+		ServiceAccountEmail: "monitoring@project.iam.gserviceaccount.com",
+		AzureInstance:       "AzurePublic",
+	}
+
+	// creating a functional account
+	createdFunctionalAccount, err := functionalAccountObj.CreateFunctionalAccountFlow(functionalAccountDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Functional Account: %v", createdFunctionalAccount.AccountName))
+
+	return nil
+}
+
+// GetFunctionalAccountWorkFlow test method to get functional accounts list from PS API.
+func GetFunctionalAccountWorkFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating asset obj
+	functionalAccountObj, _ := functional_accounts.NewFuncionalAccount(*authenticationObj, zapLogger)
+
+	// getting a functional account
+	functionalAccountsList, err := functionalAccountObj.GetFunctionalAccountsFlow()
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Functional AccountS List: %v", functionalAccountsList))
 
 	return nil
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/cenkalti/backoff/v4"
 	"golang.org/x/crypto/pkcs12"
 )
 
@@ -274,4 +275,34 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 	}
 
 	return body, nil
+}
+
+// Make http request to API.
+func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecretSafeAPIObj, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = client.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, exponentialBackOff)
+
+	if technicalError != nil {
+		return nil, technicalError
+	}
+
+	if businessError != nil {
+		return nil, businessError
+	}
+
+	defer body.Close()
+	bodyBytes, err := io.ReadAll(body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bodyBytes, nil
 }

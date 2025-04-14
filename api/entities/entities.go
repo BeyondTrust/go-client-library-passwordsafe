@@ -402,3 +402,34 @@ type ManagedSystemsByDatabaseIdDetailsBaseConfig struct {
 	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays,min=1,max=999"`
 	ChangeTime                        string `json:",omitempty" validate:"datetime=15:04"`
 }
+
+type FunctionalAccountDetails struct {
+	PlatformID          int    `validate:"required"`
+	DomainName          string `validate:"omitempty,max=500"`
+	AccountName         string `validate:"required,max=245"`
+	DisplayName         string `validate:"omitempty,max=100"`
+	Password            string `validate:"omitempty"`
+	PrivateKey          string `validate:"omitempty"`
+	Passphrase          string `validate:"omitempty"`
+	Description         string `validate:"omitempty,max=1000"`
+	ElevationCommand    string `validate:"omitempty,max=80"`
+	TenantID            string `validate:"omitempty,max=36"`
+	ObjectID            string `validate:"omitempty,max=36"`
+	Secret              string `validate:"omitempty,max=255"`
+	ServiceAccountEmail string `validate:"omitempty,max=255"`
+	AzureInstance       string `validate:"omitempty,oneof=AzurePublic AzureUsGovernment"`
+}
+
+type FunctionalAccountResponseCreate struct {
+	FunctionalAccountID  int
+	PlatformID           int
+	DomainName           string
+	AccountName          string
+	DisplayName          string
+	Description          string
+	ElevationCommand     string
+	SystemReferenceCount int
+	TenantID             string
+	ObjectID             string
+	AzureInstance        string
+}

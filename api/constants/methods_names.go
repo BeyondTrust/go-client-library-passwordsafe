@@ -34,4 +34,7 @@ const (
 	CreateManagedSystemByWorkGroupId = "CreateManagedSystemByWorkGroupId"
 
 	CreateManagedSystemByDataBaseId = "CreateManagedSystemByDataBaseId"
+
+	CreateFunctionalAccount = "CreateFunctionalAccount"
+	GetFunctionalAccount    = "GetFunctionalAccount"
 )
