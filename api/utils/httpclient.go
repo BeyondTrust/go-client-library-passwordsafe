@@ -306,3 +306,26 @@ func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecr
 
 	return bodyBytes, nil
 }
+
+func (client *HttpClientObj) GetGeneralList(url string, apiVersion string, method string, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      method,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  apiVersion,
+	}
+
+	response, err := client.MakeRequest(callSecretSafeAPIObj, exponentialBackOff)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+
+}

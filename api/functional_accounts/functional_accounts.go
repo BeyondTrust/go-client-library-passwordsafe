@@ -114,26 +114,15 @@ func (functionalAccount *FunctionalAccount) createFunctionalAccount(method strin
 
 // GetFunctionalAccountsList calls Password Safe API enpoint to get functional accounts list.
 func (functionalAccount *FunctionalAccount) GetFunctionalAccountsList(method string, httpMethod string, path string) ([]entities.FunctionalAccountResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", path)
+	functionalAccount.log.Debug(messageLog)
 
 	var err error
 	var functionalAccountResponse []entities.FunctionalAccountResponse
 
 	createManagedSystemUrl := functionalAccount.authenticationObj.ApiUrl.JoinPath(path).String()
-	messageLog := fmt.Sprintf("%v %v", httpMethod, createManagedSystemUrl)
-	functionalAccount.log.Debug(messageLog)
 
-	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         createManagedSystemUrl,
-		HttpMethod:  httpMethod,
-		Body:        bytes.Buffer{},
-		Method:      method,
-		AccessToken: "",
-		ApiKey:      "",
-		ContentType: "application/json",
-		ApiVersion:  functionalAccount.authenticationObj.ApiVersion,
-	}
-
-	response, err := functionalAccount.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, functionalAccount.authenticationObj.ExponentialBackOff)
+	response, err := functionalAccount.authenticationObj.HttpClient.GetGeneralList(createManagedSystemUrl, functionalAccount.authenticationObj.ApiVersion, method, functionalAccount.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return functionalAccountResponse, err

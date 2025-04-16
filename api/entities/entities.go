@@ -433,3 +433,24 @@ type FunctionalAccountResponse struct {
 	ObjectID             string
 	AzureInstance        string
 }
+
+type PlatformResponse struct {
+	PlatformID              int
+	Name                    string
+	ShortName               string
+	PortFlag                bool
+	DefaultPort             int
+	SupportsElevationFlag   bool
+	DomainNameFlag          bool
+	AutoManagementFlag      bool
+	DSSAutoManagementFlag   bool
+	ManageableFlag          bool
+	DSSFlag                 bool
+	LoginAccountFlag        bool
+	DefaultSessionType      string
+	ApplicationHostFlag     bool
+	RequiresApplicationHost bool
+	RequiresTenantID        bool
+	RequiresObjectID        bool
+	RequiresSecret          bool
+}

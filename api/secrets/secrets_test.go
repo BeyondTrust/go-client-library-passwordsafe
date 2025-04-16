@@ -1036,7 +1036,7 @@ func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
 				http.NotFound(w, r)
 			}
 		})),
-		response: "empty Folder List",
+		response: "empty List",
 	}
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
