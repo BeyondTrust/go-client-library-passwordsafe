@@ -118,3 +118,38 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 	return workGroupResponse, nil
 
 }
+
+// GetWorkgroupListFlow get workgroup list.
+func (workGroupObj *WorkGroupObj) GetWorkgroupListFlow() ([]entities.WorkGroupResponse, error) {
+	return workGroupObj.GetWorkgroupList("Workgroups", constants.GetWorkGroupsList)
+}
+
+// GetWorkgroupList call Workgroups enpoint
+// and returns workgroups list
+func (workGroupObj *WorkGroupObj) GetWorkgroupList(endpointPath string, method string) ([]entities.WorkGroupResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
+	workGroupObj.log.Debug(messageLog)
+
+	url := workGroupObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	var workgroupList []entities.WorkGroupResponse
+
+	response, err := workGroupObj.authenticationObj.HttpClient.GetGeneralList(url, workGroupObj.authenticationObj.ApiVersion, method, workGroupObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		return workgroupList, err
+	}
+
+	err = json.Unmarshal(response, &workgroupList)
+
+	if err != nil {
+		return workgroupList, err
+	}
+
+	if len(workgroupList) == 0 {
+		return workgroupList, fmt.Errorf("empty workgroups list")
+	}
+
+	return workgroupList, nil
+
+}

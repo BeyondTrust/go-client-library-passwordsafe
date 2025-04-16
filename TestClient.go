@@ -10,6 +10,7 @@ import (
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/databases"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/functional_accounts"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_systems"
@@ -20,6 +21,79 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
+
+var separator = "/"
+var maxFileSecretSizeBytes = 5000000
+
+// identifer is used to create unique objects names in payloads.
+var identifier = uuid.New().String()
+
+// call endponits from Secrets Safe API.
+func callSecretSafeAPIEndpoints(authenticate *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse) error {
+	err := CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	return nil
+}
+
+// call endponits from Password Safe API.
+func callPasswordSafeAPIEndpoints(authenticate *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse) error {
+	err := GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = CreateManagedAccount(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = CreateManagedSystem(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	return nil
+}
+
+// call endponits from Beyondinsight API.
+func callBeyondInsightAPIEnpoints(authenticate *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse) error {
+	err := CreateWorkGroupFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = CreateAssetWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = CreateDatabaseFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = CreateFunctionalAccountWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	err = GetFunctionalAccountWorkFlow(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	return nil
+
+}
 
 // main funtion
 func main() {
@@ -47,11 +121,9 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	separator := "/"
 	clientTimeOutInSeconds := 30
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
-	maxFileSecretSizeBytes := 5000000
 
 	backoffDefinition := backoff.NewExponentialBackOff()
 	backoffDefinition.InitialInterval = 1 * time.Second
@@ -108,43 +180,23 @@ func main() {
 		return
 	}
 
-	err = GetSecretAndManagedAccount(authenticate, zapLogger, userObject, separator, maxFileSecretSizeBytes)
+	// call API's
+
+	err = callSecretSafeAPIEndpoints(authenticate, zapLogger, userObject)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
 	}
 
-	err = CreateManagedAccount(authenticate, zapLogger)
+	err = callBeyondInsightAPIEnpoints(authenticate, zapLogger, userObject)
+
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
 	}
 
-	err = CreateSecretsAndFolders(authenticate, zapLogger, userObject, maxFileSecretSizeBytes)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
+	err = callPasswordSafeAPIEndpoints(authenticate, zapLogger, userObject)
 
-	err = CreateWorkGroupFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
-
-	err = CreateAssetWorkFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
-
-	err = CreateDatabaseFlow(authenticate, zapLogger)
-	if err != nil {
-		zapLogger.Error(err.Error())
-		return
-	}
-
-	err = CreateManagedSystem(authenticate, zapLogger)
 	if err != nil {
 		zapLogger.Error(err.Error())
 		return
@@ -224,7 +276,7 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 	manageAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticationObj, zapLogger)
 
 	account := entities.AccountDetails{
-		AccountName:                       "ManagedAccountTest_" + uuid.New().String(),
+		AccountName:                       "ManagedAccountTest_" + identifier,
 		Password:                          "Passw0rd101!*",
 		DomainName:                        "exampleDomain",
 		UserPrincipalName:                 "user@example.com",
@@ -275,7 +327,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 
 	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
 	objCredential := entities.SecretCredentialDetails{
-		Title:       "CREDENTIAL_" + uuid.New().String(),
+		Title:       "CREDENTIAL_" + identifier,
 		Description: "My Credential Secret Description",
 		Username:    "my_user",
 		Password:    "MyPass2#$!",
@@ -309,7 +361,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	zapLogger.Debug(fmt.Sprintf("Created Credential secret: %v", createdSecret.Title))
 
 	objText := entities.SecretTextDetails{
-		Title:       "TEXT_" + uuid.New().String(),
+		Title:       "TEXT_" + identifier,
 		Description: "My Text Secret Description",
 		Text:        "my_p4ssword!*2024",
 		OwnerType:   "User",
@@ -350,7 +402,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	}
 
 	objFile := entities.SecretFileDetails{
-		Title:       "FILE_" + uuid.New().String(),
+		Title:       "FILE_" + identifier,
 		Description: "My File Secret Description",
 		OwnerType:   "User",
 		OwnerId:     userObject.UserId,
@@ -386,7 +438,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	zapLogger.Debug(fmt.Sprintf("Created File secret: %v", createdSecret.Title))
 
 	folderDetails := entities.FolderDetails{
-		Name:        "FOLDER_" + uuid.New().String(),
+		Name:        "FOLDER_" + identifier,
 		Description: "My Folder Secret Description",
 	}
 
@@ -402,7 +454,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	zapLogger.Debug(fmt.Sprintf("Created Folder: %v", createdFolder.Name))
 
 	safeDetails := entities.FolderDetails{
-		Name:        "SAFE_" + uuid.New().String(),
+		Name:        "SAFE_" + identifier,
 		Description: "My new Safe",
 		FolderType:  "SAFE",
 	}
@@ -427,7 +479,7 @@ func CreateWorkGroupFlow(authenticationObj *authentication.AuthenticationObj, za
 	workGroupObj, _ := workgroups.NewWorkGroupObj(*authenticationObj, zapLogger)
 
 	workGroupDetails := entities.WorkGroupDetails{
-		Name: "WORKGROUP_" + uuid.New().String(),
+		Name: "WORKGROUP_" + identifier,
 	}
 
 	// creating a workgroup.
@@ -451,7 +503,7 @@ func CreateAssetWorkFlow(authenticationObj *authentication.AuthenticationObj, za
 
 	assetDetails := entities.AssetDetails{
 		IPAddress:       "192.16.1.1",
-		AssetName:       "ASSET_" + uuid.New().String(),
+		AssetName:       "ASSET_" + identifier,
 		DnsName:         "workstation01.local",
 		DomainName:      "example.com",
 		MacAddress:      "00:1A:2B:3C:4D:5E",
@@ -492,7 +544,7 @@ func CreateDatabaseFlow(authenticationObj *authentication.AuthenticationObj, zap
 
 	databaseDetails := entities.DatabaseDetails{
 		PlatformID:        9,
-		InstanceName:      "DATABASE_" + uuid.New().String(),
+		InstanceName:      "DATABASE_" + identifier,
 		IsDefaultInstance: true,
 		Port:              5432,
 		Version:           "15.2",
@@ -580,7 +632,7 @@ func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, za
 			DSSKeyRuleID:                       0,
 			LoginAccountID:                     0,
 			AccountNameFormat:                  1,
-			OracleInternetDirectoryID:          uuid.New().String(),
+			OracleInternetDirectoryID:          identifier,
 			OracleInternetDirectoryServiceName: "OracleService",
 			ReleaseDuration:                    60,
 			MaxReleaseDuration:                 120,
@@ -638,6 +690,61 @@ func CreateManagedSystem(authenticationObj *authentication.AuthenticationObj, za
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Managed System by Database: %v", createdManagedSystem))
+
+	return nil
+}
+
+// CreateFunctionalAccountWorkFlow test method to create functional accounts in PS API.
+func CreateFunctionalAccountWorkFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating asset obj
+	functionalAccountObj, _ := functional_accounts.NewFuncionalAccount(*authenticationObj, zapLogger)
+
+	functionalAccountDetails := entities.FunctionalAccountDetails{
+		PlatformID:          1,
+		DomainName:          "corp.example.com",
+		AccountName:         "svc-monitoring",
+		DisplayName:         "FUNCTIONAL_ACCOUNT" + identifier,
+		Password:            "P@ssw0rd123!",
+		PrivateKey:          "private key value",
+		Passphrase:          "my-passphrase",
+		Description:         "Used for monitoring agents to access the platform",
+		ElevationCommand:    "sudo",
+		TenantID:            "123e4567-e89b-12d3-a456-426614174000",
+		ObjectID:            "abc12345-def6-7890-gh12-ijklmnopqrst",
+		Secret:              "super-secret-value",
+		ServiceAccountEmail: "monitoring@project.iam.gserviceaccount.com",
+		AzureInstance:       "AzurePublic",
+	}
+
+	// creating a functional account
+	createdFunctionalAccount, err := functionalAccountObj.CreateFunctionalAccountFlow(functionalAccountDetails)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Created Functional Account: %v", createdFunctionalAccount.AccountName))
+
+	return nil
+}
+
+// GetFunctionalAccountWorkFlow test method to get functional accounts list from PS API.
+func GetFunctionalAccountWorkFlow(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+	// instantiating asset obj
+	functionalAccountObj, _ := functional_accounts.NewFuncionalAccount(*authenticationObj, zapLogger)
+
+	// getting a functional account
+	functionalAccountsList, err := functionalAccountObj.GetFunctionalAccountsFlow()
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+
+	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
+	zapLogger.Debug(fmt.Sprintf("Functional AccountS List: %v", functionalAccountsList))
 
 	return nil
 }

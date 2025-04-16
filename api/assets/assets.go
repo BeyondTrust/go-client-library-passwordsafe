@@ -138,3 +138,46 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 	return assetResponse, nil
 
 }
+
+// GetAssetsListByWorkgroupIdFlow get assets list by workgroup Id.
+func (platformObj *AssetObj) GetAssetsListByWorkgroupIdFlow(workgroupId string) ([]entities.AssetResponse, error) {
+	path := fmt.Sprintf("workgroups/%s/assets", workgroupId)
+	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupId)
+}
+
+// GetAssetsListByWorkgroupNameFlow get assets list by workgroup name.
+func (platformObj *AssetObj) GetAssetsListByWorkgroupNameFlow(workgroupName string) ([]entities.AssetResponse, error) {
+	path := fmt.Sprintf("workgroups/%s/assets", workgroupName)
+	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupName)
+}
+
+// GetAssetsList call assets enpoint
+// and returns assets list
+func (platformObj *AssetObj) GetAssetsList(endpointPath string, method string) ([]entities.AssetResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
+	platformObj.log.Debug(messageLog)
+
+	url := platformObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	var assetsList []entities.AssetResponse
+
+	response, err := platformObj.authenticationObj.HttpClient.GetGeneralList(url, platformObj.authenticationObj.ApiVersion, method, platformObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		platformObj.log.Error(err.Error())
+		return assetsList, err
+	}
+
+	err = json.Unmarshal(response, &assetsList)
+	if err != nil {
+		platformObj.log.Error(err.Error())
+		return assetsList, err
+	}
+
+	if len(assetsList) == 0 {
+		return assetsList, fmt.Errorf("empty assets list")
+	}
+
+	return assetsList, nil
+
+}

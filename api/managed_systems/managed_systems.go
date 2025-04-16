@@ -216,3 +216,38 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, pat
 	return managedSystemResponse, nil
 
 }
+
+// GetManagedSystemsListFlow get managed system list.
+func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsListFlow() ([]entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.GetManagedSystemsList("ManagedSystems", constants.GetManagedSystemsList)
+}
+
+// GetManagedSystemsList call ManagedSystems enpoint
+// and returns managed system list
+func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsList(endpointPath string, method string) ([]entities.ManagedSystemResponseCreate, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
+	ManagedSystemObj.log.Debug(messageLog + endpointPath)
+
+	url := ManagedSystemObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	var managedSystemsList []entities.ManagedSystemResponseCreate
+
+	response, err := ManagedSystemObj.authenticationObj.HttpClient.GetGeneralList(url, ManagedSystemObj.authenticationObj.ApiVersion, method, ManagedSystemObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		return managedSystemsList, err
+	}
+
+	err = json.Unmarshal(response, &managedSystemsList)
+
+	if err != nil {
+		return managedSystemsList, err
+	}
+
+	if len(managedSystemsList) == 0 {
+		return managedSystemsList, fmt.Errorf("empty managed systems list")
+	}
+
+	return managedSystemsList, nil
+
+}
