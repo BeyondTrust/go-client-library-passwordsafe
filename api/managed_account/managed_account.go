@@ -472,7 +472,7 @@ func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListFlow() ([]en
 // and returns managed accounts list
 func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPath string, method string) ([]entities.ManagedAccount, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
-	managedAccountObj.log.Debug(messageLog + endpointPath)
+	managedAccountObj.log.Debug(messageLog)
 
 	url := managedAccountObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
 

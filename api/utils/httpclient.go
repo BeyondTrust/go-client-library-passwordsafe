@@ -277,7 +277,7 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 	return body, nil
 }
 
-// Make http request to API.
+// MakeRequest Make http request to API.
 func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecretSafeAPIObj, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
 
 	var body io.ReadCloser
@@ -307,6 +307,7 @@ func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecr
 	return bodyBytes, nil
 }
 
+// GetGeneralList get list for any module.
 func (client *HttpClientObj) GetGeneralList(url string, apiVersion string, method string, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{

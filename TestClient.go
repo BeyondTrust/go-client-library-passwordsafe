@@ -14,6 +14,7 @@ import (
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
 	managed_accounts "github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_account"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/managed_systems"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/platforms"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/secrets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/utils"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/workgroups"
@@ -202,6 +203,14 @@ func main() {
 		return
 	}
 
+	// call all get list methods.
+	err = CallGetListMethods(authenticate, zapLogger)
+
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
 	// signing out
 	err = authenticate.SignOut()
 
@@ -264,7 +273,7 @@ func GetSecretAndManagedAccount(authenticationObj *authentication.Authentication
 	gotManagedAccount, _ := manageAccountObj.GetSecret("system01/managed_account01", separator)
 
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
-	zapLogger.Warn(fmt.Sprintf("%v", gotManagedAccount))
+	zapLogger.Warn(fmt.Sprintf("Managed Account Test: %v", gotManagedAccount))
 
 	return nil
 }
@@ -397,7 +406,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	// just for test purposes, file test_secret.txt should not be present in repo.
 	fileContent, err := os.ReadFile("test_secret.txt")
 	if err != nil {
-		fmt.Println("Error reading file:", err)
+		zapLogger.Error(err.Error())
 		return nil
 	}
 
@@ -747,4 +756,90 @@ func GetFunctionalAccountWorkFlow(authenticationObj *authentication.Authenticati
 	zapLogger.Debug(fmt.Sprintf("Functional AccountS List: %v", functionalAccountsList))
 
 	return nil
+}
+
+func CallGetListMethods(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger) error {
+
+	// managed accounts list
+	managedAccountObj, _ := managed_accounts.NewManagedAccountObj(*authenticationObj, zapLogger)
+	managedAccountlist, err := managedAccountObj.GetManagedAccountsListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("managed account List Lenght: %v", len(managedAccountlist)))
+
+	// assets list
+	assetObj, _ := assets.NewAssetObj(*authenticationObj, zapLogger)
+	assetlist, err := assetObj.GetAssetsListByWorkgroupIdFlow("1")
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("Assets by Id List Lenght: %v", len(assetlist)))
+
+	// workgroups list
+	workgroupObj, _ := workgroups.NewWorkGroupObj(*authenticationObj, zapLogger)
+	workgroupList, err := workgroupObj.GetWorkgroupListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("workgroup List Lenght: %v", len(workgroupList)))
+
+	// databases list
+	databaseObj, _ := databases.NewDatabaseObj(*authenticationObj, zapLogger)
+	databasesList, err := databaseObj.GetDatabasesListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("databases List Lenght: %v", len(databasesList)))
+
+	// functional accounts list
+	funcionalAccountObj, _ := functional_accounts.NewFuncionalAccount(*authenticationObj, zapLogger)
+	functionalAcocuntList, err := funcionalAccountObj.GetFunctionalAccountsFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("functional accounts List Lenght: %v", len(functionalAcocuntList)))
+
+	// safes list
+	safesObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, 0)
+	safesList, err := safesObj.SecretGetSafesListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("safes List Lenght: %v", len(safesList)))
+
+	// folders list
+	folderList, err := safesObj.SecretGetFoldersListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("folders List Lenght: %v", len(folderList)))
+
+	// platofrms list
+	platformsObj, _ := platforms.NewPlatformObj(*authenticationObj, zapLogger)
+	platformsList, err := platformsObj.GetPlatformsListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("platform List Lenght: %v", len(platformsList)))
+
+	// managed systems list
+	managedSystemObj, _ := managed_systems.NewManagedSystem(*authenticationObj, zapLogger)
+	managedSysystemList, err := managedSystemObj.GetManagedSystemsListFlow()
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return err
+	}
+	zapLogger.Debug(fmt.Sprintf("managed systems List lenght: %v", len(managedSysystemList)))
+
+	return nil
+
 }

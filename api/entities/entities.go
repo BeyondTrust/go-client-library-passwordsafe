@@ -19,8 +19,25 @@ type SignAppinResponse struct {
 
 // ManagedAccount responsible for managed account response data.
 type ManagedAccount struct {
-	SystemId  int
-	AccountId int
+	PlatformID             int
+	SystemId               int
+	SystemName             string
+	DomainName             string
+	AccountId              int
+	AccountName            string
+	InstanceName           string
+	UserPrincipalName      string
+	ApplicationID          int
+	ApplicationDisplayName string
+	DefaultReleaseDuration int
+	MaximumReleaseDuration int
+	LastChangeDate         string
+	NextChangeDate         string
+	IsChanging             bool
+	ChangeState            int
+	IsISAAccess            bool
+	PreferredNodeID        string
+	AccountDescription     string
 }
 
 // Secret responsible for secrets-safe response data.

@@ -8,10 +8,12 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	logging "github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
+	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 )
 
@@ -214,6 +216,87 @@ func TestCreateMultiPartRequest(t *testing.T) {
 	_, err := httpClientObj.CreateMultiPartRequest(server.URL+"/secrets/file", "file_name.txt", []byte("metadata"), "file_content")
 
 	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+}
+
+func TestGetGeneralList(t *testing.T) {
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/connect/token":
+			_, err := w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	var tokenData entities.GetTokenResponse
+
+	logger, _ := zap.NewDevelopment()
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.InitialInterval = 1 * time.Second
+	backoffDefinition.MaxElapsedTime = time.Duration(30) * time.Second
+	backoffDefinition.RandomizationFactor = 0.5
+
+	httpClientObj, _ := GetHttpClient(30, false, "", "", zapLogger)
+	bodyBytes, err := httpClientObj.GetGeneralList(server.URL+"/Auth/connect/token", constants.ApiVersion31, "GetToken", backoffDefinition)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	err = json.Unmarshal(bodyBytes, &tokenData)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if tokenData.AccessToken != "fake_token" {
+		t.Errorf("Test case Failed %v, %v", tokenData.AccessToken, "fake_token")
+	}
+
+}
+
+func TestGetGeneralListBadRequest(t *testing.T) {
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/connect/token":
+			w.WriteHeader(http.StatusBadRequest)
+			_, err := w.Write([]byte(`{"Bad Request"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	logger, _ := zap.NewDevelopment()
+	// create a zap logger wrapper
+	zapLogger := logging.NewZapLogger(logger)
+
+	backoffDefinition := backoff.NewExponentialBackOff()
+	backoffDefinition.InitialInterval = 1 * time.Second
+	backoffDefinition.MaxElapsedTime = time.Duration(30) * time.Second
+	backoffDefinition.RandomizationFactor = 0.5
+
+	httpClientObj, _ := GetHttpClient(30, false, "", "", zapLogger)
+	_, err := httpClientObj.GetGeneralList(server.URL+"/Auth/connect/token", constants.ApiVersion31, "GetToken", backoffDefinition)
+
+	if err == nil {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
