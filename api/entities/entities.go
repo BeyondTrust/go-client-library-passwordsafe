@@ -4,7 +4,6 @@ package entities
 
 import (
 	"bytes"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -228,8 +227,8 @@ type AssetResponse struct {
 	DomainName      string
 	IPAddress       string
 	OperatingSystem string
-	CreateDate      time.Time
-	LastUpdateDate  time.Time
+	CreateDate      string
+	LastUpdateDate  string
 	Description     string
 }
 
@@ -309,7 +308,7 @@ type ManagedSystemResponseCreate struct {
 	Template                           string `json:"Template,omitempty"`
 	ForestName                         string `json:"ForestName,omitempty"`
 	UseSSL                             bool   `json:"UseSSL,omitempty"`
-	OracleInternetDirectoryID          int    `json:"OracleInternetDirectoryID,omitempty"`
+	OracleInternetDirectoryID          string `json:"OracleInternetDirectoryID,omitempty"`
 	OracleInternetDirectoryServiceName string `json:"OracleInternetDirectoryServiceName,omitempty"`
 	SystemName                         string `json:"SystemName"`
 	PlatformID                         int    `json:"PlatformID"`
