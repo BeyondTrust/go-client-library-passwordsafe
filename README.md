@@ -148,7 +148,7 @@ export PASSWORD_SAFE_FAKE_CLIENT_SECRET="<fake_client_secret>";
 export PASSWORD_SAFE_FAKE_API_KEY="<fake_api_key>";
 export PASSWORD_SAFE_API_PATH="<fake_api_path>"
 export PASSWORD_SAFE_FAKE_API_URL="<fake_test_URL>";
-export PASSWORD_SAFE_FAKE_API_URL="<fake_password>";
+export PASSWORD_SAFE_FAKE_PASSWORD="<fake_password>";
 ```
 
 and execute:
