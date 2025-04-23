@@ -979,7 +979,7 @@ func TestManagedAccountCreateManagedAccount(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1033,7 +1033,7 @@ func TestManagedAccountCreateManagedAccountExistingOne(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName: "Managed_account_name",
-		Password:    "MyPassword1707*!",
+		Password:    constants.FakePassword,
 		Description: "Sample account for testing",
 	}
 
@@ -1083,7 +1083,7 @@ func TestManagedAccountCreateManagedAccountFlow(t *testing.T) {
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1137,7 +1137,7 @@ func TestManagedAccountCreateManagedAccountFlowSystemNotFound(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1180,7 +1180,7 @@ func TestManagedAccountCreateManagedAccountFlowEmptySystemList(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,

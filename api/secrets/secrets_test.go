@@ -640,7 +640,7 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 	secretTextDetails := entities.SecretTextDetails{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        "PasswordTest",
+		Text:        constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     1,
 		FolderId:    uuid.New(),
@@ -706,7 +706,7 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 		Title:       "Secret Title",
 		Description: "Title Description",
 		Username:    "TestUserName",
-		Password:    "PasswordTest",
+		Password:    constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     1,
 		Owners: []entities.OwnerDetails{
@@ -943,7 +943,7 @@ func TestSecretCreateBadInput(t *testing.T) {
 		Title:       "",
 		Description: "Title Description",
 		Username:    "TestUserName",
-		Password:    "PasswordTest",
+		Password:    constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     1,
 		Owners: []entities.OwnerDetails{
@@ -994,7 +994,7 @@ func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
 	secretTextDetails := entities.SecretTextDetails{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        "PasswordTest",
+		Text:        constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     1,
 		FolderId:    uuid.New(),
@@ -1046,7 +1046,7 @@ func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
 	secretTextDetails := entities.SecretTextDetails{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        "PasswordTest",
+		Text:        constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     1,
 		FolderId:    uuid.New(),

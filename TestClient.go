@@ -8,6 +8,7 @@ import (
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/assets"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
+	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/databases"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/entities"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/functional_accounts"
@@ -286,7 +287,7 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 
 	account := entities.AccountDetails{
 		AccountName:                       "ManagedAccountTest_" + identifier,
-		Password:                          "Passw0rd101!*",
+		Password:                          constants.FakePassword,
 		DomainName:                        "exampleDomain",
 		UserPrincipalName:                 "user@example.com",
 		SAMAccountName:                    "samAccount",
@@ -339,7 +340,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 		Title:       "CREDENTIAL_" + identifier,
 		Description: "My Credential Secret Description",
 		Username:    "my_user",
-		Password:    "MyPass2#$!",
+		Password:    constants.FakePassword,
 		OwnerType:   "User",
 		Notes:       "My note",
 		Owners: []entities.OwnerDetails{
@@ -372,7 +373,7 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	objText := entities.SecretTextDetails{
 		Title:       "TEXT_" + identifier,
 		Description: "My Text Secret Description",
-		Text:        "my_p4ssword!*2024",
+		Text:        constants.FakePassword,
 		OwnerType:   "User",
 		OwnerId:     userObject.UserId,
 		FolderId:    uuid.New(),
@@ -713,7 +714,7 @@ func CreateFunctionalAccountWorkFlow(authenticationObj *authentication.Authentic
 		DomainName:          "corp.example.com",
 		AccountName:         "svc-monitoring",
 		DisplayName:         "FUNCTIONAL_ACCOUNT" + identifier,
-		Password:            "P@ssw0rd123!",
+		Password:            constants.FakePassword,
 		PrivateKey:          "private key value",
 		Passphrase:          "my-passphrase",
 		Description:         "Used for monitoring agents to access the platform",

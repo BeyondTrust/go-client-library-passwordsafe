@@ -57,7 +57,7 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsFlow() ([]entit
 	var functionalAccountResponse []entities.FunctionalAccountResponse
 	var err error
 
-	functionalAccountResponse, err = functionalAccount.GetFunctionalAccountsList(constants.GetFunctionalAccount, "GET", endpointPath)
+	functionalAccountResponse, err = functionalAccount.GetFunctionalAccountsListFlow(constants.GetFunctionalAccount, "GET", endpointPath)
 
 	if err != nil {
 		return functionalAccountResponse, err
@@ -112,8 +112,8 @@ func (functionalAccount *FunctionalAccount) createFunctionalAccount(method strin
 
 }
 
-// GetFunctionalAccountsList calls Password Safe API enpoint to get functional accounts list.
-func (functionalAccount *FunctionalAccount) GetFunctionalAccountsList(method string, httpMethod string, path string) ([]entities.FunctionalAccountResponse, error) {
+// GetFunctionalAccountsListFlow calls Password Safe API enpoint to get functional accounts list.
+func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlow(method string, httpMethod string, path string) ([]entities.FunctionalAccountResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", path)
 	functionalAccount.log.Debug(messageLog)
 
@@ -132,6 +132,10 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsList(method str
 
 	if err != nil {
 		return functionalAccountResponse, err
+	}
+
+	if len(functionalAccountResponse) == 0 {
+		return functionalAccountResponse, fmt.Errorf("empty functional accounts list")
 	}
 
 	return functionalAccountResponse, err

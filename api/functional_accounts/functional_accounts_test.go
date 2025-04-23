@@ -28,7 +28,7 @@ var functionalAccountDetails = entities.FunctionalAccountDetails{
 	DomainName:          "corp.example.com",
 	AccountName:         "svc-monitoring",
 	DisplayName:         "Monitoring Service Account7",
-	Password:            "P@ssw0rd123!",
+	Password:            constants.FakePassword,
 	PrivateKey:          "private key content",
 	Passphrase:          "my-passphrase",
 	Description:         "Used for monitoring agents to access the platform",
@@ -179,7 +179,7 @@ func TestCreateFunctionalAccountsFlowBadRequest(t *testing.T) {
 
 }
 
-func TestGetFunctionalAccountsList(t *testing.T) {
+func TestGetFunctionalAccountsListFlow(t *testing.T) {
 
 	InitializeGlobalConfig()
 

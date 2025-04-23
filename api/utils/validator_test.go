@@ -90,7 +90,7 @@ func TestValidateCreateManagedAccountInput(t *testing.T) {
 
 	accountDetails := entities.AccountDetails{
 		AccountName:                       "ManagedAccountTest_" + uuid.New().String(),
-		Password:                          "Passw0rd101!*",
+		Password:                          constants.FakePassword,
 		DomainName:                        "exampleDomain",
 		UserPrincipalName:                 "user@example.com",
 		SAMAccountName:                    "samAccount",
