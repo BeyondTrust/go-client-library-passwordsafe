@@ -41,7 +41,7 @@ func (functionalAccount *FunctionalAccount) CreateFunctionalAccountFlow(function
 		return functionalAccountResponse, err
 	}
 
-	functionalAccountResponse, err = functionalAccount.createFunctionalAccount(constants.CreateManagedSystemByAssetId, "POST", endpointPath, functionalAccountDetails)
+	functionalAccountResponse, err = functionalAccount.createFunctionalAccount(constants.CreateFunctionalAccount, "POST", endpointPath, functionalAccountDetails)
 
 	if err != nil {
 		return functionalAccountResponse, err
