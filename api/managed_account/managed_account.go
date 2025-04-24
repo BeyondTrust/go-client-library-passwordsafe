@@ -462,3 +462,38 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 	return managedSystemObject, nil
 
 }
+
+// GetManagedAccountsListFlow get managed accounts list.
+func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListFlow() ([]entities.ManagedAccount, error) {
+	return managedAccountObj.GetManagedAccountsList("ManagedAccounts", constants.ManagedAccountCreate)
+}
+
+// GetManagedAccountsList call ManagedAccounts enpoint
+// and returns managed accounts list
+func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPath string, method string) ([]entities.ManagedAccount, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
+	managedAccountObj.log.Debug(messageLog)
+
+	url := managedAccountObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	var managedAccountList []entities.ManagedAccount
+
+	response, err := managedAccountObj.authenticationObj.HttpClient.GetGeneralList(url, managedAccountObj.authenticationObj.ApiVersion, method, managedAccountObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		return managedAccountList, err
+	}
+
+	err = json.Unmarshal(response, &managedAccountList)
+
+	if err != nil {
+		return managedAccountList, err
+	}
+
+	if len(managedAccountList) == 0 {
+		return managedAccountList, fmt.Errorf("empty managed accounts list")
+	}
+
+	return managedAccountList, nil
+
+}

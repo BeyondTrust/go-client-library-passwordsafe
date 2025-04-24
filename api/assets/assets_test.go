@@ -286,3 +286,121 @@ func TestCreateAssetFlowBadIPAddress(t *testing.T) {
 	}
 
 }
+
+func TestGetAssetsListByWorkgroupIdFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/workgroups/workgroup_test/assets":
+			_, err := w.Write([]byte(`[{ "IPAddress": "192.168.1.1", "AssetName": "AssetNameByWorkGroupName", "DnsName": "server01.local" }]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/workgroups/1/assets":
+			_, err := w.Write([]byte(`[{ "IPAddress": "192.168.1.1", "AssetName": "AssetNameByWorkGroupId", "DnsName": "server01.local" }]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	workGroupObj, _ := NewAssetObj(*authenticate, zapLogger)
+
+	// get assets list by work group id.
+	assetsList, err := workGroupObj.GetAssetsListByWorkgroupIdFlow("1")
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if len(assetsList) != 1 {
+		t.Errorf("Test case Failed %v, %v", len(assetsList), 1)
+	}
+
+	// get assets list by work group name.
+	assetsList, err = workGroupObj.GetAssetsListByWorkgroupNameFlow("workgroup_test")
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if len(assetsList) != 1 {
+		t.Errorf("Test case Failed %v, %v", len(assetsList), 1)
+	}
+
+}
+
+func TestGetAssetsListByWorkgroupIdFlowEmptyList(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/workgroups/1/assets":
+			// empty list
+			_, err := w.Write([]byte(`[]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	workGroupObj, _ := NewAssetObj(*authenticate, zapLogger)
+
+	// get assets list by work group id.
+	_, err := workGroupObj.GetAssetsListByWorkgroupIdFlow("1")
+
+	expetedErrorMessage := "empty assets list"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}

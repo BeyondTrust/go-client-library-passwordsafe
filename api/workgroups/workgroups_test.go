@@ -204,3 +204,153 @@ func TestCreateWorkgroupFlowTechnicalError(t *testing.T) {
 	}
 
 }
+
+func TestGetWorkgroupListFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Workgroups":
+			_, err := w.Write([]byte(`[ { "OrganizationID": "abcd27cf-791a-4c65-abe9-a6a250b8e4f6", "ID": 1, "Name": "Default Workgroup" }, { "OrganizationID": "abcd27cf-791a-4c65-abe9-a6a250b8e4f6", "ID": 2, "Name": "Name 1" }]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	workgroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+
+	workgroupList, err := workgroupObj.GetWorkgroupListFlow()
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if len(workgroupList) != 2 {
+		t.Errorf("Test case Failed %v, %v", len(workgroupList), 2)
+	}
+
+}
+
+func TestGetWorkgroupListFlowEmptyList(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Workgroups":
+			// empty list
+			_, err := w.Write([]byte(`[]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	workgroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+
+	_, err := workgroupObj.GetWorkgroupListFlow()
+
+	expetedErrorMessage := "empty workgroups list"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestGetWorkgroupListFlowBadRequest(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Workgroups":
+			// bad request
+			w.WriteHeader(http.StatusBadRequest)
+			_, err := w.Write([]byte(`{"Bad Request"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	workgroupObj, _ := NewWorkGroupObj(*authenticate, zapLogger)
+
+	_, err := workgroupObj.GetWorkgroupListFlow()
+
+	expetedErrorMessage := `error - status code: 400 - {"Bad Request"}`
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+}
