@@ -5,9 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      all-go:
-        patterns:
-          - "*"
+      groups:
+        minor-gomod:
+          update-types:
+            - minor
+            - patch
+        major-gomod:
+          update-types:
+            - major
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
