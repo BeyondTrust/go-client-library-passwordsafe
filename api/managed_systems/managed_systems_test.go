@@ -493,3 +493,154 @@ func TestCreateManagedSystemByDataBaseIdFlowBadData(t *testing.T) {
 	}
 
 }
+
+func TestGetManagedSystemsListFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedSystems":
+			// 2 managed systems
+			_, err := w.Write([]byte(`[ { "ManagedSystemID": 100, "EntityTypeID": 1, "AssetID": 56, "DatabaseID": null }, { "ManagedSystemID": 123, "EntityTypeID": 1, "AssetID": 48, "DatabaseID": null } ]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	managedSystemsList, err := databaseObj.GetManagedSystemsListFlow()
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if len(managedSystemsList) != 2 {
+		t.Errorf("Test case Failed %v, %v", len(managedSystemsList), 2)
+	}
+
+}
+
+func TestGetManagedSystemsListFlowEmptyList(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedSystems":
+			// empty list
+			_, err := w.Write([]byte(`[]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	_, err := databaseObj.GetManagedSystemsListFlow()
+
+	expetedErrorMessage := "empty managed systems list"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestGetManagedSystemsListFlowBadRequest(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedSystems":
+			// bad request
+			w.WriteHeader(http.StatusBadRequest)
+			_, err := w.Write([]byte(`{"Bad Request"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	_, err := databaseObj.GetManagedSystemsListFlow()
+
+	expetedErrorMessage := `error - status code: 400 - {"Bad Request"}`
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+}

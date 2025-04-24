@@ -13,4 +13,5 @@ var (
 	ApiVersion31       = "3.1"
 	Fakecertificate    = os.Getenv("PASSWORD_SAFE_FAKE_CERTIFICATE")
 	FakecertificateKey = os.Getenv("PASSWORD_SAFE_FAKE_CERTIFICATE_KEY")
+	FakePassword       = os.Getenv("PASSWORD_SAFE_FAKE_PASSWORD")
 )

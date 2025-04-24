@@ -979,7 +979,7 @@ func TestManagedAccountCreateManagedAccount(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1033,7 +1033,7 @@ func TestManagedAccountCreateManagedAccountExistingOne(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName: "Managed_account_name",
-		Password:    "MyPassword1707*!",
+		Password:    constants.FakePassword,
 		Description: "Sample account for testing",
 	}
 
@@ -1083,7 +1083,7 @@ func TestManagedAccountCreateManagedAccountFlow(t *testing.T) {
 	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1137,7 +1137,7 @@ func TestManagedAccountCreateManagedAccountFlowSystemNotFound(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1180,7 +1180,7 @@ func TestManagedAccountCreateManagedAccountFlowEmptySystemList(t *testing.T) {
 
 	accountAccountDetailsObj := entities.AccountDetails{
 		AccountName:         "Managed_account_name",
-		Password:            "MyPassword1707*!",
+		Password:            constants.FakePassword,
 		Description:         "Sample account for testing",
 		MaxReleaseDuration:  300000,
 		ReleaseDuration:     300000,
@@ -1194,4 +1194,155 @@ func TestManagedAccountCreateManagedAccountFlowEmptySystemList(t *testing.T) {
 		t.Errorf("Test case Failed %v} %v", err.Error(), testConfig.response)
 	}
 
+}
+
+func TestGetManagedAccountsListFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedAccounts":
+			// 2 ManagedAccounts
+			_, err := w.Write([]byte(`[ { "PlatformID": 4, "SystemId": 1, "SystemName": "system01", "InstanceName": "", "DomainName": null, "AccountId": 24 }, { "PlatformID": 4, "SystemId": 2, "SystemName": "system02", "InstanceName": "", "DomainName": null, "AccountId": 24 } ]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	managedAccountList, err := databaseObj.GetManagedAccountsListFlow()
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if len(managedAccountList) != 2 {
+		t.Errorf("Test case Failed %v, %v", len(managedAccountList), 2)
+	}
+
+}
+
+func TestGetManagedAccountsListFlowEmptyList(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedAccounts":
+			// empty list
+			_, err := w.Write([]byte(`[]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	_, err := databaseObj.GetManagedAccountsListFlow()
+
+	expetedErrorMessage := "empty managed accounts list"
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+}
+
+func TestGetManagedAccountsListFlowBadRequest(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/ManagedAccounts":
+			// bad request
+			w.WriteHeader(http.StatusBadRequest)
+			_, err := w.Write([]byte(`{"Bad Request"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	_, err := databaseObj.GetManagedAccountsListFlow()
+
+	expetedErrorMessage := `error - status code: 400 - {"Bad Request"}`
+
+	if err == nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
 }

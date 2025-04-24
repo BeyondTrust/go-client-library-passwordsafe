@@ -78,6 +78,7 @@ jobs:
           PASSWORD_SAFE_FAKE_API_KEY: ${{ vars.PASSWORD_SAFE_FAKE_API_KEY }}
           PASSWORD_SAFE_API_PATH: ${{ vars.PASSWORD_SAFE_API_PATH }}
           PASSWORD_SAFE_FAKE_API_URL: ${{ vars.PASSWORD_SAFE_FAKE_API_URL }}
+          PASSWORD_SAFE_FAKE_PASSWORD : ${{ vars.PASSWORD_SAFE_FAKE_PASSWORD }}
 
       - name: Save unit tests coverage
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
