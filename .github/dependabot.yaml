@@ -12,3 +12,11 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      minor-gh-actions:
+        update-types:
+          - minor
+          - patch
+      major-gh-actions:
+        update-types:
+          - major
