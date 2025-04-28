@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directories: 
+      - "**/*"
+    schedule:
+      interval: "weekly"
+    groups:
+      minor-gomod:
+        update-types:
+          - minor
+          - patch
+      major-gomod:
+        update-types:
+          - major
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      minor-gh-actions:
+        update-types:
+          - minor
+          - patch
+      major-gh-actions:
+        update-types:
+          - major
