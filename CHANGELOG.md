@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.21.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.21.0...v0.21.1) / 2025-05-09
+
+#### Bug Fixes
+
+* managed system creation by asset has wrong default values ([#243](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/243))
+
 ### [0.21.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.20.0...v0.21.0) / 2025-04-24
 
 #### Features
