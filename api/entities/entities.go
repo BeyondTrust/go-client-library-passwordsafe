@@ -272,7 +272,7 @@ type ManagedSystemsByAssetIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag bool   `json:"ChangePasswordAfterAnyReleaseFlag,omitempty"`
 	ResetPasswordOnMismatchFlag       bool   `json:"ResetPasswordOnMismatchFlag,omitempty"`
 	ChangeFrequencyType               string `json:"ChangeFrequencyType" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
+	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                        string `json:"ChangeTime" validate:"datetime=15:04"`
 }
 
@@ -373,7 +373,7 @@ type ManagedSystemsByWorkGroupIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag  bool   `json:",omitempty"`
 	ResetPasswordOnMismatchFlag        bool   `json:",omitempty"`
 	ChangeFrequencyType                string `json:",omitempty" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays                int    `json:",omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
+	ChangeFrequencyDays                int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                         string `json:",omitempty" validate:"datetime=15:04"`
 	AccessURL                          string `json:",omitempty" validate:"required,url"`
 }
@@ -415,7 +415,7 @@ type ManagedSystemsByDatabaseIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag bool   `json:",omitempty"`
 	ResetPasswordOnMismatchFlag       bool   `json:",omitempty"`
 	ChangeFrequencyType               string `json:",omitempty" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays,min=1,max=999"`
+	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                        string `json:",omitempty" validate:"datetime=15:04"`
 }
 
