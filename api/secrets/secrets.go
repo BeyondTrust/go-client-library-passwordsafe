@@ -330,7 +330,34 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 // SecretCreateSecret calls Secret Safe API Requests enpoint to create secrets in Password Safe.
 func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
-	secretCredentialDetailsJson, err := json.Marshal(secretDetails)
+	var CreateSecretResponse entities.CreateSecretResponse
+	var secretCredentialDetailsJson string
+	var err error
+
+	switch managedSystemDetails := secretDetails.(type) {
+
+	// validate request body according to the API Version.
+	case entities.SecretCredentialDetailsConfig30,
+		entities.SecretCredentialDetailsConfig31,
+		entities.SecretTextDetailsConfig30,
+		entities.SecretTextDetailsConfig31,
+		entities.SecretFileDetailsConfig30,
+		entities.SecretFileDetailsConfig31:
+
+		err = utils.ValidateData(managedSystemDetails)
+		if err != nil {
+			return CreateSecretResponse, err
+		}
+
+		var bytes []byte
+
+		// Convert object to json string.
+		bytes, err = json.Marshal(managedSystemDetails)
+		if err != nil {
+			return CreateSecretResponse, err
+		}
+		secretCredentialDetailsJson = string(bytes)
+	}
 
 	if err != nil {
 		return entities.CreateSecretResponse{}, err
@@ -338,18 +365,22 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 
 	payload := string(secretCredentialDetailsJson)
 
-	var CreateSecretResponse entities.CreateSecretResponse
-
 	b := bytes.NewBufferString(payload)
 
 	// path depends on the type of secret (credential, text, file).
 	var path string
 	switch secretDetails.(type) {
-	case entities.SecretCredentialDetails:
+	case entities.SecretCredentialDetailsConfig30:
 		path = "secrets"
-	case entities.SecretTextDetails:
+	case entities.SecretCredentialDetailsConfig31:
+		path = "secrets"
+	case entities.SecretTextDetailsConfig30:
 		path = "secrets/text"
-	case entities.SecretFileDetails:
+	case entities.SecretTextDetailsConfig31:
+		path = "secrets/text"
+	case entities.SecretFileDetailsConfig30:
+		path = "secrets/file"
+	case entities.SecretFileDetailsConfig31:
 		path = "secrets/file"
 	}
 
