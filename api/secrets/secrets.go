@@ -343,30 +343,12 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var secretCredentialDetailsJson string
 	var err error
 
-	switch managedSystemDetails := secretDetails.(type) {
-
-	// validate request body according to the API Version.
-	case entities.SecretCredentialDetailsConfig30,
-		entities.SecretCredentialDetailsConfig31,
-		entities.SecretTextDetailsConfig30,
-		entities.SecretTextDetailsConfig31,
-		entities.SecretFileDetailsConfig30,
-		entities.SecretFileDetailsConfig31:
-
-		err = utils.ValidateData(managedSystemDetails)
-		if err != nil {
-			return CreateSecretResponse, err
-		}
-
-		var bytes []byte
-
-		// Convert object to json string.
-		bytes, err = json.Marshal(managedSystemDetails)
-		if err != nil {
-			return CreateSecretResponse, err
-		}
-		secretCredentialDetailsJson = string(bytes)
+	// Convert object to json string.
+	secretDetailsJson, err := json.Marshal(secretDetails)
+	if err != nil {
+		return CreateSecretResponse, err
 	}
+	secretCredentialDetailsJson = string(secretDetailsJson)
 
 	payload := string(secretCredentialDetailsJson)
 

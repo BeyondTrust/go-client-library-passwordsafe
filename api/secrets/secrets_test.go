@@ -642,7 +642,8 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 		Description: "Title Description",
 	}
 
-	secretTextDetails := entities.SecretTextDetailsConfig30{
+	// Test with API Version 3.0
+	secretTextDetails30 := entities.SecretTextDetailsConfig30{
 		SecretDetailsBaseConfig: secretDetailsConfig,
 		Text:                    constants.FakePassword,
 		OwnerType:               "User",
@@ -657,7 +658,35 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 		},
 	}
 
-	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails30)
+
+	if response.Title != "Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	// Test with API Version 3.1.
+	secretTextDetails31 := entities.SecretTextDetailsConfig31{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Text:                    constants.FakePassword,
+		FolderId:                uuid.New(),
+		Owners: []entities.OwnerDetailsGroupId{
+			{
+				UserId: 1,
+				Name:   "administrator",
+				Email:  "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err = secretObj.CreateSecretFlow("folder1", secretTextDetails31)
 
 	if response.Title != "Secret Title" {
 		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
@@ -711,6 +740,7 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 		Description: "Title Description",
 	}
 
+	// Test with API Version 3.0
 	secretTextDetails := entities.SecretCredentialDetailsConfig30{
 		SecretDetailsBaseConfig: secretDetailsConfig,
 		Username:                "TestUserName",
@@ -727,6 +757,34 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 	}
 
 	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+
+	if response.Title != "Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	// Test with API Version 3.1
+	secretTextDetails31 := entities.SecretCredentialDetailsConfig31{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Username:                "TestUserName",
+		Password:                constants.FakePassword,
+		Owners: []entities.OwnerDetailsGroupId{
+			{
+				UserId: 1,
+				Name:   "administrator",
+				Email:  "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err = secretObj.CreateSecretFlow("folder1", secretTextDetails31)
 
 	if response.Title != "Secret Title" {
 		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
@@ -780,7 +838,8 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 		Description: "File Title Description",
 	}
 
-	secretTextDetails := entities.SecretFileDetailsConfig30{
+	// Test with API Version 3.0
+	secretTextDetails30 := entities.SecretFileDetailsConfig30{
 		SecretDetailsBaseConfig: secretDetailsConfig,
 		FileName:                "textfile.txt",
 		FileContent:             "Secret Content",
@@ -795,7 +854,36 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 		},
 	}
 
-	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails)
+	response, err := secretObj.CreateSecretFlow("folder1", secretTextDetails30)
+
+	if response.Title != "File Secret Title" {
+		t.Errorf("Test case Failed %v, %v", response, "File Secret Title")
+	}
+
+	if response.Description != "Title Description" {
+		t.Errorf("Test case Failed %v, %v", response, "Title Description")
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	// Test with API Version 3.1
+	secretTextDetails31 := entities.SecretFileDetailsConfig31{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		FileName:                "textfile.txt",
+		FileContent:             "Secret Content",
+		OwnerType:               "User",
+		Owners: []entities.OwnerDetailsGroupId{
+			{
+				UserId: 1,
+				Name:   "administrator",
+				Email:  "test@beyondtrust.com",
+			},
+		},
+	}
+
+	response, err = secretObj.CreateSecretFlow("folder1", secretTextDetails31)
 
 	if response.Title != "File Secret Title" {
 		t.Errorf("Test case Failed %v, %v", response, "File Secret Title")
