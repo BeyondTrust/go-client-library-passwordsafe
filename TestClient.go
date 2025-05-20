@@ -212,6 +212,12 @@ func main() {
 		return
 	}
 
+	err = CreateManagedSystem(authenticate, zapLogger)
+	if err != nil {
+		zapLogger.Error(err.Error())
+		return
+	}
+
 	// signing out
 	err = authenticate.SignOut()
 
@@ -336,26 +342,31 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse, maxFileSecretSizeBytes int) error {
 
 	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
-	objCredential := entities.SecretCredentialDetails{
+
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "CREDENTIAL_" + identifier,
 		Description: "My Credential Secret Description",
-		Username:    "my_user",
-		Password:    constants.FakePassword,
-		OwnerType:   "User",
 		Notes:       "My note",
-		Owners: []entities.OwnerDetails{
-			{
-				GroupId: 1,
-				OwnerId: userObject.UserId,
-				Owner:   userObject.UserName,
-				Email:   userObject.EmailAddress,
-			},
-		},
 		Urls: []entities.UrlDetails{
 			{
 				Id:           uuid.New(),
 				CredentialId: uuid.New(),
 				Url:          "https://www.test.com/",
+			},
+		},
+	}
+
+	objCredential := entities.SecretCredentialDetailsConfig31{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Username:                "my_user",
+		Password:                constants.FakePassword,
+
+		Owners: []entities.OwnerDetailsGroupId{
+			{
+				GroupId: 1,
+				UserId:  userObject.UserId,
+				Name:    userObject.UserName,
+				Email:   userObject.EmailAddress,
 			},
 		},
 	}
@@ -370,26 +381,27 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 	// WARNING: Do not log secrets in production code, the following log statement logs test secrets for testing purposes:
 	zapLogger.Debug(fmt.Sprintf("Created Credential secret: %v", createdSecret.Title))
 
-	objText := entities.SecretTextDetails{
+	secretDetailsConfig = entities.SecretDetailsBaseConfig{
 		Title:       "TEXT_" + identifier,
 		Description: "My Text Secret Description",
-		Text:        constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     userObject.UserId,
-		FolderId:    uuid.New(),
-		Owners: []entities.OwnerDetails{
-			{
-				GroupId: 1,
-				OwnerId: userObject.UserId,
-				Owner:   userObject.UserName,
-				Email:   userObject.EmailAddress,
-			},
-		},
 		Urls: []entities.UrlDetails{
 			{
 				Id:           uuid.New(),
 				CredentialId: uuid.New(),
 				Url:          "https://www.test.com/",
+			},
+		},
+	}
+
+	objText := entities.SecretTextDetailsConfig31{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Text:                    constants.FakePassword,
+		FolderId:                uuid.New(),
+		Owners: []entities.OwnerDetailsGroupId{
+			{
+				UserId: userObject.UserId,
+				Name:   userObject.UserName,
+				Email:  userObject.EmailAddress,
 			},
 		},
 	}
@@ -411,22 +423,10 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 		return nil
 	}
 
-	objFile := entities.SecretFileDetails{
+	secretDetailsConfig = entities.SecretDetailsBaseConfig{
 		Title:       "FILE_" + identifier,
 		Description: "My File Secret Description",
-		OwnerType:   "User",
-		OwnerId:     userObject.UserId,
-		Owners: []entities.OwnerDetails{
-			{
-				GroupId: 1,
-				OwnerId: userObject.UserId,
-				Owner:   userObject.UserName,
-				Email:   userObject.EmailAddress,
-			},
-		},
 		Notes:       "Notes 1",
-		FileName:    "my_secret.txt",
-		FileContent: string(fileContent),
 		Urls: []entities.UrlDetails{
 			{
 				Id:           uuid.New(),
@@ -434,6 +434,22 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 				Url:          "https://www.test.com/",
 			},
 		},
+	}
+
+	objFile := entities.SecretFileDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		OwnerType:               "User",
+		OwnerId:                 userObject.UserId,
+		Owners: []entities.OwnerDetailsOwnerId{
+			{
+				OwnerId: userObject.UserId,
+				Owner:   userObject.UserName,
+				Email:   userObject.EmailAddress,
+			},
+		},
+
+		FileName:    "my_secret.txt",
+		FileContent: string(fileContent),
 	}
 
 	// creating a file secret in folder1.

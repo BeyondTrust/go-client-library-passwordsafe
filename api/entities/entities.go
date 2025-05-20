@@ -119,19 +119,6 @@ type CreateSecretResponse struct {
 	FolderId    string
 }
 
-type SecretCredentialDetails struct {
-	Title          string         `json:",omitempty" validate:"required"`
-	Description    string         `json:",omitempty" validate:"omitempty,max=256"`
-	Username       string         `json:",omitempty" validate:"required"`
-	Password       string         `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
-	OwnerId        int            `json:",omitempty" validate:"required_if=OwnerType Group"`
-	OwnerType      string         `json:",omitempty" validate:"required,oneof=User Group"`
-	Owners         []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
-	Notes          string         `json:",omitempty" validate:"omitempty,max=4000"`
-	Urls           []UrlDetails   `json:",omitempty" validate:"omitempty"`
-	PasswordRuleID int            `json:",omitempty" validate:"omitempty"`
-}
-
 type SecretCredentialDetailsConfig30 struct {
 	SecretDetailsBaseConfig
 	Username       string                `json:",omitempty" validate:"required"`
@@ -148,18 +135,6 @@ type SecretCredentialDetailsConfig31 struct {
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
 	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required_if=OwnerType User"`
 	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
-}
-
-type SecretTextDetails struct {
-	Title       string         `json:",omitempty" validate:"required,max=256"`
-	Description string         `json:",omitempty" validate:"omitempty,max=256"`
-	Text        string         `json:",omitempty" validate:"required,max=4096"`
-	OwnerId     int            `json:",omitempty" validate:"required_if=OwnerType Group"`
-	OwnerType   string         `json:",omitempty" validate:"required,oneof=User Group"`
-	Owners      []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
-	Notes       string         `json:",omitempty" validate:"omitempty,max=4000"`
-	FolderId    uuid.UUID      `json:",omitempty" validate:"omitempty"`
-	Urls        []UrlDetails   `json:",omitempty" validate:"omitempty"`
 }
 
 type SecretDetailsBaseConfig struct {
@@ -185,18 +160,6 @@ type SecretTextDetailsConfig31 struct {
 	FolderId uuid.UUID             `json:",omitempty" validate:"omitempty"`
 }
 
-type SecretFileDetails struct {
-	Title       string         `json:",omitempty" validate:"required,max=256"`
-	Description string         `json:",omitempty" validate:"omitempty,max=256"`
-	OwnerId     int            `json:",omitempty" validate:"required_if=OwnerType Group"`
-	OwnerType   string         `json:",omitempty" validate:"required,oneof=User Group"`
-	Owners      []OwnerDetails `json:",omitempty" validate:"required_if=OwnerType User"`
-	Notes       string         `json:",omitempty" validate:"omitempty,max=4000"`
-	FileName    string         `json:",omitempty" validate:"required,max=256"`
-	FileContent string         `json:",omitempty" validate:"required,max=5000000"`
-	Urls        []UrlDetails   `json:",omitempty" validate:"omitempty"`
-}
-
 type SecretFileDetailsConfig30 struct {
 	SecretDetailsBaseConfig
 	OwnerId     int                   `json:",omitempty" validate:"required_if=OwnerType Group"`
@@ -210,14 +173,8 @@ type SecretFileDetailsConfig31 struct {
 	SecretDetailsBaseConfig
 	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required_if=OwnerType User"`
 	FileName    string                `json:",omitempty" validate:"required,max=256"`
+	OwnerType   string                `json:",omitempty" validate:"required,oneof=User Group"`
 	FileContent string                `json:",omitempty" validate:"required,max=5000000"`
-}
-
-type OwnerDetails struct {
-	GroupId int    `json:",omitempty" validate:"required,min=1,max=2147483647"`
-	OwnerId int    `json:",omitempty" validate:"required,min=1,max=2147483647"`
-	Owner   string `json:",omitempty" validate:"omitempty"`
-	Email   string `json:",omitempty" validate:"omitempty"`
 }
 
 type OwnerDetailsOwnerId struct {

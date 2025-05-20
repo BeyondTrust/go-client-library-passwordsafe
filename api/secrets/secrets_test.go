@@ -637,14 +637,18 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretTextDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     1,
-		FolderId:    uuid.New(),
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretTextDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Text:                    constants.FakePassword,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		FolderId:                uuid.New(),
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -702,14 +706,18 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretCredentialDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Username:    "TestUserName",
-		Password:    constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     1,
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretCredentialDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Username:                "TestUserName",
+		Password:                constants.FakePassword,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -767,14 +775,18 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretFileDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "File Title Description",
-		FileName:    "textfile.txt",
-		FileContent: "Secret Content",
-		OwnerType:   "User",
-		OwnerId:     1,
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretFileDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		FileName:                "textfile.txt",
+		FileContent:             "Secret Content",
+		OwnerType:               "User",
+		OwnerId:                 1,
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -818,14 +830,18 @@ func TestSecretCreateFileSecretFlowErrorFileContent(t *testing.T) {
 	n := 5_000_001
 	fileContent := strings.Repeat("A", n)
 
-	secretTextDetails := entities.SecretFileDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "File Title Description",
-		FileName:    "textfile.txt",
-		FileContent: fileContent,
-		OwnerType:   "User",
-		OwnerId:     1,
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretFileDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		FileName:                "textfile.txt",
+		FileContent:             fileContent,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -877,14 +893,27 @@ func TestSecretCreateFileSecretFlowError(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretFileDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "File Title Description",
-		FileName:    "textfile.txt",
-		FileContent: "Secret Content",
-		OwnerType:   "User",
-		OwnerId:     1,
-		Owners: []entities.OwnerDetails{
+	}
+
+	var owners []entities.OwnerDetailsOwnerId
+
+	mainOwner := entities.OwnerDetailsOwnerId{
+		OwnerId: 1,
+		Owner:   "test",
+		Email:   "test@test.com",
+	}
+	owners = append(owners, mainOwner)
+
+	secretTextDetails := entities.SecretFileDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		FileName:                "textfile.txt",
+		FileContent:             "Secret Content",
+		OwnerType:               "User",
+		OwnerId:                 1,
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -939,14 +968,17 @@ func TestSecretCreateBadInput(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretCredentialDetails{
-		Title:       "",
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Description: "Title Description",
-		Username:    "TestUserName",
-		Password:    constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     1,
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretCredentialDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Username:                "TestUserName",
+		Password:                constants.FakePassword,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -991,14 +1023,18 @@ func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretTextDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     1,
-		FolderId:    uuid.New(),
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretTextDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Text:                    constants.FakePassword,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		FolderId:                uuid.New(),
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
@@ -1043,14 +1079,18 @@ func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
-	secretTextDetails := entities.SecretTextDetails{
+	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
 		Description: "Title Description",
-		Text:        constants.FakePassword,
-		OwnerType:   "User",
-		OwnerId:     1,
-		FolderId:    uuid.New(),
-		Owners: []entities.OwnerDetails{
+	}
+
+	secretTextDetails := entities.SecretTextDetailsConfig30{
+		SecretDetailsBaseConfig: secretDetailsConfig,
+		Text:                    constants.FakePassword,
+		OwnerType:               "User",
+		OwnerId:                 1,
+		FolderId:                uuid.New(),
+		Owners: []entities.OwnerDetailsOwnerId{
 			{
 				OwnerId: 1,
 				Owner:   "administrator",
