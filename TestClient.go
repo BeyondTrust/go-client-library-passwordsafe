@@ -123,7 +123,7 @@ func main() {
 	certificateName := os.Getenv("PASSWORD_SAFE_CERTIFICATE_NAME")
 	certificatePassword := os.Getenv("PASSWORD_SAFE_CERTIFICATE_PASSWORD")
 
-	clientTimeOutInSeconds := 30
+	clientTimeOutInSeconds := 300
 	verifyCa := true
 	retryMaxElapsedTimeMinutes := 2
 
@@ -436,15 +436,13 @@ func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj
 		},
 	}
 
-	objFile := entities.SecretFileDetailsConfig30{
+	objFile := entities.SecretFileDetailsConfig31{
 		SecretDetailsBaseConfig: secretDetailsConfig,
-		OwnerType:               "User",
-		OwnerId:                 userObject.UserId,
-		Owners: []entities.OwnerDetailsOwnerId{
+		Owners: []entities.OwnerDetailsGroupId{
 			{
-				OwnerId: userObject.UserId,
-				Owner:   userObject.UserName,
-				Email:   userObject.EmailAddress,
+				UserId: userObject.UserId,
+				Name:   userObject.UserName,
+				Email:  userObject.EmailAddress,
 			},
 		},
 

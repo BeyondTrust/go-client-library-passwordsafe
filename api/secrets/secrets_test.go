@@ -873,7 +873,6 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 		SecretDetailsBaseConfig: secretDetailsConfig,
 		FileName:                "textfile.txt",
 		FileContent:             "Secret Content",
-		OwnerType:               "User",
 		Owners: []entities.OwnerDetailsGroupId{
 			{
 				UserId: 1,

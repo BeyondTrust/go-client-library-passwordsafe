@@ -314,7 +314,7 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 		fileContent = fileSecret.FileContent
 	}
 
-	body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileName, []byte(payload), fileContent)
+	body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileName, []byte(payload), fileContent, secretObj.authenticationObj.ApiVersion)
 	if err != nil {
 		return entities.CreateSecretResponse{}, err
 	}

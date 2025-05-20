@@ -229,7 +229,7 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 }
 
 // CreateMultipartRequest creates and sends multipart request.
-func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string) (io.ReadCloser, error) {
+func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
 
 	var requestBody bytes.Buffer
 
@@ -255,6 +255,7 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 	multipartWriter.Close()
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		ApiVersion:  apiVersion,
 		Url:         url,
 		HttpMethod:  "POST",
 		Body:        requestBody,

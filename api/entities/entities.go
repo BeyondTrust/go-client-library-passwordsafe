@@ -133,7 +133,7 @@ type SecretCredentialDetailsConfig31 struct {
 	SecretDetailsBaseConfig
 	Username       string                `json:",omitempty" validate:"required"`
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
-	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required_if=OwnerType User"`
+	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
 }
 
@@ -148,7 +148,7 @@ type SecretTextDetailsConfig30 struct {
 	SecretDetailsBaseConfig
 	Text      string                `json:",omitempty" validate:"required,max=4096"`
 	OwnerId   int                   `json:",omitempty" validate:"required_if=OwnerType Group"`
-	OwnerType string                `json:",omitempty" validate:"required,oneof=User Group"`
+	OwnerType string                `json:",omitempty" validate:"oneof=User Group"`
 	Owners    []OwnerDetailsOwnerId `json:",omitempty" validate:"required_if=OwnerType User"`
 	FolderId  uuid.UUID             `json:",omitempty" validate:"omitempty"`
 }
@@ -156,14 +156,14 @@ type SecretTextDetailsConfig30 struct {
 type SecretTextDetailsConfig31 struct {
 	SecretDetailsBaseConfig
 	Text     string                `json:",omitempty" validate:"required,max=4096"`
-	Owners   []OwnerDetailsGroupId `json:",omitempty" validate:"required_if=OwnerType User"`
+	Owners   []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	FolderId uuid.UUID             `json:",omitempty" validate:"omitempty"`
 }
 
 type SecretFileDetailsConfig30 struct {
 	SecretDetailsBaseConfig
 	OwnerId     int                   `json:",omitempty" validate:"required_if=OwnerType Group"`
-	OwnerType   string                `json:",omitempty" validate:"required,oneof=User Group"`
+	OwnerType   string                `json:",omitempty" validate:"oneof=User Group"`
 	Owners      []OwnerDetailsOwnerId `json:",omitempty" validate:"required_if=OwnerType User"`
 	FileName    string                `json:",omitempty" validate:"required,max=256"`
 	FileContent string                `json:",omitempty" validate:"required,max=5000000"`
@@ -171,9 +171,8 @@ type SecretFileDetailsConfig30 struct {
 
 type SecretFileDetailsConfig31 struct {
 	SecretDetailsBaseConfig
-	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required_if=OwnerType User"`
+	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	FileName    string                `json:",omitempty" validate:"required,max=256"`
-	OwnerType   string                `json:",omitempty" validate:"required,oneof=User Group"`
 	FileContent string                `json:",omitempty" validate:"required,max=5000000"`
 }
 
