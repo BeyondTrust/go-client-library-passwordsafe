@@ -898,15 +898,6 @@ func TestSecretCreateFileSecretFlowError(t *testing.T) {
 		Description: "File Title Description",
 	}
 
-	var owners []entities.OwnerDetailsOwnerId
-
-	mainOwner := entities.OwnerDetailsOwnerId{
-		OwnerId: 1,
-		Owner:   "test",
-		Email:   "test@test.com",
-	}
-	owners = append(owners, mainOwner)
-
 	secretTextDetails := entities.SecretFileDetailsConfig30{
 		SecretDetailsBaseConfig: secretDetailsConfig,
 		FileName:                "textfile.txt",
