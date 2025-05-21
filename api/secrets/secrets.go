@@ -267,7 +267,7 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, err
 	}
 
-	folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
+	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
 
 	if err != nil {
 		return createResponse, err
@@ -409,15 +409,21 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 
 }
 
-// SecretGetFolders call secrets-safe/folders/ enpoint
-// and returns folder list
-func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.FolderResponse, error) {
+// SecretGetFoldersFlow get folders list
+func (secretObj *SecretObj) SecretGetFoldersListFlow() ([]entities.FolderResponse, error) {
+	return secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
+}
+
+// SecretGetSafesFlow get safes list
+func (secretObj *SecretObj) SecretGetSafesListFlow() ([]entities.FolderResponse, error) {
+	return secretObj.SecretGetFoldersAndSafes("secrets-safe/safes/", constants.SecretGetSafes)
+}
+
+// SecretGetFoldersAndSafes call secrets-safe/folders/ - secrets-safe/folders/  enpoint
+// and returns folder list - safe list
+func (secretObj *SecretObj) SecretGetFoldersAndSafes(endpointPath string, method string) ([]entities.FolderResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	secretObj.log.Debug(messageLog + endpointPath)
-
-	var body io.ReadCloser
-	var technicalError error
-	var businessError error
 
 	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
 
@@ -434,34 +440,21 @@ func (secretObj *SecretObj) SecretGetFolders(endpointPath string) ([]entities.Fo
 		ApiVersion:  secretObj.authenticationObj.ApiVersion,
 	}
 
-	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
-		return technicalError
-	}, secretObj.authenticationObj.ExponentialBackOff)
-
-	if technicalError != nil {
-		return foldersObj, technicalError
-	}
-
-	if businessError != nil {
-		return foldersObj, businessError
-	}
-
-	defer body.Close()
-	bodyBytes, err := io.ReadAll(body)
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
+		secretObj.log.Error(err.Error())
 		return foldersObj, err
 	}
 
-	err = json.Unmarshal(bodyBytes, &foldersObj)
+	err = json.Unmarshal(response, &foldersObj)
 	if err != nil {
 		secretObj.log.Error(err.Error())
 		return foldersObj, err
 	}
 
 	if len(foldersObj) == 0 {
-		return foldersObj, fmt.Errorf("empty Folder List")
+		return foldersObj, fmt.Errorf("empty List")
 	}
 
 	return foldersObj, nil
@@ -477,7 +470,7 @@ func (secretObj *SecretObj) GetParentFolderId(folderTarget string) (string, erro
 		return "", fmt.Errorf("parent folder name must not be empty")
 	}
 
-	folders, err := secretObj.SecretGetFolders("secrets-safe/folders/")
+	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
 
 	if err != nil {
 		return "", err

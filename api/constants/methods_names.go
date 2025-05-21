@@ -7,10 +7,13 @@ const (
 	SecretGetFileSecret   = "SecretGetFileSecret"
 	SecretCreateSecret    = "SecretCreateSecret"
 	SecretGetFolders      = "SecretGetFolders"
+	SecretGetSafes        = "SecretGetSafes"
 	SecretCreateFolder    = "SecretCreateFolder"
 	SecretCreateSafes     = "SecretCreateSafes"
 
-	ManagedAccountGet                  = "ManagedAccountGet"
+	ManagedAccountGet    = "ManagedAccountGet"
+	ManagedAccountCreate = "ManagedAccountCreate"
+
 	ManagedAccountCreateRequest        = "ManagedAccountCreateRequest"
 	CredentialByRequestId              = "CredentialByRequestId"
 	ManagedAccountRequestCheckIn       = "ManagedAccountRequestCheckIn"
@@ -23,15 +26,23 @@ const (
 	GetToken  = "GetToken"
 	SignAppin = "SignAppin"
 
-	CreateWorkGroup = "CreateWorkGroup"
+	CreateWorkGroup   = "CreateWorkGroup"
+	GetWorkGroupsList = "GetWorkGroupsList"
 
-	CreateAsset = "CreateAsset"
+	CreateAsset                  = "CreateAsset"
+	GetAssetsListByWorkgroupId   = "GetAssetsListByWorkgroupId"
+	GetAssetsListByWorkgroupName = "GetAssetsListByWorkgroupName"
 
-	CreateDatabase = "CreateDatabase"
+	CreateDatabase   = "CreateDatabase"
+	GetDataBasesList = "GetDataBasesList"
 
-	CreateManagedSystemByAssetId = "CreateManagedSystemByAssetId"
-
+	CreateManagedSystemByAssetId     = "CreateManagedSystemByAssetId"
 	CreateManagedSystemByWorkGroupId = "CreateManagedSystemByWorkGroupId"
+	CreateManagedSystemByDataBaseId  = "CreateManagedSystemByDataBaseId"
+	GetManagedSystemsList            = "GetManagedSystemsList"
 
-	CreateManagedSystemByDataBaseId = "CreateManagedSystemByDataBaseId"
+	CreateFunctionalAccount = "CreateFunctionalAccount"
+	GetFunctionalAccount    = "GetFunctionalAccount"
+
+	GetPlatformsList = "GetPlatformsList"
 )

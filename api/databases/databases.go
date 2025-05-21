@@ -127,3 +127,38 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 	return databaseResponse, nil
 
 }
+
+// GetDatabasesListFlow get databases list.
+func (databaseObj *DatabaseObj) GetDatabasesListFlow() ([]entities.DatabaseResponse, error) {
+	return databaseObj.GetDatabasesList("Databases", constants.GetDataBasesList)
+}
+
+// GetDatabasesList call Databases enpoint
+// and returns databases list
+func (databaseObj *DatabaseObj) GetDatabasesList(endpointPath string, method string) ([]entities.DatabaseResponse, error) {
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
+	databaseObj.log.Debug(messageLog)
+
+	url := databaseObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	var databasesList []entities.DatabaseResponse
+
+	response, err := databaseObj.authenticationObj.HttpClient.GetGeneralList(url, databaseObj.authenticationObj.ApiVersion, method, databaseObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		return databasesList, err
+	}
+
+	err = json.Unmarshal(response, &databasesList)
+
+	if err != nil {
+		return databasesList, err
+	}
+
+	if len(databasesList) == 0 {
+		return databasesList, fmt.Errorf("empty databases list")
+	}
+
+	return databasesList, nil
+
+}

@@ -4,7 +4,6 @@ package entities
 
 import (
 	"bytes"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -19,8 +18,25 @@ type SignAppinResponse struct {
 
 // ManagedAccount responsible for managed account response data.
 type ManagedAccount struct {
-	SystemId  int
-	AccountId int
+	PlatformID             int
+	SystemId               int
+	SystemName             string
+	DomainName             string
+	AccountId              int
+	AccountName            string
+	InstanceName           string
+	UserPrincipalName      string
+	ApplicationID          int
+	ApplicationDisplayName string
+	DefaultReleaseDuration int
+	MaximumReleaseDuration int
+	LastChangeDate         string
+	NextChangeDate         string
+	IsChanging             bool
+	ChangeState            int
+	IsISAAccess            bool
+	PreferredNodeID        string
+	AccountDescription     string
 }
 
 // Secret responsible for secrets-safe response data.
@@ -211,8 +227,8 @@ type AssetResponse struct {
 	DomainName      string
 	IPAddress       string
 	OperatingSystem string
-	CreateDate      time.Time
-	LastUpdateDate  time.Time
+	CreateDate      string
+	LastUpdateDate  string
 	Description     string
 }
 
@@ -256,7 +272,7 @@ type ManagedSystemsByAssetIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag bool   `json:"ChangePasswordAfterAnyReleaseFlag,omitempty"`
 	ResetPasswordOnMismatchFlag       bool   `json:"ResetPasswordOnMismatchFlag,omitempty"`
 	ChangeFrequencyType               string `json:"ChangeFrequencyType" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
+	ChangeFrequencyDays               int    `json:"ChangeFrequencyDays,omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                        string `json:"ChangeTime" validate:"datetime=15:04"`
 }
 
@@ -292,7 +308,7 @@ type ManagedSystemResponseCreate struct {
 	Template                           string `json:"Template,omitempty"`
 	ForestName                         string `json:"ForestName,omitempty"`
 	UseSSL                             bool   `json:"UseSSL,omitempty"`
-	OracleInternetDirectoryID          int    `json:"OracleInternetDirectoryID,omitempty"`
+	OracleInternetDirectoryID          string `json:"OracleInternetDirectoryID,omitempty"`
 	OracleInternetDirectoryServiceName string `json:"OracleInternetDirectoryServiceName,omitempty"`
 	SystemName                         string `json:"SystemName"`
 	PlatformID                         int    `json:"PlatformID"`
@@ -357,7 +373,7 @@ type ManagedSystemsByWorkGroupIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag  bool   `json:",omitempty"`
 	ResetPasswordOnMismatchFlag        bool   `json:",omitempty"`
 	ChangeFrequencyType                string `json:",omitempty" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays                int    `json:",omitempty" validate:"min=1,max=999,required_if=ChangeFrequencyType xdays"`
+	ChangeFrequencyDays                int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                         string `json:",omitempty" validate:"datetime=15:04"`
 	AccessURL                          string `json:",omitempty" validate:"required,url"`
 }
@@ -399,6 +415,58 @@ type ManagedSystemsByDatabaseIdDetailsBaseConfig struct {
 	ChangePasswordAfterAnyReleaseFlag bool   `json:",omitempty"`
 	ResetPasswordOnMismatchFlag       bool   `json:",omitempty"`
 	ChangeFrequencyType               string `json:",omitempty" validate:"oneof=first last xdays"`
-	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays,min=1,max=999"`
+	ChangeFrequencyDays               int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                        string `json:",omitempty" validate:"datetime=15:04"`
+}
+
+type FunctionalAccountDetails struct {
+	PlatformID          int    `validate:"required"`
+	DomainName          string `validate:"omitempty,max=500"`
+	AccountName         string `validate:"required,max=245"`
+	DisplayName         string `validate:"omitempty,max=100"`
+	Password            string `validate:"omitempty"`
+	PrivateKey          string `validate:"omitempty"`
+	Passphrase          string `validate:"omitempty"`
+	Description         string `validate:"omitempty,max=1000"`
+	ElevationCommand    string `validate:"omitempty,max=80"`
+	TenantID            string `validate:"omitempty,max=36"`
+	ObjectID            string `validate:"omitempty,max=36"`
+	Secret              string `validate:"omitempty,max=255"`
+	ServiceAccountEmail string `validate:"omitempty,max=255"`
+	AzureInstance       string `validate:"omitempty,oneof=AzurePublic AzureUsGovernment"`
+}
+
+type FunctionalAccountResponse struct {
+	FunctionalAccountID  int
+	PlatformID           int
+	DomainName           string
+	AccountName          string
+	DisplayName          string
+	Description          string
+	ElevationCommand     string
+	SystemReferenceCount int
+	TenantID             string
+	ObjectID             string
+	AzureInstance        string
+}
+
+type PlatformResponse struct {
+	PlatformID              int
+	Name                    string
+	ShortName               string
+	PortFlag                bool
+	DefaultPort             int
+	SupportsElevationFlag   bool
+	DomainNameFlag          bool
+	AutoManagementFlag      bool
+	DSSAutoManagementFlag   bool
+	ManageableFlag          bool
+	DSSFlag                 bool
+	LoginAccountFlag        bool
+	DefaultSessionType      string
+	ApplicationHostFlag     bool
+	RequiresApplicationHost bool
+	RequiresTenantID        bool
+	RequiresObjectID        bool
+	RequiresSecret          bool
 }
