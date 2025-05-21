@@ -149,7 +149,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 		return entities.ManagedAccount{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -175,44 +175,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 	data := fmt.Sprintf(`{"SystemID":%v, "AccountID":%v, "DurationMinutes":5, "Reason":"Tesr", "ConflictOption": "reuse"}`, systemName, accountName)
 	b := bytes.NewBufferString(data)
 
-	var body io.ReadCloser
-	var technicalError error
-	var businessError error
-
-	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         url,
-		HttpMethod:  "POST",
-		Body:        *b,
-		Method:      constants.ManagedAccountCreateRequest,
-		AccessToken: "",
-		ApiKey:      "",
-		ContentType: "application/json",
-		ApiVersion:  "",
-	}
-
-	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
-		return technicalError
-	}, managedAccountObj.authenticationObj.ExponentialBackOff)
-
-	if technicalError != nil {
-		return "", technicalError
-	}
-
-	if businessError != nil {
-		return "", businessError
-	}
-
-	defer body.Close()
-	bodyBytes, err := io.ReadAll(body)
-
-	if err != nil {
-		return "", err
-	}
-
-	responseString := string(bodyBytes)
-
-	return responseString, nil
+	return managedAccountObj.sendRequestAndGetSingleString("POST", url, constants.ManagedAccountCreateRequest, *b)
 
 }
 
@@ -220,52 +183,15 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 // enpoint and returns secret value by request Id.
 func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
-	managedAccountObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
+	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
+	return managedAccountObj.sendRequestAndGetSingleString("GET", url, constants.CredentialByRequestId, bytes.Buffer{})
 
-	var body io.ReadCloser
-	var technicalError error
-	var businessError error
-
-	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         url,
-		HttpMethod:  "GET",
-		Body:        bytes.Buffer{},
-		Method:      constants.CredentialByRequestId,
-		AccessToken: "",
-		ApiKey:      "",
-		ContentType: "application/json",
-		ApiVersion:  "",
-	}
-
-	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
-		return technicalError
-	}, managedAccountObj.authenticationObj.ExponentialBackOff)
-
-	if technicalError != nil {
-		return "", technicalError
-	}
-
-	if businessError != nil {
-		return "", businessError
-	}
-
-	defer body.Close()
-	bodyBytes, err := io.ReadAll(body)
-	if err != nil {
-		managedAccountObj.log.Error(err.Error())
-		return "", err
-	}
-
-	responseString := string(bodyBytes)
-
-	return responseString, nil
 }
 
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "PUT", url)
-	managedAccountObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
+	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
 
 	data := "{}"
 	b := bytes.NewBufferString(data)
@@ -385,7 +311,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 		return entities.CreateManagedAccountsResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -442,7 +368,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 		return managedSystemObject, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -471,6 +397,7 @@ func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListFlow() ([]en
 // GetManagedAccountsList call ManagedAccounts enpoint
 // and returns managed accounts list
 func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPath string, method string) ([]entities.ManagedAccount, error) {
+
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	managedAccountObj.log.Debug(messageLog)
 
@@ -495,5 +422,42 @@ func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPat
 	}
 
 	return managedAccountList, nil
+
+}
+
+// sendRequestAndGetSingleString send a request and get the response as string.
+func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(httpMethod string, url string, method string, b bytes.Buffer) (string, error) {
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  httpMethod,
+		Body:        b,
+		Method:      method,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  "",
+	}
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, managedAccountObj.authenticationObj.ExponentialBackOff)
+	if technicalError != nil {
+		return "", technicalError
+	}
+	if businessError != nil {
+		return "", businessError
+	}
+	defer func() { _ = body.Close() }()
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+	responseString := string(bodyBytes)
+	return responseString, nil
 
 }

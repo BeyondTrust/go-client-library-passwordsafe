@@ -101,7 +101,7 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 		return entities.WorkGroupResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {

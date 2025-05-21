@@ -455,7 +455,7 @@ func TestCreateManagedSystemByDataBaseIdFlowEmptyDatabaseId(t *testing.T) {
 
 	_, err := managedSystemObj.CreateManagedSystemByDataBaseIdFlow("", managedSystemDetails)
 
-	expetedErrorMessage := "Database Id is empty, please send a valid Database Id"
+	expetedErrorMessage := "database Id is empty, please send a valid Database Id"
 
 	if err == nil {
 		t.Errorf("Test case Failed: %v", err)
