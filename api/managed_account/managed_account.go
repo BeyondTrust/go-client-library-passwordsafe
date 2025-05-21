@@ -149,7 +149,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 		return entities.ManagedAccount{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -203,7 +203,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 		return "", businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -220,7 +220,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(system
 // enpoint and returns secret value by request Id.
 func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
-	managedAccountObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
+	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
 
 	var body io.ReadCloser
 	var technicalError error
@@ -250,7 +250,7 @@ func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId st
 		return "", businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
 		managedAccountObj.log.Error(err.Error())
@@ -265,7 +265,7 @@ func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId st
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "PUT", url)
-	managedAccountObj.log.Debug(strings.Replace(messageLog, requestId, "****", -1))
+	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
 
 	data := "{}"
 	b := bytes.NewBufferString(data)
@@ -385,7 +385,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 		return entities.CreateManagedAccountsResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -442,7 +442,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 		return managedSystemObject, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {

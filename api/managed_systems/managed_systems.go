@@ -128,7 +128,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 	var err error
 
 	if workGroupId == "" {
-		return managedSystemResponse, errors.New("Database Id is empty, please send a valid Database Id")
+		return managedSystemResponse, errors.New("database Id is empty, please send a valid Database Id")
 	}
 
 	// just one payload
@@ -199,7 +199,7 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, pat
 		return entities.ManagedSystemResponseCreate{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
