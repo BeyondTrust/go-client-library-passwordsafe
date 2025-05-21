@@ -121,7 +121,8 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 		return entities.AssetResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
+
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
