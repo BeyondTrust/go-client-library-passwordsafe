@@ -72,7 +72,7 @@ func TestCreateWorkgroupFlow(t *testing.T) {
 			}
 
 		case "/Workgroups":
-			_, err := w.Write([]byte(fmt.Sprintf(`{"Name": "%s"}`, workGroupName)))
+			_, err := fmt.Fprintf(w, `{"Name": "%s"}`, workGroupName)
 			if err != nil {
 				t.Error("Test case Failed")
 			}

@@ -90,7 +90,7 @@ func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParameter
 
 // GetPasswordSafeAuthentication is responsible for getting a token and signing in.
 func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignAppinResponse, error) {
-	var accessToken string = ""
+	var accessToken string
 	var err error
 
 	if authenticationObj.clientId != "" && authenticationObj.clientSecret != "" {
@@ -149,7 +149,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		return "", businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -215,7 +215,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 		return entities.SignAppinResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
 		return entities.SignAppinResponse{}, err
@@ -267,7 +267,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	}
 
 	if body != nil {
-		defer body.Close()
+		defer func() { _ = body.Close() }()
 	}
 
 	defer authenticationObj.HttpClient.HttpClient.CloseIdleConnections()

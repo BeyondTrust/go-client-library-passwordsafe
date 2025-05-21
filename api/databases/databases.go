@@ -110,7 +110,7 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 		return entities.DatabaseResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
