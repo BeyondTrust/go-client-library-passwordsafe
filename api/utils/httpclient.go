@@ -96,9 +96,10 @@ func GetPFXContent(clientCertificatePath string, clientCertificateName string, c
 
 	var keyBlock, certificateBlock *pem.Block
 	for _, pemBlock := range pfxFileBlock {
-		if pemBlock.Type == "PRIVATE KEY" {
+		switch pemBlock.Type {
+		case "PRIVATE KEY":
 			keyBlock = pemBlock
-		} else if pemBlock.Type == "CERTIFICATE" {
+		case "CERTIFICATE":
 			certificateBlock = pemBlock
 		}
 	}
@@ -149,7 +150,7 @@ func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.Cal
 // GetAuthorizationHeader Get authorization header string
 func (client *HttpClientObj) GetAuthorizationHeader(accessToken string, apiKey string) string {
 
-	var authorizationHeader string = ""
+	var authorizationHeader string
 
 	if accessToken != "" {
 		authorizationHeader = "Bearer " + accessToken
@@ -252,7 +253,10 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 		return nil, err
 	}
 
-	multipartWriter.Close()
+	err = multipartWriter.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
 		Url:         url,
@@ -297,7 +301,7 @@ func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecr
 		return nil, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {

@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	err = pprof.StartCPUProfile(f)
 	if err != nil {
@@ -54,7 +54,11 @@ func main() {
 		panic(err)
 	}
 
-	f.Close()
+	err = f.Close()
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 // Method to be tested

@@ -72,7 +72,7 @@ func TestCallSecretSafeAPI(t *testing.T) {
 		t.Errorf("Test case Failed: %v", technicalError)
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
