@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 
 	backoff "github.com/cenkalti/backoff/v4"
+
+	urlnet "net/url"
 )
 
 // SecretObj responsible for session requests.
@@ -157,6 +159,12 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	}
 
 	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	parsedUrl, _ := urlnet.Parse(url)
+	parsedUrl.RawQuery = params.Encode()
+
+	url = parsedUrl.String()
+
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
 
@@ -168,7 +176,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
-		ApiVersion:  secretObj.authenticationObj.ApiVersion,
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
