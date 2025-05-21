@@ -81,13 +81,13 @@ jobs:
           PASSWORD_SAFE_FAKE_PASSWORD : ${{ vars.PASSWORD_SAFE_FAKE_PASSWORD }}
 
       - name: Save unit tests coverage
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage
           path: api/coverage.out
 
       - name: Save built library
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: library
           path: go-client-library-passwordsafe
@@ -104,7 +104,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download coverage
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: coverage
 
@@ -159,7 +159,7 @@ jobs:
           fetch-depth: 0
 
       - name: Jfrog setup
-        uses: jfrog/setup-jfrog-cli@f748a0599171a192a2668afee8d0497f7c1069df # v4.5.6
+        uses: jfrog/setup-jfrog-cli@ff5cb544114ffc152db9cea1cd3d5978d5074946 # v4.5.11
         env:
           JF_URL: https://beyondtrust.jfrog.io
         with:
@@ -174,7 +174,7 @@ jobs:
           mkdir -p beyondtrust/passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Download library binary
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: library
           path: beyondtrust/passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
