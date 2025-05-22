@@ -19,8 +19,6 @@ import (
 	"github.com/google/uuid"
 
 	backoff "github.com/cenkalti/backoff/v4"
-
-	urlnet "net/url"
 )
 
 // SecretObj responsible for session requests.
@@ -158,18 +156,18 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		params.Add("version", secretObj.authenticationObj.ApiVersion)
 	}
 
-	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+	endpointUrl := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
 
-	parsedUrl, _ := urlnet.Parse(url)
+	parsedUrl, _ := url.Parse(endpointUrl)
 	parsedUrl.RawQuery = params.Encode()
 
-	url = parsedUrl.String()
+	endpointUrl = parsedUrl.String()
 
-	messageLog := fmt.Sprintf("%v %v", "GET", url)
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointUrl)
 	secretObj.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         url,
+		Url:         endpointUrl,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
 		Method:      constants.SecretGetSecretByPath,
