@@ -192,7 +192,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		return entities.Secret{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -252,7 +252,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 		return "", businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	responseData, err := io.ReadAll(body)
 	if err != nil {
 		return "", err
@@ -327,7 +327,7 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 		return entities.CreateSecretResponse{}, err
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -403,7 +403,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 		return entities.CreateSecretResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
@@ -614,7 +614,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 		return entities.CreateFolderResponse{}, businessError
 	}
 
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
 
 	if err != nil {
