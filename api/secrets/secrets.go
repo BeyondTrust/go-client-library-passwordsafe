@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 
 	backoff "github.com/cenkalti/backoff/v4"
+
+	urlnet "net/url"
 )
 
 // SecretObj responsible for session requests.
@@ -157,6 +159,12 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	}
 
 	url := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	parsedUrl, _ := urlnet.Parse(url)
+	parsedUrl.RawQuery = params.Encode()
+
+	url = parsedUrl.String()
+
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	secretObj.log.Debug(messageLog)
 
@@ -168,7 +176,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
-		ApiVersion:  secretObj.authenticationObj.ApiVersion,
+		ApiVersion:  "",
 	}
 
 	technicalError = backoff.Retry(func() error {
@@ -284,10 +292,6 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
 	}
 
-	if err != nil {
-		return entities.CreateSecretResponse{}, err
-	}
-
 	createResponse, err = secretObj.SecretCreateSecret(folder.Id, secretDetails)
 
 	if err != nil {
@@ -299,30 +303,39 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 
 // SecretCreateFileSecret create a secret of type file.
 func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string, payload string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
-	var fileSecret entities.SecretFileDetails
-	var ok bool
+
+	var fileName string
+	var fileContent string
 
 	var CreateSecretResponse entities.CreateSecretResponse
 
-	if fileSecret, ok = secretDetails.(entities.SecretFileDetails); ok {
-		body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileSecret.FileName, []byte(payload), fileSecret.FileContent)
-		if err != nil {
-			return entities.CreateSecretResponse{}, err
-		}
-
-		defer func() { _ = body.Close() }()
-		bodyBytes, err := io.ReadAll(body)
-
-		if err != nil {
-			return entities.CreateSecretResponse{}, err
-		}
-
-		err = json.Unmarshal([]byte(bodyBytes), &CreateSecretResponse)
-
-		if err != nil {
-			return entities.CreateSecretResponse{}, err
-		}
+	switch fileSecret := secretDetails.(type) {
+	case entities.SecretFileDetailsConfig30:
+		fileName = fileSecret.FileName
+		fileContent = fileSecret.FileContent
+	case entities.SecretFileDetailsConfig31:
+		fileName = fileSecret.FileName
+		fileContent = fileSecret.FileContent
 	}
+
+	body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileName, []byte(payload), fileContent, secretObj.authenticationObj.ApiVersion)
+	if err != nil {
+		return entities.CreateSecretResponse{}, err
+	}
+
+	defer func() { _ = body.Close() }()
+	bodyBytes, err := io.ReadAll(body)
+
+	if err != nil {
+		return entities.CreateSecretResponse{}, err
+	}
+
+	err = json.Unmarshal([]byte(bodyBytes), &CreateSecretResponse)
+
+	if err != nil {
+		return entities.CreateSecretResponse{}, err
+	}
+
 	return CreateSecretResponse, nil
 
 }
@@ -330,28 +343,23 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 // SecretCreateSecret calls Secret Safe API Requests enpoint to create secrets in Password Safe.
 func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
-	secretCredentialDetailsJson, err := json.Marshal(secretDetails)
+	var CreateSecretResponse entities.CreateSecretResponse
+	var secretCredentialDetailsJson string
+	var err error
 
+	// Convert object to json string.
+	secretDetailsJson, err := json.Marshal(secretDetails)
 	if err != nil {
-		return entities.CreateSecretResponse{}, err
+		return CreateSecretResponse, err
 	}
+	secretCredentialDetailsJson = string(secretDetailsJson)
 
 	payload := string(secretCredentialDetailsJson)
-
-	var CreateSecretResponse entities.CreateSecretResponse
 
 	b := bytes.NewBufferString(payload)
 
 	// path depends on the type of secret (credential, text, file).
-	var path string
-	switch secretDetails.(type) {
-	case entities.SecretCredentialDetails:
-		path = "secrets"
-	case entities.SecretTextDetails:
-		path = "secrets/text"
-	case entities.SecretFileDetails:
-		path = "secrets/file"
-	}
+	path := secretObj.GetPathToCreateSecret(secretDetails)
 
 	SecretCreateSecretUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", folderId, path).String()
 
@@ -407,6 +415,27 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 
 	return CreateSecretResponse, nil
 
+}
+
+// GetPathToCreateSecret get endpoint path.
+func (secretObj *SecretObj) GetPathToCreateSecret(secretDetails interface{}) string {
+	// path depends on the type of secret (credential, text, file).
+	var path string
+	switch secretDetails.(type) {
+	case entities.SecretCredentialDetailsConfig30:
+		path = "secrets"
+	case entities.SecretCredentialDetailsConfig31:
+		path = "secrets"
+	case entities.SecretTextDetailsConfig30:
+		path = "secrets/text"
+	case entities.SecretTextDetailsConfig31:
+		path = "secrets/text"
+	case entities.SecretFileDetailsConfig30:
+		path = "secrets/file"
+	case entities.SecretFileDetailsConfig31:
+		path = "secrets/file"
+	}
+	return path
 }
 
 // SecretGetFoldersFlow get folders list
