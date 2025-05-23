@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.22.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.21.1...v0.22.0) / 2025-05-23
+
+#### Features
+
+* add support for API version (3.0, 3.1) in create credential, text and file features ([#246](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/246))
+
 ### [0.21.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.21.0...v0.21.1) / 2025-05-09
 
 #### Bug Fixes
