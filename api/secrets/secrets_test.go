@@ -834,7 +834,7 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
-		Title:       "Secret Title",
+		Title:       "File Secret Title",
 		Description: "File Title Description",
 	}
 
