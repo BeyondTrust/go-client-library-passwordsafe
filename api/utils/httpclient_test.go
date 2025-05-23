@@ -213,7 +213,7 @@ func TestCreateMultiPartRequest(t *testing.T) {
 	zapLogger := logging.NewZapLogger(logger)
 
 	httpClientObj, _ := GetHttpClient(30, false, "", "", zapLogger)
-	_, err := httpClientObj.CreateMultiPartRequest(server.URL+"/secrets/file", "file_name.txt", []byte("metadata"), "file_content")
+	_, err := httpClientObj.CreateMultiPartRequest(server.URL+"/secrets/file", "file_name.txt", []byte("metadata"), "file_content", constants.ApiVersion31)
 
 	if err != nil {
 		t.Errorf("Test case Failed: %v", err)
