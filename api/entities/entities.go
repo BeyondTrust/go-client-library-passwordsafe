@@ -401,7 +401,7 @@ type ManagedSystemsByWorkGroupIdDetailsBaseConfig struct {
 	ChangeFrequencyType                string `json:",omitempty" validate:"oneof=first last xdays"`
 	ChangeFrequencyDays                int    `json:",omitempty" validate:"required_if=ChangeFrequencyType xdays"`
 	ChangeTime                         string `json:",omitempty" validate:"datetime=15:04"`
-	AccessURL                          string `json:",omitempty" validate:"required,url"`
+	AccessURL                          string `json:",omitempty"`
 }
 
 type ManagedSystemsByWorkGroupIdDetailsConfig30 struct {
