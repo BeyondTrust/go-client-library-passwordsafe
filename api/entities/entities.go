@@ -369,7 +369,7 @@ type ManagedSystemResponseCreate struct {
 type ManagedSystemsByWorkGroupIdDetailsBaseConfig struct {
 	EntityTypeID                       int    `json:",omitempty" validate:"required"`
 	HostName                           string `json:",omitempty" validate:"required,max=128"`
-	IPAddress                          string `json:",omitempty" validate:"max=46"`
+	IPAddress                          string `json:",omitempty" validate:"required,ip,max=46"`
 	DnsName                            string `json:",omitempty" validate:"max=225"`
 	InstanceName                       string `json:",omitempty" validate:"required_if=IsDefaultInstance true,max=100"`
 	IsDefaultInstance                  bool   `json:",omitempty"`
