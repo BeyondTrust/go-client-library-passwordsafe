@@ -376,7 +376,7 @@ func TestCreateManagedSystemByWorkGroupIdFlowEmptyWorkGroupId(t *testing.T) {
 
 }
 
-func TestCreateManagedSystemByWorkGroupIdEmptyEmail(t *testing.T) {
+func TestCreateManagedSystemByWorkGroupIdEmptyEmailAndAccesUrl(t *testing.T) {
 
 	InitializeGlobalConfig()
 
@@ -420,7 +420,7 @@ func TestCreateManagedSystemByWorkGroupIdEmptyEmail(t *testing.T) {
 			ISAReleaseDuration:  130,
 			ChangeFrequencyType: "first",
 			ChangeTime:          "00:00",
-			AccessURL:           "https://example.com",
+			AccessURL:           "",
 		},
 	}
 
