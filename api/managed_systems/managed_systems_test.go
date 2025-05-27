@@ -376,6 +376,69 @@ func TestCreateManagedSystemByWorkGroupIdFlowEmptyWorkGroupId(t *testing.T) {
 
 }
 
+func TestCreateManagedSystemByWorkGroupIdEmptyEmail(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Mocking Response according to the endpoint path
+		switch r.URL.Path {
+		case "/Auth/SignAppin":
+			_, err := w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Auth/Signout":
+			_, err := w.Write([]byte(``))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		case "/Workgroups/1/ManagedSystems":
+			_, err := w.Write([]byte(`{"ManagedSystemID": 15, "EntityTypeID": 1, "AssetID": 1}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	managedSystemDetails := entities.ManagedSystemsByWorkGroupIdDetailsConfig30{
+		// not email, managed system must be created despite of email is not set.
+		ManagedSystemsByWorkGroupIdDetailsBaseConfig: entities.ManagedSystemsByWorkGroupIdDetailsBaseConfig{
+			EntityTypeID:        1,
+			HostName:            "example.com",
+			IPAddress:           "192.168.1.1",
+			PlatformID:          2,
+			ReleaseDuration:     130,
+			MaxReleaseDuration:  130,
+			ISAReleaseDuration:  130,
+			ChangeFrequencyType: "first",
+			ChangeTime:          "00:00",
+			AccessURL:           "https://example.com",
+		},
+	}
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+	response, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow("1", managedSystemDetails)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if response.ManagedSystemID != 15 {
+		t.Errorf("Test case Failedd %v, %v", response.ManagedSystemID, 15)
+	}
+
+}
+
 func TestCreateManagedSystemByDataBaseIdFlow(t *testing.T) {
 
 	InitializeGlobalConfig()
