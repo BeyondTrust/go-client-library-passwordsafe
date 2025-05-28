@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.22.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.22.0...v0.22.1) / 2025-05-28
+
+#### Bug Fixes
+
+* ContactEmail default value for creating managed system by workgroup is invalid ([#250](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/250))
+
 ### [0.22.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.21.1...v0.22.0) / 2025-05-23
 
 #### Features
