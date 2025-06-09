@@ -33,7 +33,7 @@ jobs:
           oidc-provider-name: nonprod-go-client-library-passwordsafe
 
       - name: Run XRay scan
-        uses: jfrog/frogbot@2d715d2ab6fe44a03c215de6fd399903d64e93e0 # v2.26.0
+        uses: jfrog/frogbot@32f860046257361a48d8892bc2f07c5ceff7bf96 # v2.26.2
         env:
           JF_URL: https://beyondtrust.jfrog.io
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
