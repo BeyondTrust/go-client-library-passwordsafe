@@ -1,0 +1,185 @@
+name: Dependabot comment
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions: {}
+
+jobs:
+  release:
+    name: Release run
+    if: startsWith(github.head_ref, 'dependabot/')
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    uses: ./.github/workflows/release.yml
+
+  pr_runs:
+    name: PR's workflow runs
+    if: ${{ always() && startsWith(github.head_ref, 'dependabot/') }}
+    needs: release
+    runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      pull-requests: read
+      issues: read
+      actions: read
+    outputs:
+      results: ${{ steps.runs.outputs.results }}
+      pr_sha: ${{ steps.runs.outputs.pr_sha }}
+    steps:
+
+      - name: Get runs
+        id: runs
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            var head_sha;
+            var results = {
+              cifuzz: {},
+              coverage: {},
+              frogbot: {},
+              linter: {},
+              scorecard: {}
+            };
+            const pr = await github.request('GET /repos/{owner}/{repo}/pulls', {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            pr.data.forEach(element => {
+              if (element.number === context.issue.number) {
+                head_sha = element.head.sha;
+              }  
+            });
+            const workflow = await github.request('GET /repos/{owner}/{repo}/actions/runs', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: head_sha
+            });
+            workflow.data.workflow_runs.forEach(element => {
+              if (element.name === 'CIFuzz') {
+                results.cifuzz.conclusion = element.conclusion;
+                results.cifuzz.url = element.html_url;
+              } else if (element.name === 'Code coverage report on PR') {
+                results.coverage.conclusion = element.conclusion;
+                results.coverage.url = element.html_url;
+              } else if (element.name === 'Frogbot') {
+                results.frogbot.conclusion = element.conclusion;
+                results.frogbot.url = element.html_url;
+              } else if (element.name === 'Go Lint and Code Complexity') {
+                results.linter.conclusion = element.conclusion;
+                results.linter.url = element.html_url;
+              } else if (element.name === 'Scorecard supply-chain security') {
+                results.scorecard.conclusion = element.conclusion;
+                results.scorecard.url = element.html_url;
+              }
+            });
+            core.setOutput("results", results);
+            core.setOutput("pr_sha", head_sha);
+    
+  verifier:
+    name: Comment for Dependabot PR
+    needs: [release, pr_runs]
+    runs-on: ubuntu-latest
+    if: ${{ always() && startsWith(github.head_ref, 'dependabot/') }}
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      
+      - name: Make comment
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            var release_url;
+            var output;
+            var release_result = '${{ needs.release.result }}';
+            var pr_runs_result = ${{ needs.pr_runs.outputs.results }};
+            const workflow = await github.request('GET /repos/{owner}/{repo}/actions/runs', {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: '${{ needs.pr_runs.outputs.pr_sha }}'
+            });
+            workflow.data.workflow_runs.forEach(element => {
+              if (element.name === 'Dependabot comment') {
+                release_url = element.html_url;
+              }
+            });
+            if (release_result === 'success' &&
+                pr_runs_result.cifuzz.conclusion === 'success' &&
+                pr_runs_result.coverage.conclusion === 'success' &&
+                pr_runs_result.frogbot.conclusion === 'success' &&
+                pr_runs_result.linter.conclusion === 'success' &&
+                pr_runs_result.scorecard.conclusion === 'success') {
+              output = `## Dependabot PR Readiness Checked
+
+              Release Workflow **${{ needs.release.result }}**
+              - Build **success**
+              - Unit testing **success**
+              - Sonarqube Analysis **success**
+              - Publish to JFrog **success**
+              - X-ray scan **success**
+
+              CIFuzz Workflow **${pr_runs_result.cifuzz.conclusion}**
+              - Fuzzing tests **success**
+
+              Coverage report Workflow **${pr_runs_result.coverage.conclusion}**
+              - Unit testing **success**
+              - Coverage report **success**
+
+              Frogbot Workflow **${pr_runs_result.frogbot.conclusion}**
+              - Frogbot Analysis **success**
+
+              Linter Workflow **${pr_runs_result.linter.conclusion}**
+              - golangci linter **success**
+              - gocognit linter **success**
+
+              Scorecard analysis Workflow **${pr_runs_result.scorecard.conclusion}**
+              - Scorecard Scan & Analysis **Success**
+
+              ## Ready to Merge
+              `;
+            } else {
+              let names = ['Release','CIFuzz','Coverage report','Frogbot','Linter','Scorecard analysis'];
+              let conclusions = [ release_result,
+                pr_runs_result.cifuzz.conclusion,
+                pr_runs_result.coverage.conclusion,
+                pr_runs_result.frogbot.conclusion,
+                pr_runs_result.linter.conclusion,
+                pr_runs_result.scorecard.conclusion];
+              let urls = [release_url,
+                pr_runs_result.cifuzz.url,
+                pr_runs_result.coverage.url,
+                pr_runs_result.frogbot.url,
+                pr_runs_result.linter.url,
+                pr_runs_result.scorecard.url];
+
+              output = '## Dependabot PR Readiness Checked';
+
+              for (let i = 0; i < names.length; i++) {
+                if (conclusions[i] !== 'success') {
+                  output+= "\n"+names[i]+" Workflow **failed**, please check the workflow run [here]("+urls[i]+")";
+                }
+              }
+
+              output+='\n## Please DevOps or Development teams take a look at the possible issues.';
+            
+            } 
+            const fs = require('fs');
+            fs.writeFile('message.txt', output, (err) => {
+              if (err) throw err;
+            });
+                        
+      - name: Post Comment
+        uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2.8.2
+        with:
+          message-path: |
+            message.txt
