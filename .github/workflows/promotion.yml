@@ -14,7 +14,7 @@ jobs:
       id-token: write
     steps:
       - name: Jfrog setup
-        uses: jfrog/setup-jfrog-cli@ff5cb544114ffc152db9cea1cd3d5978d5074946 # v4.5.11
+        uses: jfrog/setup-jfrog-cli@88e9eba31c07e31beefa4cef5c0e93d1af9535d7 # v4.6.1
         env:
           JF_URL: https://beyondtrust.jfrog.io
         with:

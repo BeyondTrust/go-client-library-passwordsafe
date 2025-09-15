@@ -26,14 +26,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up JFrog
-        uses: jfrog/setup-jfrog-cli@ff5cb544114ffc152db9cea1cd3d5978d5074946 # v4.5.11
+        uses: jfrog/setup-jfrog-cli@88e9eba31c07e31beefa4cef5c0e93d1af9535d7 # v4.6.1
         env:
           JF_URL: https://beyondtrust.jfrog.io
         with:
           oidc-provider-name: nonprod-go-client-library-passwordsafe
 
       - name: Run XRay scan
-        uses: jfrog/frogbot@2d715d2ab6fe44a03c215de6fd399903d64e93e0 # v2.26.0
+        uses: jfrog/frogbot@55998588bc80f18e8e0723587d9daf4af9dcb873 # v2.28.0
         env:
           JF_URL: https://beyondtrust.jfrog.io
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
