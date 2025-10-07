@@ -1,4 +1,4 @@
-// Copyright 2024 BeyondTrust. All rights reserved.
+// Copyright 2025 BeyondTrust. All rights reserved.
 // Package managed_accounts implements Get managed account logic
 package managed_accounts
 
@@ -460,4 +460,38 @@ func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(http
 	responseString := string(bodyBytes)
 	return responseString, nil
 
+}
+
+// DeleteManagedAccountById deletes a managed account by its ID.
+func (managedAccountObj *ManagedAccountstObj) DeleteManagedAccountById(managedAccountID int) error {
+	url := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts", strconv.Itoa(managedAccountID)).String()
+	messageLog := fmt.Sprintf("%v %v", "DELETE", url)
+	managedAccountObj.log.Debug(messageLog)
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "DELETE",
+		Body:        bytes.Buffer{},
+		Method:      constants.ManagedAccountDelete,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  "",
+	}
+
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, managedAccountObj.authenticationObj.ExponentialBackOff)
+
+	if technicalError != nil {
+		return technicalError
+	}
+	if businessError != nil {
+		return businessError
+	}
+	return nil
 }
