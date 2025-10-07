@@ -13,6 +13,7 @@ const (
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"
+	ManagedAccountDelete = "ManagedAccountDelete"
 
 	ManagedAccountCreateRequest        = "ManagedAccountCreateRequest"
 	CredentialByRequestId              = "CredentialByRequestId"
