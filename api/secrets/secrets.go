@@ -625,3 +625,53 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	return createSecretResponse, nil
 
 }
+
+// deleteByID is a common method for deleting resources by ID.
+func (secretObj *SecretObj) deleteByID(resourceID, resourceType, methodConstant string) error {
+	// Validate that resourceID is a valid UUID
+	_, err := uuid.Parse(resourceID)
+	if err != nil {
+		return fmt.Errorf("invalid UUID format for %sID: %v", resourceType, err)
+	}
+
+	url := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/"+resourceType+"s", resourceID).String()
+	messageLog := fmt.Sprintf("%v %v", "DELETE", url)
+	secretObj.log.Debug(messageLog)
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         url,
+		HttpMethod:  "DELETE",
+		Body:        bytes.Buffer{},
+		Method:      methodConstant,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  "",
+	}
+
+	var technicalError error
+	var businessError error
+
+	technicalError = backoff.Retry(func() error {
+		_, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, secretObj.authenticationObj.ExponentialBackOff)
+
+	if technicalError != nil {
+		return technicalError
+	}
+	if businessError != nil {
+		return businessError
+	}
+	return nil
+}
+
+// DeleteSecretById deletes a secret by its ID.
+func (secretObj *SecretObj) DeleteSecretById(secretID string) error {
+	return secretObj.deleteByID(secretID, "secret", constants.SecretDeleteSecret)
+}
+
+// DeleteFolderById deletes a folder by its ID.
+func (secretObj *SecretObj) DeleteFolderById(folderID string) error {
+	return secretObj.deleteByID(folderID, "folder", constants.SecretDeleteFolder)
+}
