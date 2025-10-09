@@ -31,7 +31,9 @@ jobs:
       results: ${{ steps.runs.outputs.results }}
       pr_sha: ${{ steps.runs.outputs.pr_sha }}
     steps:
-
+      - name: Wait for workflows to finish
+        run: sleep 210s
+        
       - name: Get runs
         id: runs
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
