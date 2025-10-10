@@ -1,4 +1,4 @@
-// Copyright 2024 BeyondTrust. All rights reserved.
+// Copyright 2025 BeyondTrust. All rights reserved.
 // Package managed_accounts implements functions to retrieve managed accounts
 // Unit tests for managed_accounts package.
 package managed_accounts
@@ -1344,5 +1344,65 @@ func TestGetManagedAccountsListFlowBadRequest(t *testing.T) {
 
 	if err.Error() != expetedErrorMessage {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+}
+
+func TestDeleteManagedAccountById_Success(t *testing.T) {
+	InitializeGlobalConfig()
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	// Mock server returns 200 OK for DELETE
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("Expected DELETE method, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+	err := managedAccountObj.DeleteManagedAccountById(123)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteManagedAccountById_NotFound(t *testing.T) {
+	InitializeGlobalConfig()
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	// Mock server returns 404 Not Found for DELETE
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("Expected DELETE method, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+	err := managedAccountObj.DeleteManagedAccountById(999)
+	if err == nil {
+		t.Errorf("Expected error for 404 response, got nil")
+	}
+}
+
+func TestDeleteManagedAccountById_ServerError(t *testing.T) {
+	InitializeGlobalConfig()
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	// Mock server returns 500 Internal Server Error for DELETE
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("Expected DELETE method, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+	err := managedAccountObj.DeleteManagedAccountById(500)
+	if err == nil {
+		t.Errorf("Expected error for 500 response, got nil")
 	}
 }

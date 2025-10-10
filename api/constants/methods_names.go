@@ -10,9 +10,12 @@ const (
 	SecretGetSafes        = "SecretGetSafes"
 	SecretCreateFolder    = "SecretCreateFolder"
 	SecretCreateSafes     = "SecretCreateSafes"
+	SecretDeleteSecret    = "SecretDeleteSecret"
+	SecretDeleteFolder    = "SecretDeleteFolder"
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"
+	ManagedAccountDelete = "ManagedAccountDelete"
 
 	ManagedAccountCreateRequest        = "ManagedAccountCreateRequest"
 	CredentialByRequestId              = "CredentialByRequestId"
