@@ -162,3 +162,20 @@ func (databaseObj *DatabaseObj) GetDatabasesList(endpointPath string, method str
 	return databasesList, nil
 
 }
+
+// DeleteDatabaseById deletes a database by its ID.
+func (databaseObj *DatabaseObj) DeleteDatabaseById(databaseID int) error {
+	urlBuilder := func(id string) string {
+		return databaseObj.authenticationObj.ApiUrl.JoinPath("Databases", id).String()
+	}
+	return utils.DeleteResourceByID(
+		fmt.Sprintf("%d", databaseID),
+		"database",
+		constants.DeleteDatabase,
+		urlBuilder,
+		false, // validate as integer
+		&databaseObj.authenticationObj.HttpClient,
+		databaseObj.authenticationObj.ExponentialBackOff,
+		databaseObj.log,
+	)
+}
