@@ -417,7 +417,9 @@ func TestDeleteDatabaseById_Success(t *testing.T) {
 		case r.Method == "DELETE" && r.URL.Path == "/Databases/123":
 			w.WriteHeader(http.StatusOK)
 			// Return empty body for successful deletion
-			w.Write([]byte(``))
+			if _, err := w.Write([]byte(``)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
 
 		default:
 			http.NotFound(w, r)
@@ -449,7 +451,9 @@ func TestDeleteDatabaseById_NotFound(t *testing.T) {
 		switch {
 		case r.Method == "DELETE" && r.URL.Path == "/Databases/999":
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error": "Database not found"}`))
+			if _, err := w.Write([]byte(`{"error": "Database not found"}`)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
 
 		default:
 			http.NotFound(w, r)
