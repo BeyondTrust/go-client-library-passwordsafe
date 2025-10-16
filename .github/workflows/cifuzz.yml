@@ -1,4 +1,4 @@
-name: CIFuzz
+name: Fuzzing Testing
 
 on:
   pull_request:
