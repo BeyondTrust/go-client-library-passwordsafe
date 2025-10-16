@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -65,7 +66,7 @@ func TestDeleteResourceByID_UUIDValidation(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got nil for resource ID: %s", tt.resourceID)
-				} else if tt.errorContains != "" && !contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', but got '%s'", tt.errorContains, err.Error())
 				}
 			} else {
@@ -138,7 +139,7 @@ func TestDeleteResourceByID_IntegerValidation(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("Expected error but got nil for resource ID: %s", tt.resourceID)
-				} else if tt.errorContains != "" && !contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', but got '%s'", tt.errorContains, err.Error())
 				}
 			} else {
@@ -148,21 +149,4 @@ func TestDeleteResourceByID_IntegerValidation(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	if len(substr) == 0 {
-		return true
-	}
-	if len(s) < len(substr) {
-		return false
-	}
-
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
