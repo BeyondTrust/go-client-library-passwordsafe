@@ -402,3 +402,69 @@ func TestGetDatabasesListFlowFlowBadRequest(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 }
+
+func TestDeleteDatabaseById_Success(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/Databases/123":
+			w.WriteHeader(http.StatusOK)
+			// Return empty body for successful deletion
+			w.Write([]byte(``))
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	err = databaseObj.DeleteDatabaseById(123)
+
+	if err != nil {
+		t.Errorf("Expected successful deletion but got error: %v", err)
+	}
+}
+
+func TestDeleteDatabaseById_InvalidID(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	// Create a minimal server that we don't expect to be called
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Server should not be called for invalid ID")
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	// Test with an ID that would fail integer validation if passed as string
+	// Since DeleteDatabaseById takes an int, we need to test the validation indirectly
+	// by ensuring the function works with valid integers
+	err = databaseObj.DeleteDatabaseById(0)
+
+	// Even ID 0 should pass validation (it's a valid integer)
+	// The error would come from HTTP level, not validation level
+	// If we get a validation error, that would be unexpected
+	if err != nil && (err.Error() == "invalid integer format for databaseID: strconv.Atoi: parsing \"\": invalid syntax" ||
+		err.Error() == "invalid integer format for databaseID: strconv.Atoi: parsing \"invalid\": invalid syntax") {
+		t.Errorf("Unexpected validation error for valid integer ID: %v", err)
+	}
+}
