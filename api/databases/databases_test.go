@@ -436,7 +436,7 @@ func TestDeleteDatabaseById_Success(t *testing.T) {
 	}
 }
 
-func TestDeleteDatabaseById_InvalidID(t *testing.T) {
+func TestDeleteDatabaseById_NotFound(t *testing.T) {
 	InitializeGlobalConfig()
 
 	authenticate, err := authentication.Authenticate(*authParams)
@@ -445,9 +445,15 @@ func TestDeleteDatabaseById_InvalidID(t *testing.T) {
 		t.Fatalf("Authentication failed: %v", err)
 	}
 
-	// Create a minimal server that we don't expect to be called
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Error("Server should not be called for invalid ID")
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/Databases/999":
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error": "Database not found"}`))
+
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	defer server.Close()
 
@@ -455,16 +461,15 @@ func TestDeleteDatabaseById_InvalidID(t *testing.T) {
 	authenticate.ApiUrl = *apiUrl
 	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
 
-	// Test with an ID that would fail integer validation if passed as string
-	// Since DeleteDatabaseById takes an int, we need to test the validation indirectly
-	// by ensuring the function works with valid integers
-	err = databaseObj.DeleteDatabaseById(0)
+	err = databaseObj.DeleteDatabaseById(999)
 
-	// Even ID 0 should pass validation (it's a valid integer)
-	// The error would come from HTTP level, not validation level
-	// If we get a validation error, that would be unexpected
-	if err != nil && (err.Error() == "invalid integer format for databaseID: strconv.Atoi: parsing \"\": invalid syntax" ||
-		err.Error() == "invalid integer format for databaseID: strconv.Atoi: parsing \"invalid\": invalid syntax") {
-		t.Errorf("Unexpected validation error for valid integer ID: %v", err)
+	expectedErrorMessage := `error - status code: 404 - {"error": "Database not found"}`
+
+	if err == nil {
+		t.Errorf("Expected error but got nil")
+	}
+
+	if err != nil && err.Error() != expectedErrorMessage {
+		t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
 	}
 }
