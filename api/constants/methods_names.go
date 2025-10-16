@@ -39,6 +39,7 @@ const (
 	GetAssetsListByWorkgroupName = "GetAssetsListByWorkgroupName"
 
 	CreateDatabase   = "CreateDatabase"
+	DeleteDatabase   = "DeleteDatabase"
 	GetDataBasesList = "GetDataBasesList"
 
 	CreateManagedSystemByAssetId     = "CreateManagedSystemByAssetId"
