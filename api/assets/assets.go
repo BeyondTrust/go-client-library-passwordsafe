@@ -182,3 +182,20 @@ func (platformObj *AssetObj) GetAssetsList(endpointPath string, method string) (
 	return assetsList, nil
 
 }
+
+// DeleteAssetById deletes an asset by its ID.
+func (assetObj *AssetObj) DeleteAssetById(assetID int) error {
+	urlBuilder := func(id string) string {
+		return assetObj.authenticationObj.ApiUrl.JoinPath("Assets", id).String()
+	}
+	return utils.DeleteResourceByID(
+		fmt.Sprintf("%d", assetID),
+		"asset",
+		constants.DeleteAsset,
+		urlBuilder,
+		false, // validate as integer
+		&assetObj.authenticationObj.HttpClient,
+		assetObj.authenticationObj.ExponentialBackOff,
+		assetObj.log,
+	)
+}

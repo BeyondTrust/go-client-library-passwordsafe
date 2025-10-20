@@ -402,3 +402,78 @@ func TestGetDatabasesListFlowFlowBadRequest(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
 	}
 }
+
+func TestDeleteDatabaseById_Success(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/Databases/123":
+			w.WriteHeader(http.StatusOK)
+			// Return empty body for successful deletion
+			if _, err := w.Write([]byte(``)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	err = databaseObj.DeleteDatabaseById(123)
+
+	if err != nil {
+		t.Errorf("Expected successful deletion but got error: %v", err)
+	}
+}
+
+func TestDeleteDatabaseById_NotFound(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/Databases/999":
+			w.WriteHeader(http.StatusNotFound)
+			if _, err := w.Write([]byte(`{"error": "Database not found"}`)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	err = databaseObj.DeleteDatabaseById(999)
+
+	expectedErrorMessage := `error - status code: 404 - {"error": "Database not found"}`
+
+	if err == nil {
+		t.Errorf("Expected error but got nil")
+	}
+
+	if err != nil && err.Error() != expectedErrorMessage {
+		t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
+	}
+}

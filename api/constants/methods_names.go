@@ -12,6 +12,7 @@ const (
 	SecretCreateSafes     = "SecretCreateSafes"
 	SecretDeleteSecret    = "SecretDeleteSecret"
 	SecretDeleteFolder    = "SecretDeleteFolder"
+	SecretDeleteSafe      = "SecretDeleteSafe"
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"
@@ -33,10 +34,12 @@ const (
 	GetWorkGroupsList = "GetWorkGroupsList"
 
 	CreateAsset                  = "CreateAsset"
+	DeleteAsset                  = "DeleteAsset"
 	GetAssetsListByWorkgroupId   = "GetAssetsListByWorkgroupId"
 	GetAssetsListByWorkgroupName = "GetAssetsListByWorkgroupName"
 
 	CreateDatabase   = "CreateDatabase"
+	DeleteDatabase   = "DeleteDatabase"
 	GetDataBasesList = "GetDataBasesList"
 
 	CreateManagedSystemByAssetId     = "CreateManagedSystemByAssetId"

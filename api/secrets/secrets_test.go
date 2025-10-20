@@ -1663,3 +1663,88 @@ func TestDeleteFolderByIdServerError(t *testing.T) {
 		t.Errorf("Test case Failed: Expected error related to DELETE operation, got '%v'", err.Error())
 	}
 }
+
+func TestDeleteSafeById(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestDeleteSafeById",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Verify the correct endpoint and method
+			if r.Method != "DELETE" {
+				t.Errorf("Expected DELETE method, got %v", r.Method)
+			}
+			if !strings.Contains(r.URL.Path, "/secrets-safe/safes/") {
+				t.Errorf("Expected URL to contain '/secrets-safe/safes/', got %v", r.URL.Path)
+			}
+			w.WriteHeader(http.StatusOK)
+		})),
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	validSafeID := "9152f5b6-07d6-4955-175a-08db047219ce"
+	err := secretObj.DeleteSafeById(validSafeID)
+
+	if err != nil {
+		t.Errorf("Test case Failed: Expected no error, got: %v", err)
+	}
+}
+
+func TestDeleteSafeByIdInvalidUUID(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	invalidSafeID := "invalid-uuid-format"
+	err := secretObj.DeleteSafeById(invalidSafeID)
+
+	if err == nil {
+		t.Error("Test case Failed: Expected error for invalid UUID")
+	}
+
+	expectedErrorPrefix := "invalid UUID format for safeID"
+	if !strings.Contains(err.Error(), expectedErrorPrefix) {
+		t.Errorf("Test case Failed: Expected error to contain '%v', got: %v", expectedErrorPrefix, err.Error())
+	}
+}
+
+func TestDeleteSafeByIdNotFound(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfigStringResponse{
+		name: "TestDeleteSafeByIdNotFound",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mock 404 response for safe not found
+			w.WriteHeader(http.StatusNotFound)
+			_, err := w.Write([]byte(`{"error": "Safe not found"}`))
+			if err != nil {
+				t.Error(err)
+			}
+		})),
+		response: "error - status code: 404 - {\"error\": \"Safe not found\"}",
+	}
+
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	validSafeID := "9152f5b6-07d6-4955-175a-08db047219ce"
+	err := secretObj.DeleteSafeById(validSafeID)
+
+	if err == nil {
+		t.Error("Test case Failed: Expected error for 404 response")
+	}
+
+	if !strings.Contains(err.Error(), "404") {
+		t.Errorf("Test case Failed: Expected 404 error, got '%v'", err.Error())
+	}
+}
