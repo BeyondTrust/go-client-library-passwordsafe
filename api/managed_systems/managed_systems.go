@@ -251,3 +251,20 @@ func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsList(endpointPath str
 	return managedSystemsList, nil
 
 }
+
+// DeleteManagedSystemById deletes a managed system by its ID.
+func (managedSystemObj *ManagedSystemObj) DeleteManagedSystemById(managedSystemID int) error {
+	urlBuilder := func(id string) string {
+		return managedSystemObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems", id).String()
+	}
+	return utils.DeleteResourceByID(
+		fmt.Sprintf("%d", managedSystemID),
+		"managed system",
+		constants.DeleteManagedSystem,
+		urlBuilder,
+		false, // validate as integer
+		&managedSystemObj.authenticationObj.HttpClient,
+		managedSystemObj.authenticationObj.ExponentialBackOff,
+		managedSystemObj.log,
+	)
+}
