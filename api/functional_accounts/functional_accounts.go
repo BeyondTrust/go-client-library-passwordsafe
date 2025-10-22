@@ -141,3 +141,20 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlow(method
 	return functionalAccountResponse, err
 
 }
+
+// DeleteFunctionalAccountById deletes a functional account by its ID.
+func (functionalAccount *FunctionalAccount) DeleteFunctionalAccountById(functionalAccountID int) error {
+	urlBuilder := func(id string) string {
+		return functionalAccount.authenticationObj.ApiUrl.JoinPath("FunctionalAccounts", id).String()
+	}
+	return utils.DeleteResourceByID(
+		fmt.Sprintf("%d", functionalAccountID),
+		"functional account",
+		constants.DeleteFunctionalAccount,
+		urlBuilder,
+		false, // validate as integer
+		&functionalAccount.authenticationObj.HttpClient,
+		functionalAccount.authenticationObj.ExponentialBackOff,
+		functionalAccount.log,
+	)
+}
