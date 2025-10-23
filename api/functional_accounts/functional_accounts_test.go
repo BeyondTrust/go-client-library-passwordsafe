@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -225,4 +226,72 @@ func TestGetFunctionalAccountsListFlow(t *testing.T) {
 		t.Errorf("Test case Failed %v, %v", len(functionalAccountsList), 6)
 	}
 
+}
+
+func TestDeleteFunctionalAccountById_Success(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/FunctionalAccounts/123":
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	functionalAccountObj, _ := NewFuncionalAccount(*authenticate, zapLogger)
+
+	err = functionalAccountObj.DeleteFunctionalAccountById(123)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestDeleteFunctionalAccountById_NotFound(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/FunctionalAccounts/999":
+			w.WriteHeader(http.StatusNotFound)
+			if _, err := w.Write([]byte(`{"error": "Functional account not found"}`)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	functionalAccountObj, _ := NewFuncionalAccount(*authenticate, zapLogger)
+
+	err = functionalAccountObj.DeleteFunctionalAccountById(999)
+
+	if err == nil {
+		t.Error("Expected an error for non-existent functional account, got nil")
+	}
+
+	// Verify error message contains relevant information
+	errorMessage := err.Error()
+	if !strings.Contains(errorMessage, "Functional account") && !strings.Contains(errorMessage, "functional account") {
+		t.Errorf("Expected error message to contain 'functional account', got: %s", errorMessage)
+	}
 }

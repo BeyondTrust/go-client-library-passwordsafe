@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -705,5 +706,71 @@ func TestGetManagedSystemsListFlowBadRequest(t *testing.T) {
 
 	if err.Error() != expetedErrorMessage {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+}
+
+func TestDeleteManagedSystemById_Success(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/ManagedSystems/123":
+			w.WriteHeader(http.StatusOK)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	err = managedSystemObj.DeleteManagedSystemById(123)
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestDeleteManagedSystemById_NotFound(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, err := authentication.Authenticate(*authParams)
+	if err != nil {
+		t.Fatalf("Authentication failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == "DELETE" && r.URL.Path == "/ManagedSystems/999":
+			w.WriteHeader(http.StatusNotFound)
+			if _, err := w.Write([]byte(`{"error": "Managed system not found"}`)); err != nil {
+				t.Errorf("Failed to write response: %v", err)
+			}
+
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	err = managedSystemObj.DeleteManagedSystemById(999)
+
+	if err == nil {
+		t.Errorf("Expected error but got nil")
+	}
+
+	if err != nil && !strings.Contains(err.Error(), "error - status code: 404") {
+		t.Errorf("Expected 404 error but got: %v", err)
 	}
 }

@@ -45,9 +45,11 @@ const (
 	CreateManagedSystemByAssetId     = "CreateManagedSystemByAssetId"
 	CreateManagedSystemByWorkGroupId = "CreateManagedSystemByWorkGroupId"
 	CreateManagedSystemByDataBaseId  = "CreateManagedSystemByDataBaseId"
+	DeleteManagedSystem              = "DeleteManagedSystem"
 	GetManagedSystemsList            = "GetManagedSystemsList"
 
 	CreateFunctionalAccount = "CreateFunctionalAccount"
+	DeleteFunctionalAccount = "DeleteFunctionalAccount"
 	GetFunctionalAccount    = "GetFunctionalAccount"
 
 	GetPlatformsList = "GetPlatformsList"
