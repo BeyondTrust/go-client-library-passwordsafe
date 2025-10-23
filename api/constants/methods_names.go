@@ -49,6 +49,7 @@ const (
 	GetManagedSystemsList            = "GetManagedSystemsList"
 
 	CreateFunctionalAccount = "CreateFunctionalAccount"
+	DeleteFunctionalAccount = "DeleteFunctionalAccount"
 	GetFunctionalAccount    = "GetFunctionalAccount"
 
 	GetPlatformsList = "GetPlatformsList"
