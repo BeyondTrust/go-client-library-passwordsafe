@@ -1,5 +1,74 @@
 # Changelog
 
+### 0.23.0 / 2025-10-23
+
+#### Features
+
+* [BIPS-28460] Add delete methods for managed accounts, secrets and folders ([#266](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/266))
+* [BIPS-28460] Release ready ([#267](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/267))
+* [BIPS-28461] delete methods part2 ([#270](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/270))
+* [BIPS-28461] Managed Systems and Functional Accounts delete methods ([#272](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/272))
+* add api version parameter ([#180](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/180))
+* add creating assets feature in terraform provider ([#199](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/199))
+* add creating Databases feature in terraform provider ([#201](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/201))
+* add creating folders feature in terraform provider ([#165](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/165))
+* add creating Managed System feature associated with Assets ([#209](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/209))
+* add creating Managed System feature associated with Databases ([#228](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/228))
+* add creating Managed System feature associated with Workgroups ([#223](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/223))
+* add creating safes feature in terraform provider ([#175](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/175))
+* add creating Workgroups feature in terraform provider ([#196](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/196))
+* Add Functional Account datasource and get functional accounts list resource in terraform provider ([#234](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/234))
+* add fuzzing tests ([#171](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/171))
+* add performance test ([#56](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/56))
+* add support for API version (3.0, 3.1) in create credential, text and file features ([#246](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/246))
+* add writing managed accounts feature in terraform provider ([#152](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/152))
+* add writing secrets feature in terraform provider ([#161](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/161))
+* BIPS-18112 Enforce PR link to Jira ([#147](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/147))
+* Changing release type to simple
+* codeql config added
+* Dependabot config added
+* Frogbot config added
+* improve  authenticate method parameters ([#183](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/183))
+* initial commit ([#2](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/2))
+* launch please release app ([#140](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/140))
+* put 30 seconds as default client time out ([#39](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/39))
+* Ready to release
+* Release please config added
+* Release please yaml added
+* remove verifyca from required list ([#86](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/86))
+* return error when occurs from secrets flow ([#142](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/142))
+* Support API Key Authentication ([#139](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/139))
+* use a struct to group validate input function parameters ([#116](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/116))
+* Workflow init ([#1](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/1))
+
+#### Bug Fixes
+
+* adding checks for PR workflow run ([#74](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/74))
+* artifactory documentation updated ([#131](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/131))
+* change library imports paths ([#71](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/71))
+* change module name in .mod file ([#65](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/65))
+* client credentials are not required, add apikey validation ([#154](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/154))
+* code cognitive complexity in go library repo ([#204](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/204))
+* ContactEmail default value for creating managed system by workgroup is invalid ([#250](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/250))
+* file download ([#33](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/33))
+* fix wrong spanish error message in validator ([#190](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/190))
+* Fixing codeql behavior
+* Fixing Go Linter ([#153](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/153))
+* improve authenticate method call parameters in fuzzing test ([#184](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/184))
+* improve README.md file and update dependencies ([#211](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/211))
+* long paths not parsing correctly ([#50](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/50))
+* managed system creation by asset has wrong default values ([#243](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/243))
+* plugin crashed - with nonexistent API server ([#192](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/192))
+* return error when secret was not found ([#145](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/145))
+* security findings resolved and fixed ([#130](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/130))
+* signout method ([#81](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/81))
+* solve minnor issues and linting issues ([#30](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/30))
+
+#### Miscellaneous Chores
+
+* release 0.1.0 ([#10](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/10))
+* release 0.23.0 ([#273](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/273))
+
 ### [0.22.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.22.0...v0.22.1) / 2025-05-28
 
 #### Bug Fixes
