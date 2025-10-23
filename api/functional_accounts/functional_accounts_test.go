@@ -240,11 +240,6 @@ func TestDeleteFunctionalAccountById_Success(t *testing.T) {
 		switch {
 		case r.Method == "DELETE" && r.URL.Path == "/FunctionalAccounts/123":
 			w.WriteHeader(http.StatusOK)
-			// Return empty body for successful deletion
-			if _, err := w.Write([]byte(``)); err != nil {
-				t.Errorf("Failed to write response: %v", err)
-			}
-
 		default:
 			http.NotFound(w, r)
 		}
