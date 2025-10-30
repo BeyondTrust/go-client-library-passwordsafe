@@ -43,7 +43,6 @@ jobs:
             var results = {
               cifuzz: {},
               coverage: {},
-              frogbot: {},
               linter: {},
               scorecard: {}
             };
@@ -68,9 +67,6 @@ jobs:
               } else if (element.name === 'Code coverage report on PR') {
                 results.coverage.conclusion = element.conclusion;
                 results.coverage.url = element.html_url;
-              } else if (element.name === 'Frogbot') {
-                results.frogbot.conclusion = element.conclusion;
-                results.frogbot.url = element.html_url;
               } else if (element.name === 'Go Lint and Code Complexity') {
                 results.linter.conclusion = element.conclusion;
                 results.linter.url = element.html_url;
@@ -119,7 +115,6 @@ jobs:
             if (release_result === 'success' &&
                 pr_runs_result.cifuzz.conclusion === 'success' &&
                 pr_runs_result.coverage.conclusion === 'success' &&
-                pr_runs_result.frogbot.conclusion === 'success' &&
                 pr_runs_result.linter.conclusion === 'success' &&
                 pr_runs_result.scorecard.conclusion === 'success') {
               output = `## Dependabot PR Readiness Checked
@@ -127,9 +122,6 @@ jobs:
               Release Workflow **${{ needs.release.result }}**
               - Build **success**
               - Unit testing **success**
-              - Sonarqube Analysis **success**
-              - Publish to JFrog **success**
-              - X-ray scan **success**
 
               CIFuzz Workflow **${pr_runs_result.cifuzz.conclusion}**
               - Fuzzing tests **success**
@@ -137,9 +129,6 @@ jobs:
               Coverage report Workflow **${pr_runs_result.coverage.conclusion}**
               - Unit testing **success**
               - Coverage report **success**
-
-              Frogbot Workflow **${pr_runs_result.frogbot.conclusion}**
-              - Frogbot Analysis **success**
 
               Linter Workflow **${pr_runs_result.linter.conclusion}**
               - golangci linter **success**
@@ -155,13 +144,11 @@ jobs:
               let conclusions = [ release_result,
                 pr_runs_result.cifuzz.conclusion,
                 pr_runs_result.coverage.conclusion,
-                pr_runs_result.frogbot.conclusion,
                 pr_runs_result.linter.conclusion,
                 pr_runs_result.scorecard.conclusion];
               let urls = [release_url,
                 pr_runs_result.cifuzz.url,
                 pr_runs_result.coverage.url,
-                pr_runs_result.frogbot.url,
                 pr_runs_result.linter.url,
                 pr_runs_result.scorecard.url];
 
