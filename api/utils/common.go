@@ -103,7 +103,7 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse e
 		if !ok {
 			return owners
 		}
-		for _, ownerRaw := range ownersList{
+		for _, ownerRaw := range ownersList {
 			ownerMap, ok := ownerRaw.(map[string]interface{})
 			if !ok {
 				continue
@@ -121,7 +121,7 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse e
 }
 
 
-// GetOwnerDetailsGroupIdList get Owners details list.
+// GetOwnerDetailsGroupIdList constructs a list of owner details with group IDs from the provided data map.
 func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsGroupId {
 	var owners []entities.OwnerDetailsGroupId
 
@@ -161,7 +161,7 @@ func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAp
 	return owners
 }
 
-// GetUrlsDetailsList get urls details list.
+// GetUrlsDetailsList extracts and parses URL details from the provided data map.
 func GetUrlsDetailsList(d map[string]interface{}) []entities.UrlDetails {
 
 	urls := []entities.UrlDetails{}
@@ -172,7 +172,7 @@ func GetUrlsDetailsList(d map[string]interface{}) []entities.UrlDetails {
 		if !ok {
 			return urls
 		}
-		for _, urlRaw := range urlsList{
+		for _, urlRaw := range urlsList {
 			urlMap, ok := urlRaw.(map[string]interface{})
 			if !ok {
 				continue
@@ -212,7 +212,7 @@ func GetIntField(data map[string]interface{}, key string, defaultValue int) int 
 	}
 	switch v := val.(type) {
 		case float64:
-			return int(val.(float64))
+			return int(v)
 		case int:
 			return v
 	}
