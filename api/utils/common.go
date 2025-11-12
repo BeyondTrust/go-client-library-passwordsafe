@@ -83,7 +83,7 @@ func DeleteResourceByID(
 
 
 // GetOwnerDetailsOwnerIdList get Owners details list.
-func GetOwnerDetailsOwnerIdList(data map[string]interface{}, ownerType string, groupId int, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsOwnerId {
+func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsOwnerId {
 	var owners []entities.OwnerDetailsOwnerId
 
 	mainOwner := entities.OwnerDetailsOwnerId{
@@ -99,7 +99,11 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, ownerType string, g
 	}
 
 	if ownersRaw != nil {
-		for _, ownerRaw := range ownersRaw.([]interface{}) {
+		ownersList, ok := ownersRaw.([]interface{})
+		if !ok {
+			return owners
+		}
+		for _, ownerRaw := range ownersList{
 			ownerMap := ownerRaw.(map[string]interface{})
 			owner := entities.OwnerDetailsOwnerId{
 				OwnerId: GetIntField(ownerMap, "owner_id", 0),
@@ -115,7 +119,7 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, ownerType string, g
 
 
 // GetOwnerDetailsGroupIdList get Owners details list.
-func GetOwnerDetailsGroupIdList(data map[string]interface{}, ownerType string, groupId int, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsGroupId {
+func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsGroupId {
 	var owners []entities.OwnerDetailsGroupId
 
 	mainOwner := entities.OwnerDetailsGroupId{
@@ -132,7 +136,11 @@ func GetOwnerDetailsGroupIdList(data map[string]interface{}, ownerType string, g
 	}
 
 	if ownersRaw != nil {
-		for _, ownerRaw := range ownersRaw.([]interface{}) {
+		ownersList, ok := ownersRaw.([]interface{})
+		if !ok {
+			return owners
+		}
+		for _, ownerRaw := range ownersList {
 			ownerMap := ownerRaw.(map[string]interface{})
 
 			owner := entities.OwnerDetailsGroupId{
@@ -153,10 +161,14 @@ func GetOwnerDetailsGroupIdList(data map[string]interface{}, ownerType string, g
 func GetUrlsDetailsList(d map[string]interface{}, ownerType string, groupId int) []entities.UrlDetails {
 
 	urls := []entities.UrlDetails{}
-	urlsRaw, _ := d["urls"]
+	urlsRaw := d["urls"]
 
 	if urlsRaw != nil {
-		for _, urlRaw := range urlsRaw.([]interface{}) {
+		urlsList, ok := urlsRaw.([]interface{})
+		if !ok {
+			return urls
+		}
+		for _, urlRaw := range urlsList{
 			urlMap := urlRaw.(map[string]interface{})
 
 			id, _ := uuid.Parse(GetStringField(urlMap, "id", ""))
@@ -179,7 +191,10 @@ func GetStringField(data map[string]interface{}, key string, defaultValue string
 	if !exists {
 		return defaultValue
 	}
-	return val.(string)
+	if strVal, ok := val.(string); ok {
+		return strVal
+	}
+	return defaultValue
 }
 
 // GetIntField retrieves a numeric field from a map, returning a default value if the key does not exist.
@@ -188,11 +203,11 @@ func GetIntField(data map[string]interface{}, key string, defaultValue int) int 
 	if !exists {
 		return defaultValue
 	}
-	switch val.(type) {
+	switch v := val.(type) {
 		case float64:
 			return int(val.(float64))
 		case int:
-			return val.(int)
+			return v
 	}
 	return defaultValue
 }

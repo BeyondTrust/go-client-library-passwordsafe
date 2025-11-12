@@ -240,7 +240,7 @@ func TestGetOwnerDetailsOwnerIdList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetOwnerDetailsOwnerIdList(tt.data, "user", 1, tt.signAppinResponse)
+			result := GetOwnerDetailsOwnerIdList(tt.data, tt.signAppinResponse)
 			require.Len(t, result, tt.expectedLen)
 
 			if tt.expectedOwners != nil {
@@ -346,7 +346,7 @@ func TestGetOwnerDetailsGroupIdList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetOwnerDetailsGroupIdList(tt.data, "user", tt.groupId, tt.signAppinResponse)
+			result := GetOwnerDetailsGroupIdList(tt.data, tt.groupId, tt.signAppinResponse)
 			require.Len(t, result, tt.expectedLen)
 
 			if tt.expectedOwners != nil {
