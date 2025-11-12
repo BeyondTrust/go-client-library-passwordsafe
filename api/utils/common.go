@@ -104,7 +104,10 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse e
 			return owners
 		}
 		for _, ownerRaw := range ownersList{
-			ownerMap := ownerRaw.(map[string]interface{})
+			ownerMap, ok := ownerRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
 			owner := entities.OwnerDetailsOwnerId{
 				OwnerId: GetIntField(ownerMap, "owner_id", 0),
 				Owner:   GetStringField(ownerMap, "owner", ""),
@@ -141,15 +144,16 @@ func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAp
 			return owners
 		}
 		for _, ownerRaw := range ownersList {
-			ownerMap := ownerRaw.(map[string]interface{})
-
+			ownerMap, ok := ownerRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
 			owner := entities.OwnerDetailsGroupId{
 				GroupId: GetIntField(ownerMap, "group_id", 0),
 				UserId:  GetIntField(ownerMap, "user_id", 0),
 				Name:    GetStringField(ownerMap, "name", ""),
 				Email:   GetStringField(ownerMap, "email", ""),
 			}
-			
 			owners = append(owners, owner)
 		}
 	}
@@ -158,7 +162,7 @@ func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAp
 }
 
 // GetUrlsDetailsList get urls details list.
-func GetUrlsDetailsList(d map[string]interface{}, ownerType string, groupId int) []entities.UrlDetails {
+func GetUrlsDetailsList(d map[string]interface{}) []entities.UrlDetails {
 
 	urls := []entities.UrlDetails{}
 	urlsRaw := d["urls"]
@@ -169,7 +173,10 @@ func GetUrlsDetailsList(d map[string]interface{}, ownerType string, groupId int)
 			return urls
 		}
 		for _, urlRaw := range urlsList{
-			urlMap := urlRaw.(map[string]interface{})
+			urlMap, ok := urlRaw.(map[string]interface{})
+			if !ok {
+				continue
+			}
 
 			id, _ := uuid.Parse(GetStringField(urlMap, "id", ""))
 			credentialId, _ := uuid.Parse(GetStringField(urlMap, "credential_id", ""))

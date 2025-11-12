@@ -445,7 +445,7 @@ func TestGetUrlsDetailsList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := GetUrlsDetailsList(tt.data, "user", 1)
+			result := GetUrlsDetailsList(tt.data)
 			require.Len(t, result, tt.expectedLen)
 			require.Equal(t, tt.expected, result)
 		})
