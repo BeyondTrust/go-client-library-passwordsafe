@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.24.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.23.0...v0.24.0) / 2025-11-13
+
+#### Features
+
+* move/add common methods from ESO repo to Go client library ([#278](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/278))
+
 ### 0.23.0 / 2025-10-23
 
 #### Features
