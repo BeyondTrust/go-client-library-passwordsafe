@@ -677,7 +677,7 @@ func (secretObj *SecretObj) DeleteSafeById(safeID string) error {
 	)
 }
 
-// SearchSecretByTitleFlow calls Password Safe API enpoint to search secrets by title.
+// SearchSecretByTitleFlow calls Password Safe API endpoint to search secrets by title.
 func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entities.Secret, error) {
 	var secretResponse []entities.Secret
 	secretResponse, err := secretObj.SearchSecretByTitle("secrets-safe/secrets", secretTitle)
@@ -691,7 +691,7 @@ func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entitie
 	return entities.Secret{}, fmt.Errorf("secret was not found: %s", secretTitle)
 }
 
-// SearchSecretByTitle call secrets-safe/secrets enpoint
+// SearchSecretByTitle calls secrets-safe/secrets endpoint
 func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title string) ([]entities.Secret, error) {
 
 	var secretResponse []entities.Secret
