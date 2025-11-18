@@ -688,7 +688,7 @@ func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entitie
 	if secretResponse != nil && len(secretResponse) > 0 {
 		return secretResponse[0], nil
 	}
-	return entities.Secret{}, fmt.Errorf("Secret was not found: %v", secretTitle)
+	return entities.Secret{}, fmt.Errorf("Secret was not found: %s", secretTitle)
 }
 
 // SearchSecretByTitle call secrets-safe/secrets enpoint
@@ -699,12 +699,13 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 	params := url.Values{}
 	params.Add("title", title)
 
-	var buffer bytes.Buffer
-	buffer.WriteString(params.Encode())
-
 	endpointUrl := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
 
-	parsedUrl, _ := url.Parse(endpointUrl)
+	parsedUrl, err := url.Parse(endpointUrl)
+	if err != nil {
+		return secretResponse, fmt.Errorf("failed to parse endpoint URL: %w", err)
+	}
+
 	parsedUrl.RawQuery = params.Encode()
 
 	endpointUrl = parsedUrl.String()
@@ -715,7 +716,7 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
 		Url:         endpointUrl,
 		HttpMethod:  "GET",
-		Body:        buffer,
+		Body:        bytes.Buffer{},
 		Method:      constants.SecretGetSecretByTitle,
 		AccessToken: "",
 		ApiKey:      "",
