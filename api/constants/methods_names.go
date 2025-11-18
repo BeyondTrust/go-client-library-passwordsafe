@@ -3,16 +3,17 @@
 package constants
 
 const (
-	SecretGetSecretByPath = "SecretGetSecretByPath"
-	SecretGetFileSecret   = "SecretGetFileSecret"
-	SecretCreateSecret    = "SecretCreateSecret"
-	SecretGetFolders      = "SecretGetFolders"
-	SecretGetSafes        = "SecretGetSafes"
-	SecretCreateFolder    = "SecretCreateFolder"
-	SecretCreateSafes     = "SecretCreateSafes"
-	SecretDeleteSecret    = "SecretDeleteSecret"
-	SecretDeleteFolder    = "SecretDeleteFolder"
-	SecretDeleteSafe      = "SecretDeleteSafe"
+	SecretGetSecretByPath  = "SecretGetSecretByPath"
+	SecretGetFileSecret    = "SecretGetFileSecret"
+	SecretCreateSecret     = "SecretCreateSecret"
+	SecretGetFolders       = "SecretGetFolders"
+	SecretGetSafes         = "SecretGetSafes"
+	SecretCreateFolder     = "SecretCreateFolder"
+	SecretCreateSafes      = "SecretCreateSafes"
+	SecretDeleteSecret     = "SecretDeleteSecret"
+	SecretDeleteFolder     = "SecretDeleteFolder"
+	SecretDeleteSafe       = "SecretDeleteSafe"
+	SecretGetSecretByTitle = "SecretGetSecretByTitle"
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"
