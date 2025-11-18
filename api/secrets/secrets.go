@@ -685,10 +685,10 @@ func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entitie
 		return entities.Secret{}, err
 	}
 
-	if secretResponse != nil && len(secretResponse) > 0 {
+	if len(secretResponse) > 0 {
 		return secretResponse[0], nil
 	}
-	return entities.Secret{}, fmt.Errorf("Secret was not found: %s", secretTitle)
+	return entities.Secret{}, fmt.Errorf("secret was not found: %s", secretTitle)
 }
 
 // SearchSecretByTitle call secrets-safe/secrets enpoint
