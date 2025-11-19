@@ -1,5 +1,11 @@
 # Changelog
 
+### [0.25.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.24.0...v0.25.0) / 2025-11-19
+
+#### Features
+
+* add search secret by title method ([#280](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/280))
+
 ### [0.24.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.23.0...v0.24.0) / 2025-11-13
 
 #### Features
