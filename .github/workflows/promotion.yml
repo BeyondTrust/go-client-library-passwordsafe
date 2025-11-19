@@ -7,6 +7,7 @@ permissions: {}
 
 jobs:
   promotion:
+    name: Promote released Go library to Prod repo
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -33,12 +34,23 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BUILD_NAME="${{ github.event.repository.name }}"
 
-          BUILD_NUMBER="$(jfrog rt curl api/build/${BUILD_NAME} -s | jq -e -r '[.buildsNumbers[] | select(.uri | contains("'$VERSION'"))] | sort_by(.started) | reverse | .[0].uri[1:]')"
+          BUILD_NUMBER=$(
+            jfrog rt curl api/build/${BUILD_NAME} -s | \
+            jq -r "
+              [
+                .buildsNumbers[]
+                | select(.uri | contains(\"$VERSION\"))
+              ]
+              | sort_by(.started)
+              | reverse
+              | .[0].uri[1:]
+            "
+          )
 
           if [ -z "$BUILD_NUMBER" ]; then
             echo "::error::Error retrieving build from Artifactory. No matching name/version. Name: $BUILD_NAME; Version: $VERSION"
             exit 1
           fi
 
-          echo "Promoting generic"
+          echo "Promoting Go Library $BUILD_NAME $BUILD_NUMBER"
           jfrog rt build-promote  "$BUILD_NAME" "$BUILD_NUMBER" eng-generic-prod-local --status released --copy=true
