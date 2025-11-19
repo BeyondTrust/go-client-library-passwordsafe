@@ -676,3 +676,64 @@ func (secretObj *SecretObj) DeleteSafeById(safeID string) error {
 		secretObj.log,
 	)
 }
+
+// SearchSecretByTitleFlow calls Password Safe API endpoint to search secrets by title.
+func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entities.Secret, error) {
+	var secretResponse []entities.Secret
+	secretResponse, err := secretObj.SearchSecretByTitle("secrets-safe/secrets", secretTitle)
+	if err != nil {
+		return entities.Secret{}, err
+	}
+
+	if len(secretResponse) > 0 {
+		return secretResponse[0], nil
+	}
+	return entities.Secret{}, fmt.Errorf("secret was not found: %s", secretTitle)
+}
+
+// SearchSecretByTitle calls secrets-safe/secrets endpoint
+func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title string) ([]entities.Secret, error) {
+
+	var secretResponse []entities.Secret
+
+	params := url.Values{}
+	params.Add("title", title)
+
+	endpointUrl := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
+
+	parsedUrl, err := url.Parse(endpointUrl)
+	if err != nil {
+		return secretResponse, fmt.Errorf("failed to parse endpoint URL: %w", err)
+	}
+
+	parsedUrl.RawQuery = params.Encode()
+
+	endpointUrl = parsedUrl.String()
+
+	messageLog := fmt.Sprintf("%v %v", "GET", endpointUrl)
+	secretObj.log.Debug(messageLog)
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         endpointUrl,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.SecretGetSecretByTitle,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  "",
+	}
+
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
+
+	if err != nil {
+		return secretResponse, err
+	}
+
+	err = json.Unmarshal(response, &secretResponse)
+	if err != nil {
+		return secretResponse, err
+	}
+
+	return secretResponse, nil
+}
