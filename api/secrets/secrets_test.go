@@ -1748,3 +1748,65 @@ func TestDeleteSafeByIdNotFound(t *testing.T) {
 		t.Errorf("Test case Failed: Expected 404 error, got '%v'", err.Error())
 	}
 }
+
+func TestSearchSecretByTitleFlow(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfig{
+		name: "TestSearchSecretByTitleFlow",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response
+			_, err := w.Write([]byte(`[{"Password": "secret_password","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "secret_title"}]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+		})),
+		response: &entities.Secret{
+			Id:       "9152f5b6-07d6-4955-175a-08db047219ce",
+			Title:    "secret_title",
+			Password: "secret_password",
+		},
+	}
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	response, err := secretObj.SearchSecretByTitleFlow("secret_title")
+
+	if response != *testConfig.response {
+		t.Errorf("Test case Failed %v, %v", response, *testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
+func TestSearchSecretByTitleFlowSecretNotFound(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfig{
+		name: "TestSearchSecretByTitleFlowSecretNotFound",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response
+			w.WriteHeader(http.StatusNotFound)
+			_, err := w.Write([]byte(`{"error": "Secret not found"}`))
+			if err != nil {
+				t.Error(err)
+			}
+		})),
+	}
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+
+	_, err := secretObj.SearchSecretByTitleFlow("secret_title")
+
+	if err == nil {
+		t.Error("Test case Failed: Expected error for 404 response")
+	}
+}
