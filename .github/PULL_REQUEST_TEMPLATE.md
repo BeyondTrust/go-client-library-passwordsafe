@@ -1,6 +1,6 @@
 <!--
 ## Instructions
-- Please look at & fill in each section (hint: change [ ] to [x] to "check" a checkbox).
+- Please look at and fill in each section (hint: change [ ] to [x] to "check" a checkbox).
 - Would relevant screenshots be helpful?
 - Be generous with your description, as it will be helpful to reviewers.
 -->
@@ -24,6 +24,11 @@
 -->
 
 ## Checklist
+
+### Release
+
+- [ ]  Priority release required due to Hot fix / Escalation / Critical bug
+- [ ]  Priority release not required (can be released later with other stories or bugs fixes)
 
 ### Testing
 
