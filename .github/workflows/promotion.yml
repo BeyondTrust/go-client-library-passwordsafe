@@ -10,7 +10,6 @@ jobs:
     name: Promote released Go library to Prod repo
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
       id-token: write
     steps:

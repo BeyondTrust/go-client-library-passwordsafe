@@ -21,9 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: unit_test
     permissions:
-      pull-requests: write
       contents: read
-      id-token: write
     outputs:
       full_version: ${{ steps.version.outputs.full_version }}
     steps:
@@ -150,7 +148,6 @@ jobs:
     needs: [build, sonarqube]
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
       id-token: write
     if: ${{ !startsWith(github.head_ref, 'dependabot/') }}

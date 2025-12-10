@@ -23,9 +23,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     permissions: 
-      contents: read
       pull-requests: read
-      issues: read
       actions: read
     outputs:
       results: ${{ steps.runs.outputs.results }}
@@ -87,6 +85,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: read
+      issues: write
     steps:
 
       - name: Checkout code
