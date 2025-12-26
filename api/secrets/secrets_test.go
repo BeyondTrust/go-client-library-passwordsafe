@@ -100,6 +100,41 @@ func TestSecretGetSecretByPath(t *testing.T) {
 	}
 }
 
+func TestSecretGetSecretByPathWithDecryptFalse(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := SecretTestConfig{
+		name: "TestSecretGetSecretByPathWithDecryptFalse",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Mocking Response
+			_, err := w.Write([]byte(`[{"Password": "","Id": "9152f5b6-07d6-4955-175a-08db047219ce","Title": "credential_in_sub_3"}]`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+		})),
+		response: &entities.Secret{
+			Id:       "9152f5b6-07d6-4955-175a-08db047219ce",
+			Title:    "credential_in_sub_3",
+			Password: "",
+		},
+	}
+	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, false)
+
+	response, err := secretObj.SecretGetSecretByPath("path1/path2/", "fake_title", "/", "secrets-safe/secrets")
+
+	if response != *testConfig.response {
+		t.Errorf("Test case Failed %v, %v", response, *testConfig.response)
+	}
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+}
+
 func TestSecretGetFileSecret(t *testing.T) {
 
 	InitializeGlobalConfig()
