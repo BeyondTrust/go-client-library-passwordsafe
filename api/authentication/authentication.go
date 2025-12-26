@@ -129,7 +129,7 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 		Method:      constants.GetToken,
 		AccessToken: "",
 		ApiKey:      "",
-		ContentType: "application/json",
+		ContentType: "application/x-www-form-urlencoded",
 		ApiVersion:  "",
 	}
 

@@ -87,7 +87,7 @@ func TestSecretGetSecretByPath(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	response, err := secretObj.SecretGetSecretByPath("path1/path2/", "fake_title", "/", "secrets-safe/secrets")
 
@@ -117,7 +117,7 @@ func TestSecretGetFileSecret(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 	response, err := secretObj.SecretGetFileSecret("1", testConfig.server.URL)
 
 	if response != "fake_password" {
@@ -172,7 +172,7 @@ func TestSecretFlow(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, err := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -223,7 +223,7 @@ func TestSecretFlow_SecretNotFound(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretPaths := strings.Split("oauthgrp_nocert/Test1,oauthgrp_nocert/client_id", ",")
 	secrets, err := secretObj.GetSecretFlow(secretPaths, "/")
@@ -252,7 +252,7 @@ func TestSecretGetSecret(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	response, err := secretObj.GetSecret("path1/path2", "/")
 
@@ -284,7 +284,7 @@ func TestSecretGetSecrets(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretPaths := []string{"fake/Client", "fake/test_file_1"}
 	response, err := secretObj.GetSecrets(secretPaths, "/")
@@ -342,7 +342,7 @@ func TestSecretFlowTechnicalErrorFile(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, _ := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -396,7 +396,7 @@ func TestSecretFlowBusinessErrorFile(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, _ := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -449,7 +449,7 @@ func TestSecretFlowLongSecret(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 30)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 30, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 
@@ -499,7 +499,7 @@ func TestSecretFlowTechnicalErrorCredential(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, _ := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -547,7 +547,7 @@ func TestSecretFlowBusinessErrorCredential(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, _ := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -594,7 +594,7 @@ func TestSecretFlowBadBody(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretsPaths := strings.Split("oauthgrp_nocert/Test1/Test2/title1,oauthgrp_nocert/client_id", ",")
 	response, _ := secretObj.GetSecretFlow(secretsPaths, "/")
@@ -635,7 +635,7 @@ func TestSecretCreateTextSecretFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
@@ -733,7 +733,7 @@ func TestSecretCreateCredentialSecretFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
@@ -831,7 +831,7 @@ func TestSecretCreateFileSecretFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "File Secret Title",
@@ -911,7 +911,7 @@ func TestSecretCreateFileSecretFlowErrorFileContent(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	// exceeds the max file size value (5MB)
 	n := 5_000_001
@@ -978,7 +978,7 @@ func TestSecretCreateFileSecretFlowError(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
@@ -1044,7 +1044,7 @@ func TestSecretCreateBadInput(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Description: "Title Description",
@@ -1099,7 +1099,7 @@ func TestSecretCreateSecretFlowFolderNotFound(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
@@ -1155,7 +1155,7 @@ func TestSecretCreateSecretFlowEmptyFolderList(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "Secret Title",
@@ -1212,7 +1212,7 @@ func TestSecretFolderFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
@@ -1265,7 +1265,7 @@ func TestSecretFolderFlowBadParentFolder(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
@@ -1291,7 +1291,7 @@ func TestSecretFolderFlowEmptyParentFolder(t *testing.T) {
 
 	var authenticate, _ = authentication.Authenticate(*authParams)
 
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
@@ -1332,7 +1332,7 @@ func TestSecretSafeFlow(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	folderDetails := entities.FolderDetails{
 		Name:        "FOLDER_" + uuid.New().String(),
@@ -1375,7 +1375,7 @@ func TestDeleteSecretById(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSecretID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSecretById(validSecretID)
@@ -1390,7 +1390,7 @@ func TestDeleteSecretByIdInvalidUUID(t *testing.T) {
 	InitializeGlobalConfig()
 
 	var authenticate, _ = authentication.Authenticate(*authParams)
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	invalidSecretID := "invalid-uuid-format"
 	err := secretObj.DeleteSecretById(invalidSecretID)
@@ -1425,7 +1425,7 @@ func TestDeleteSecretByIdNotFound(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSecretID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSecretById(validSecretID)
@@ -1459,7 +1459,7 @@ func TestDeleteSecretByIdForbidden(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSecretID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSecretById(validSecretID)
@@ -1493,7 +1493,7 @@ func TestDeleteSecretByIdServerError(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSecretID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSecretById(validSecretID)
@@ -1530,7 +1530,7 @@ func TestDeleteFolderById(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validFolderID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteFolderById(validFolderID)
@@ -1545,7 +1545,7 @@ func TestDeleteFolderByIdInvalidUUID(t *testing.T) {
 	InitializeGlobalConfig()
 
 	var authenticate, _ = authentication.Authenticate(*authParams)
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	invalidFolderID := "invalid-uuid-format"
 	err := secretObj.DeleteFolderById(invalidFolderID)
@@ -1580,7 +1580,7 @@ func TestDeleteFolderByIdNotFound(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validFolderID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteFolderById(validFolderID)
@@ -1614,7 +1614,7 @@ func TestDeleteFolderByIdForbidden(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validFolderID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteFolderById(validFolderID)
@@ -1648,7 +1648,7 @@ func TestDeleteFolderByIdServerError(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validFolderID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteFolderById(validFolderID)
@@ -1685,7 +1685,7 @@ func TestDeleteSafeById(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSafeID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSafeById(validSafeID)
@@ -1700,7 +1700,7 @@ func TestDeleteSafeByIdInvalidUUID(t *testing.T) {
 	InitializeGlobalConfig()
 
 	var authenticate, _ = authentication.Authenticate(*authParams)
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	invalidSafeID := "invalid-uuid-format"
 	err := secretObj.DeleteSafeById(invalidSafeID)
@@ -1735,7 +1735,7 @@ func TestDeleteSafeByIdNotFound(t *testing.T) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	validSafeID := "9152f5b6-07d6-4955-175a-08db047219ce"
 	err := secretObj.DeleteSafeById(validSafeID)
@@ -1771,7 +1771,7 @@ func TestSearchSecretByTitleFlow(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	response, err := secretObj.SearchSecretByTitleFlow("secret_title")
 
@@ -1802,7 +1802,7 @@ func TestSearchSecretByTitleFlowSecretNotFound(t *testing.T) {
 	}
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	_, err := secretObj.SearchSecretByTitleFlow("secret_title")
 
