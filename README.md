@@ -48,6 +48,10 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
   - type: string
   - default: /
   - required: False
+- decrypt
+  - description: When true, returns the decrypted password field; when false, the password field is omitted. Allowed values: True/False
+  - type: bool
+  - required: True
 - clientTimeOutInSeconds
   - description: Timeout specifies a time limit for requests made by this Client. The timeout includes connection time, any redirects, and reading the response body.
   - type: int

@@ -94,7 +94,7 @@ func FuzzGetSecret(f *testing.F) {
 
 	apiUrl, _ := url.Parse(testConfig.server.URL + "/")
 	authenticate.ApiUrl = *apiUrl
-	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, 4000)
+	secretObj, _ := secrets.NewSecretObj(*authenticate, zapLogger, 4000, true)
 
 	f.Add("fake/Test1", "/")
 	f.Add("fake/Test2", "*")

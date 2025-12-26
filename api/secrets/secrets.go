@@ -26,14 +26,16 @@ type SecretObj struct {
 	log                    logging.Logger
 	authenticationObj      authentication.AuthenticationObj
 	maxFileSecretSizeBytes int
+	decrypt                bool
 }
 
 // NewSecretObj creates secret obj
-func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger, maxFileSecretSizeBytes int) (*SecretObj, error) {
+func NewSecretObj(authentication authentication.AuthenticationObj, logger logging.Logger, maxFileSecretSizeBytes int, decrypt bool) (*SecretObj, error) {
 	secretObj := &SecretObj{
 		log:                    logger,
 		authenticationObj:      authentication,
 		maxFileSecretSizeBytes: maxFileSecretSizeBytes,
+		decrypt:                decrypt,
 	}
 	return secretObj, nil
 }
@@ -151,6 +153,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	params.Add("path", secretPath)
 	params.Add("title", secretTitle)
 	params.Add("separator", separator)
+	params.Add("decrypt", fmt.Sprintf("%v", secretObj.decrypt))
 
 	if secretObj.authenticationObj.ApiVersion != "" {
 		params.Add("version", secretObj.authenticationObj.ApiVersion)
@@ -698,6 +701,7 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 
 	params := url.Values{}
 	params.Add("title", title)
+	params.Add("decrypt", fmt.Sprintf("%v", secretObj.decrypt))
 
 	endpointUrl := secretObj.authenticationObj.ApiUrl.JoinPath(endpointPath).String()
 
