@@ -250,7 +250,7 @@ func GetCertificateData(certificatePath string, certificateName string, certific
 func GetSecretAndManagedAccount(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse, separator string, maxFileSecretSizeBytes int) error {
 
 	// instantiating secret obj
-	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
+	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes, true)
 
 	secretPaths := []string{"oauthgrp/credential8", "oauthgrp/file1"}
 
@@ -341,7 +341,7 @@ func CreateManagedAccount(authenticationObj *authentication.AuthenticationObj, z
 // CreateSecretsAndFolders test method to create secrets/folders/safes in PS API.
 func CreateSecretsAndFolders(authenticationObj *authentication.AuthenticationObj, zapLogger *logging.ZapLogger, userObject entities.SignAppinResponse, maxFileSecretSizeBytes int) error {
 
-	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes)
+	secretObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, maxFileSecretSizeBytes, true)
 
 	secretDetailsConfig := entities.SecretDetailsBaseConfig{
 		Title:       "CREDENTIAL_" + identifier,
@@ -821,7 +821,7 @@ func CallGetListMethods(authenticationObj *authentication.AuthenticationObj, zap
 	zapLogger.Debug(fmt.Sprintf("functional accounts List Lenght: %v", len(functionalAcocuntList)))
 
 	// safes list
-	safesObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, 0)
+	safesObj, _ := secrets.NewSecretObj(*authenticationObj, zapLogger, 0, true)
 	safesList, err := safesObj.SecretGetSafesListFlow()
 	if err != nil {
 		zapLogger.Error(err.Error())
