@@ -10,6 +10,16 @@
 
 * add support for decrypt parameter on get secret by path endpoint ([#290](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/290))
 
+### [1.0.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.25.0...v1.0.0) / 2025-12-29
+
+#### ⚠ BREAKING CHANGES
+
+* add support for decrypt parameter on get secret by path endpoint ([#290](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/290))
+
+#### Features
+
+* add support for decrypt parameter on get secret by path endpoint ([#290](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/290))
+
 ### [0.25.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.24.0...v0.25.0) / 2025-11-19
 
 #### Features
