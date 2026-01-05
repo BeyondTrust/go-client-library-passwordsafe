@@ -26,7 +26,7 @@ jobs:
       full_version: ${{ steps.version.outputs.full_version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -80,13 +80,13 @@ jobs:
           PASSWORD_SAFE_FAKE_PASSWORD : ${{ vars.PASSWORD_SAFE_FAKE_PASSWORD }}
 
       - name: Save unit tests coverage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: coverage
           path: api/coverage.out
 
       - name: Save built library
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: library
           path: go-client-library-passwordsafe
@@ -99,18 +99,18 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'dependabot/') }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
       - name: Download coverage
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: coverage
 
       - name: SonarQube Scan on PR
         if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
         with:
           projectBaseDir: .
           args: >
@@ -126,7 +126,7 @@ jobs:
 
       - name: SonarQube Scan on branch
         if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+        uses: sonarsource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
         with:
           projectBaseDir: .
           args: >
@@ -153,7 +153,7 @@ jobs:
     if: ${{ !startsWith(github.head_ref, 'dependabot/') }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
@@ -174,7 +174,7 @@ jobs:
           mkdir -p beyondtrust/passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
 
       - name: Download library binary
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: library
           path: beyondtrust/passwordsafe/go-library-passwordsafe/${{ needs.build.outputs.full_version }}
