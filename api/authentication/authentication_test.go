@@ -221,6 +221,100 @@ func TestGetToken(t *testing.T) {
 	}
 }
 
+func TestGetTokenDetails(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/Auth/connect/token":
+			_, err := w.Write([]byte(`{"access_token": "fake_token", "expires_in": 600, "token_type": "Bearer", "scope": "publicapi"}`))
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	response, err := authenticate.GetTokenDetails(server.URL+"/Auth/connect/token", "", "")
+
+	if err != nil {
+		t.Fatalf("TestGetTokenDetails Failed: %v", err)
+	}
+	if response.AccessToken != "fake_token" {
+		t.Errorf("AccessToken mismatch: got %q, want %q", response.AccessToken, "fake_token")
+	}
+	if response.ExpiresIn != 600 {
+		t.Errorf("ExpiresIn mismatch: got %d, want 600", response.ExpiresIn)
+	}
+	if response.TokenType != "Bearer" {
+		t.Errorf("TokenType mismatch: got %q, want %q", response.TokenType, "Bearer")
+	}
+	if response.Scope != "publicapi" {
+		t.Errorf("Scope mismatch: got %q, want %q", response.Scope, "publicapi")
+	}
+}
+
+func TestGetTokenDetails_ErrorResponse(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error": "invalid_client"}`))
+	}))
+	defer server.Close()
+
+	_, err := authenticate.GetTokenDetails(server.URL+"/Auth/connect/token", "", "")
+
+	if err == nil {
+		t.Fatal("TestGetTokenDetails_ErrorResponse: expected error on 401, got nil")
+	}
+}
+
+func TestGetTokenDetails_InvalidJSON(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`not-json`))
+	}))
+	defer server.Close()
+
+	_, err := authenticate.GetTokenDetails(server.URL+"/Auth/connect/token", "", "")
+
+	if err == nil {
+		t.Fatal("TestGetTokenDetails_InvalidJSON: expected error for invalid JSON, got nil")
+	}
+}
+
+func TestGetToken_Error(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	// Close the server immediately so every request gets "connection refused",
+	// exercising the technicalError path in GetTokenDetails and the
+	// error-return branch in the GetToken wrapper.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	server.Close()
+
+	_, err := authenticate.GetToken(server.URL+"/Auth/connect/token", "", "")
+
+	if err == nil {
+		t.Fatal("TestGetToken_Error: expected error on closed server, got nil")
+	}
+}
+
 func TestGetPasswordSafeAuthentication(t *testing.T) {
 
 	InitializeGlobalConfig()

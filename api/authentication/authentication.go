@@ -109,6 +109,19 @@ func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (ent
 
 // GetToken is responsible for getting a token from the PS API.
 func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
+	data, err := authenticationObj.GetTokenDetails(endpointUrl, clientId, clientSecret)
+	if err != nil {
+		return "", err
+	}
+	return data.AccessToken, nil
+}
+
+// GetTokenDetails is responsible for getting a token from the PS API and returning
+// the full token response including expiry information.
+// Unlike GetToken, which returns only the access token string, this method returns
+// the complete entities.GetTokenResponse so callers can use expires_in to calculate
+// exact token expiry without relying on a hard-coded default lifetime.
+func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, clientId string, clientSecret string) (entities.GetTokenResponse, error) {
 
 	params := url.Values{}
 	params.Add("client_id", clientId)
@@ -142,33 +155,28 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 	}, authenticationObj.ExponentialBackOff)
 
 	if technicalError != nil {
-		return "", technicalError
+		return entities.GetTokenResponse{}, technicalError
 	}
 
 	if businessError != nil {
-		return "", businessError
+		return entities.GetTokenResponse{}, businessError
 	}
 
 	defer func() { _ = body.Close() }()
 	bodyBytes, err := io.ReadAll(body)
-
 	if err != nil {
-		return "", err
+		return entities.GetTokenResponse{}, err
 	}
-
-	responseString := string(bodyBytes)
 
 	var data entities.GetTokenResponse
-
-	err = json.Unmarshal([]byte(responseString), &data)
-	if err != nil {
+	if err = json.Unmarshal(bodyBytes, &data); err != nil {
 		authenticationObj.log.Error(err.Error())
-		return "", err
+		return entities.GetTokenResponse{}, err
 	}
 
-	authenticationObj.log.Debug("Successfully retrieved token")
+	authenticationObj.log.Debug("Successfully retrieved token details")
 
-	return data.AccessToken, nil
+	return data, nil
 
 }
 
