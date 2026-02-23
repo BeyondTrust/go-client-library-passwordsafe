@@ -1,5 +1,11 @@
 # Changelog
 
+### [1.1.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.0.0...v1.1.0) / 2026-02-23
+
+#### Features
+
+* [BIPS-33206] retrieve full token response with expiry info ([#293](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/293))
+
 ### [1.0.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v0.25.0...v1.0.0) / 2025-12-29
 
 #### ⚠ BREAKING CHANGES
