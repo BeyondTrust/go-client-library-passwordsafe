@@ -296,6 +296,25 @@ func TestGetTokenDetails_InvalidJSON(t *testing.T) {
 	}
 }
 
+func TestGetToken_Error(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = Authenticate(*authParamsOauth)
+
+	// Close the server immediately so every request gets "connection refused",
+	// exercising the technicalError path in GetTokenDetails and the
+	// error-return branch in the GetToken wrapper.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	server.Close()
+
+	_, err := authenticate.GetToken(server.URL+"/Auth/connect/token", "", "")
+
+	if err == nil {
+		t.Fatal("TestGetToken_Error: expected error on closed server, got nil")
+	}
+}
+
 func TestGetPasswordSafeAuthentication(t *testing.T) {
 
 	InitializeGlobalConfig()
