@@ -109,67 +109,11 @@ func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (ent
 
 // GetToken is responsible for getting a token from the PS API.
 func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
-
-	params := url.Values{}
-	params.Add("client_id", clientId)
-	params.Add("client_secret", clientSecret)
-	params.Add("grant_type", "client_credentials")
-
-	var body io.ReadCloser
-	var technicalError error
-	var businessError error
-
-	var buffer bytes.Buffer
-	buffer.WriteString(params.Encode())
-
-	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
-		Url:         endpointUrl,
-		HttpMethod:  "POST",
-		Body:        buffer,
-		Method:      constants.GetToken,
-		AccessToken: "",
-		ApiKey:      "",
-		ContentType: "application/x-www-form-urlencoded",
-		ApiVersion:  "",
-	}
-
-	messageLog := fmt.Sprintf("%v %v", "POST", endpointUrl)
-	authenticationObj.log.Debug(messageLog)
-
-	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
-		return technicalError
-	}, authenticationObj.ExponentialBackOff)
-
-	if technicalError != nil {
-		return "", technicalError
-	}
-
-	if businessError != nil {
-		return "", businessError
-	}
-
-	defer func() { _ = body.Close() }()
-	bodyBytes, err := io.ReadAll(body)
-
+	data, err := authenticationObj.GetTokenDetails(endpointUrl, clientId, clientSecret)
 	if err != nil {
 		return "", err
 	}
-
-	responseString := string(bodyBytes)
-
-	var data entities.GetTokenResponse
-
-	err = json.Unmarshal([]byte(responseString), &data)
-	if err != nil {
-		authenticationObj.log.Error(err.Error())
-		return "", err
-	}
-
-	authenticationObj.log.Debug("Successfully retrieved token")
-
 	return data.AccessToken, nil
-
 }
 
 // GetTokenDetails is responsible for getting a token from the PS API and returning
