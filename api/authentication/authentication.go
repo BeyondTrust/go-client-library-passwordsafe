@@ -172,6 +172,70 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 
 }
 
+// GetTokenDetails is responsible for getting a token from the PS API and returning
+// the full token response including expiry information.
+// Unlike GetToken, which returns only the access token string, this method returns
+// the complete entities.GetTokenResponse so callers can use expires_in to calculate
+// exact token expiry without relying on a hard-coded default lifetime.
+func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, clientId string, clientSecret string) (entities.GetTokenResponse, error) {
+
+	params := url.Values{}
+	params.Add("client_id", clientId)
+	params.Add("client_secret", clientSecret)
+	params.Add("grant_type", "client_credentials")
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+
+	var buffer bytes.Buffer
+	buffer.WriteString(params.Encode())
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         endpointUrl,
+		HttpMethod:  "POST",
+		Body:        buffer,
+		Method:      constants.GetToken,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  "",
+	}
+
+	messageLog := fmt.Sprintf("%v %v", "POST", endpointUrl)
+	authenticationObj.log.Debug(messageLog)
+
+	technicalError = backoff.Retry(func() error {
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, authenticationObj.ExponentialBackOff)
+
+	if technicalError != nil {
+		return entities.GetTokenResponse{}, technicalError
+	}
+
+	if businessError != nil {
+		return entities.GetTokenResponse{}, businessError
+	}
+
+	defer func() { _ = body.Close() }()
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return entities.GetTokenResponse{}, err
+	}
+
+	var data entities.GetTokenResponse
+	if err = json.Unmarshal(bodyBytes, &data); err != nil {
+		authenticationObj.log.Error(err.Error())
+		return entities.GetTokenResponse{}, err
+	}
+
+	authenticationObj.log.Debug("Successfully retrieved token details")
+
+	return data, nil
+
+}
+
 // SignAppin is responsible for creating a PS API session.
 func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string, apiKey string) (entities.SignAppinResponse, error) {
 
