@@ -182,58 +182,62 @@ func (client *HttpClientObj) SetApiVersion(url string, apiVersion string) string
 	return url
 }
 
+// resolveContext returns ctx if non-nil, otherwise context.Background().
+func resolveContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.Background()
+	}
+	return ctx
+}
+
+// handleDoError builds the appropriate return values when http.Client.Do returns an error.
+func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.ReadCloser, int, error, error) {
+	client.log.Debug(fmt.Sprintf("%v %v", "Error Making request: ", err.Error()))
+	if resp != nil {
+		return nil, resp.StatusCode, err, nil
+	}
+	return nil, 0, err, nil
+}
+
+// handleResponseStatus inspects resp.StatusCode and returns the appropriate values.
+func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, body bytes.Buffer) (io.ReadCloser, int, error, error) {
+	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
+		err := fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, 0, nil, body)
+		client.log.Error(err.Error())
+		return nil, resp.StatusCode, err, nil
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		respBody := new(bytes.Buffer)
+		_, err := respBody.ReadFrom(resp.Body)
+		if err != nil {
+			client.log.Error(err.Error())
+			return nil, resp.StatusCode, err, nil
+		}
+		return nil, resp.StatusCode, nil, fmt.Errorf("error - status code: %v - %v", resp.StatusCode, respBody)
+	}
+	return resp.Body, resp.StatusCode, nil, nil
+}
+
 // HttpRequest makes http request to the server.
-func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (closer io.ReadCloser, scode int, technicalError error, businessError error) {
-
+func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (io.ReadCloser, int, error, error) {
 	url = client.SetApiVersion(url, apiVersion)
-
 	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
 
-	requestContext := client.Context
-	if requestContext == nil {
-		requestContext = context.Background()
-	}
-
-	req, err := http.NewRequestWithContext(requestContext, method, url, &body)
+	req, err := http.NewRequestWithContext(resolveContext(client.Context), method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil
 	}
 	req.Header = http.Header{"Content-Type": []string{contentType}}
 
-	authorizationHeader := client.GetAuthorizationHeader(accessToken, apiKey)
-
-	if authorizationHeader != "" {
+	if authorizationHeader := client.GetAuthorizationHeader(accessToken, apiKey); authorizationHeader != "" {
 		req.Header.Set("Authorization", authorizationHeader)
 	}
 
 	resp, err := client.HttpClient.Do(req)
 	if err != nil {
-		client.log.Debug(fmt.Sprintf("%v %v", "Error Making request: ", err.Error()))
-		if resp != nil {
-			return nil, resp.StatusCode, err, nil
-		}
-		return nil, 0, err, nil
+		return client.handleDoError(resp, err)
 	}
-
-	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
-		err = fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, scode, err, body)
-		client.log.Error(err.Error())
-		return nil, resp.StatusCode, err, nil
-	}
-
-	if resp.StatusCode >= http.StatusBadRequest {
-		respBody := new(bytes.Buffer)
-		_, err = respBody.ReadFrom(resp.Body)
-		if err != nil {
-			client.log.Error(err.Error())
-			return nil, resp.StatusCode, err, nil
-		}
-
-		err = fmt.Errorf("error - status code: %v - %v", resp.StatusCode, respBody)
-		return nil, resp.StatusCode, nil, err
-	}
-
-	return resp.Body, resp.StatusCode, nil, nil
+	return client.handleResponseStatus(resp, method, body)
 }
 
 // CreateMultipartRequest creates and sends multipart request.

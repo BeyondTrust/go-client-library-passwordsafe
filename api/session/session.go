@@ -45,53 +45,58 @@ type Session struct {
 	log       logging.Logger
 }
 
+// validateSessionParams checks that the required fields in params are valid.
+func validateSessionParams(accessToken string, params Parameters) error {
+	switch {
+	case accessToken == "":
+		return fmt.Errorf("session: accessToken must not be empty")
+	case params.EndpointURL == "":
+		return fmt.Errorf("session: EndpointURL must not be empty")
+	case params.Logger == nil:
+		return fmt.Errorf("session: Logger must not be nil")
+	case params.HTTPClient.HttpClient == nil:
+		return fmt.Errorf("session: HTTPClient.HttpClient must not be nil")
+	case params.MaxFileSecretSizeBytes < 0:
+		return fmt.Errorf("session: MaxFileSecretSizeBytes must be greater than or equal to 0")
+	}
+	return nil
+}
+
+// resolveSessionDefaults fills in zero-value fields in params with sensible defaults.
+func resolveSessionDefaults(params *Parameters) {
+	if params.MaxFileSecretSizeBytes == 0 {
+		params.MaxFileSecretSizeBytes = defaultMaxFileSecretSizeBytes
+	}
+	if params.APIVersion == "" {
+		params.APIVersion = defaultAPIVersion
+	}
+	if params.BackoffDefinition == nil {
+		params.BackoffDefinition = backoff.NewExponentialBackOff()
+		if params.RetryMaxElapsedTimeSeconds > 0 {
+			params.BackoffDefinition.MaxElapsedTime = time.Duration(params.RetryMaxElapsedTimeSeconds) * time.Second
+		}
+	}
+}
+
 // NewSessionFromToken creates a Session by signing in to BeyondTrust
 // PasswordSafe using the provided access token. No OAuth credentials
 // are required; the caller is responsible for supplying a valid,
 // non-expired token.
 func NewSessionFromToken(ctx context.Context, accessToken string, params Parameters) (*Session, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("session: accessToken must not be empty")
-	}
-	if params.EndpointURL == "" {
-		return nil, fmt.Errorf("session: EndpointURL must not be empty")
-	}
-	if params.Logger == nil {
-		return nil, fmt.Errorf("session: Logger must not be nil")
-	}
-	if params.HTTPClient.HttpClient == nil {
-		return nil, fmt.Errorf("session: HTTPClient.HttpClient must not be nil")
-	}
-	if params.MaxFileSecretSizeBytes < 0 {
-		return nil, fmt.Errorf("session: MaxFileSecretSizeBytes must be greater than or equal to 0")
+	if err := validateSessionParams(accessToken, params); err != nil {
+		return nil, err
 	}
 
-	maxFileSize := params.MaxFileSecretSizeBytes
-	if maxFileSize == 0 {
-		maxFileSize = defaultMaxFileSecretSizeBytes
-	}
-
-	apiVersion := params.APIVersion
-	if apiVersion == "" {
-		apiVersion = defaultAPIVersion
-	}
-
-	backoffDefinition := params.BackoffDefinition
-	if backoffDefinition == nil {
-		backoffDefinition = backoff.NewExponentialBackOff()
-		if params.RetryMaxElapsedTimeSeconds > 0 {
-			backoffDefinition.MaxElapsedTime = time.Duration(params.RetryMaxElapsedTimeSeconds) * time.Second
-		}
-	}
+	resolveSessionDefaults(&params)
 
 	httpClient := params.HTTPClient
 	httpClient.Context = ctx
 
 	authObj, err := authentication.Authenticate(authentication.AuthenticationParametersObj{
 		HTTPClient:                 httpClient,
-		BackoffDefinition:          backoffDefinition,
+		BackoffDefinition:          params.BackoffDefinition,
 		EndpointURL:                params.EndpointURL,
-		APIVersion:                 apiVersion,
+		APIVersion:                 params.APIVersion,
 		ClientID:                   "",
 		ClientSecret:               "",
 		ApiKey:                     "",
@@ -108,7 +113,7 @@ func NewSessionFromToken(ctx context.Context, accessToken string, params Paramet
 		return nil, fmt.Errorf("session: SignAppin failed: %w", err)
 	}
 
-	secretObj, err := secrets.NewSecretObj(*authObj, params.Logger, maxFileSize, params.DecryptSecrets)
+	secretObj, err := secrets.NewSecretObj(*authObj, params.Logger, params.MaxFileSecretSizeBytes, params.DecryptSecrets)
 	if err != nil {
 		return nil, fmt.Errorf("session: failed to create SecretObj: %w", err)
 	}
