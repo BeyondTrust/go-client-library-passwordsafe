@@ -85,8 +85,8 @@ if workGroupId == "" {
 
 - Unit tests live in `_test.go` files within the same package (white-box testing).
 - Use `net/http/httptest` to mock HTTP endpoints; never make real network calls in unit tests.
-- Test configuration is initialised in a shared `InitializeGlobalConfig()` helper called at the start of each test.
-- Use `github.com/stretchr/testify` for assertions.
+- Prefer initialising test configuration via a shared `InitializeGlobalConfig()` helper called at the start of each test suite; per-package helpers are acceptable where a shared helper is not yet available.
+- Prefer `github.com/stretchr/testify` for assertions in new or updated tests; Go's standard library `testing` helpers may remain in existing tests.
 - Test environment values (URLs, credentials) are read from environment variables defined in `api/constants/constants.go` (e.g., `constants.FakeApiUrl`).
 - Fuzz tests live under `fuzzing/<domain>/` and must not share a package with unit tests.
 
