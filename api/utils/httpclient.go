@@ -202,13 +202,15 @@ func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.R
 // handleResponseStatus inspects resp.StatusCode and returns the appropriate values.
 func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, body bytes.Buffer) (io.ReadCloser, int, error, error) {
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
-		err := fmt.Errorf("error %v: StatusCode: %v, %v, %v", method, 0, nil, body)
+		_ = resp.Body.Close()
+		err := fmt.Errorf("error %s: StatusCode: %d, Status: %s, Body: %s", method, resp.StatusCode, resp.Status, body.String())
 		client.log.Error(err.Error())
 		return nil, resp.StatusCode, err, nil
 	}
 	if resp.StatusCode >= http.StatusBadRequest {
 		respBody := new(bytes.Buffer)
 		_, err := respBody.ReadFrom(resp.Body)
+		_ = resp.Body.Close()
 		if err != nil {
 			client.log.Error(err.Error())
 			return nil, resp.StatusCode, err, nil
