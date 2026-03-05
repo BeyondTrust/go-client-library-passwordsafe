@@ -100,6 +100,45 @@ func TestNewSessionFromToken_NilLogger(t *testing.T) {
 	}
 }
 
+func TestNewSessionFromToken_NilUnderlyingHTTPClient(t *testing.T) {
+	logger := testLogger(t)
+
+	_, err := NewSessionFromToken(context.Background(), "token", Parameters{
+		EndpointURL:       "http://example.com",
+		HTTPClient:        utils.HttpClientObj{},
+		BackoffDefinition: testBackoff(),
+		Logger:            logger,
+	})
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "HTTPClient.HttpClient must not be nil") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestNewSessionFromToken_NegativeMaxFileSecretSizeBytes(t *testing.T) {
+	logger := testLogger(t)
+
+	_, err := NewSessionFromToken(context.Background(), "token", Parameters{
+		EndpointURL:            "http://example.com",
+		HTTPClient:             testHTTPClient(t, logger),
+		BackoffDefinition:      testBackoff(),
+		Logger:                 logger,
+		MaxFileSecretSizeBytes: -1,
+	})
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "MaxFileSecretSizeBytes must be greater than or equal to 0") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestNewSessionFromToken_SignAppinFailure(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -407,5 +446,72 @@ func TestNewSessionFromToken_DefaultAPIVersion(t *testing.T) {
 
 	if sessionObj.authObj.ApiVersion != "3.0" {
 		t.Fatalf("unexpected api version: %v", sessionObj.authObj.ApiVersion)
+	}
+}
+
+func TestNewSessionFromToken_NilBackoffUsesDefault(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/Auth/SignAppIn":
+			_, _ = w.Write([]byte(`{"UserId":1,"EmailAddress":"test@beyondtrust.com"}`))
+		case "/Auth/Signout":
+			_, _ = w.Write([]byte(``))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	logger := testLogger(t)
+
+	sessionObj, err := NewSessionFromToken(context.Background(), "token", Parameters{
+		EndpointURL:                server.URL + "/",
+		HTTPClient:                 testHTTPClient(t, logger),
+		BackoffDefinition:          nil,
+		Logger:                     logger,
+		APIVersion:                 "3.1",
+		RetryMaxElapsedTimeSeconds: 1,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	defer func() { _ = sessionObj.Close() }()
+
+	if sessionObj.authObj.ExponentialBackOff == nil {
+		t.Fatal("expected non-nil backoff definition")
+	}
+}
+
+func TestNewSessionFromToken_ContextCanceled(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/Auth/SignAppIn":
+			time.Sleep(50 * time.Millisecond)
+			_, _ = w.Write([]byte(`{"UserId":1,"EmailAddress":"test@beyondtrust.com"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	logger := testLogger(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := NewSessionFromToken(ctx, "token", Parameters{
+		EndpointURL:       server.URL + "/",
+		HTTPClient:        testHTTPClient(t, logger),
+		BackoffDefinition: testBackoff(),
+		Logger:            logger,
+		APIVersion:        "3.1",
+	})
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "context canceled") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

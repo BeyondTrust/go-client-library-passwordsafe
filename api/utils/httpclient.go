@@ -4,6 +4,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/pem"
 	"errors"
@@ -29,6 +30,7 @@ import (
 // HttpClientObj responsible for http request instance.
 type HttpClientObj struct {
 	HttpClient *http.Client
+	Context    context.Context
 	log        logging.Logger
 }
 
@@ -187,7 +189,12 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
 
-	req, err := http.NewRequest(method, url, &body)
+	requestContext := client.Context
+	if requestContext == nil {
+		requestContext = context.Background()
+	}
+
+	req, err := http.NewRequestWithContext(requestContext, method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil
 	}

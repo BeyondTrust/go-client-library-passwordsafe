@@ -6,6 +6,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/logging"
@@ -49,8 +50,6 @@ type Session struct {
 // are required; the caller is responsible for supplying a valid,
 // non-expired token.
 func NewSessionFromToken(ctx context.Context, accessToken string, params Parameters) (*Session, error) {
-	_ = ctx
-
 	if accessToken == "" {
 		return nil, fmt.Errorf("session: accessToken must not be empty")
 	}
@@ -59,6 +58,12 @@ func NewSessionFromToken(ctx context.Context, accessToken string, params Paramet
 	}
 	if params.Logger == nil {
 		return nil, fmt.Errorf("session: Logger must not be nil")
+	}
+	if params.HTTPClient.HttpClient == nil {
+		return nil, fmt.Errorf("session: HTTPClient.HttpClient must not be nil")
+	}
+	if params.MaxFileSecretSizeBytes < 0 {
+		return nil, fmt.Errorf("session: MaxFileSecretSizeBytes must be greater than or equal to 0")
 	}
 
 	maxFileSize := params.MaxFileSecretSizeBytes
@@ -71,9 +76,20 @@ func NewSessionFromToken(ctx context.Context, accessToken string, params Paramet
 		apiVersion = defaultAPIVersion
 	}
 
+	backoffDefinition := params.BackoffDefinition
+	if backoffDefinition == nil {
+		backoffDefinition = backoff.NewExponentialBackOff()
+		if params.RetryMaxElapsedTimeSeconds > 0 {
+			backoffDefinition.MaxElapsedTime = time.Duration(params.RetryMaxElapsedTimeSeconds) * time.Second
+		}
+	}
+
+	httpClient := params.HTTPClient
+	httpClient.Context = ctx
+
 	authObj, err := authentication.Authenticate(authentication.AuthenticationParametersObj{
-		HTTPClient:                 params.HTTPClient,
-		BackoffDefinition:          params.BackoffDefinition,
+		HTTPClient:                 httpClient,
+		BackoffDefinition:          backoffDefinition,
 		EndpointURL:                params.EndpointURL,
 		APIVersion:                 apiVersion,
 		ClientID:                   "",
