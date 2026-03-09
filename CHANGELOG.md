@@ -1,5 +1,11 @@
 # Changelog
 
+### [1.2.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.1.0...v1.2.0) / 2026-03-06
+
+#### Features
+
+* [BIPS-33395] add session management using access token ([#294](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/294))
+
 ### [1.1.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.0.0...v1.1.0) / 2026-02-23
 
 #### Features
