@@ -1,5 +1,11 @@
 # Changelog
 
+### [1.2.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.2.0...v1.2.1) / 2026-03-19
+
+#### Bug Fixes
+
+* update Go version to 1.26.1 in go.mod ([#296](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/296))
+
 ### [1.2.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.1.0...v1.2.0) / 2026-03-06
 
 #### Features
