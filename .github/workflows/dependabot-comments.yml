@@ -7,22 +7,11 @@ on:
 permissions: {}
 
 jobs:
-  release:
-    name: Release run
-    if: startsWith(github.head_ref, 'dependabot/')
-    permissions:
-      contents: read
-      id-token: write
-      pull-requests: write
-    secrets: inherit
-    uses: ./.github/workflows/release.yml
-
   pr_runs:
     name: PR's workflow runs
     if: ${{ always() && startsWith(github.head_ref, 'dependabot/') }}
-    needs: release
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       pull-requests: read
       actions: read
     outputs:
@@ -31,7 +20,7 @@ jobs:
     steps:
       - name: Wait for workflows to finish
         run: sleep 210s
-        
+
       - name: Get runs
         id: runs
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
@@ -51,7 +40,7 @@ jobs:
             pr.data.forEach(element => {
               if (element.number === context.issue.number) {
                 head_sha = element.head.sha;
-              }  
+              }
             });
             const workflow = await github.request('GET /repos/{owner}/{repo}/actions/runs', {
               owner: context.repo.owner,
@@ -75,10 +64,10 @@ jobs:
             });
             core.setOutput("results", results);
             core.setOutput("pr_sha", head_sha);
-    
+
   verifier:
     name: Comment for Dependabot PR
-    needs: [release, pr_runs]
+    needs: pr_runs
     runs-on: ubuntu-latest
     if: ${{ always() && startsWith(github.head_ref, 'dependabot/') }}
     permissions:
@@ -92,35 +81,18 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
-      
+
       - name: Make comment
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
-            var release_url;
             var output;
-            var release_result = '${{ needs.release.result }}';
             var pr_runs_result = ${{ needs.pr_runs.outputs.results }};
-            const workflow = await github.request('GET /repos/{owner}/{repo}/actions/runs', {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head_sha: '${{ needs.pr_runs.outputs.pr_sha }}'
-            });
-            workflow.data.workflow_runs.forEach(element => {
-              if (element.name === 'Dependabot comment') {
-                release_url = element.html_url;
-              }
-            });
-            if (release_result === 'success' &&
-                pr_runs_result.cifuzz.conclusion === 'success' &&
+            if (pr_runs_result.cifuzz.conclusion === 'success' &&
                 pr_runs_result.coverage.conclusion === 'success' &&
                 pr_runs_result.linter.conclusion === 'success' &&
                 pr_runs_result.scorecard.conclusion === 'success') {
               output = `## Dependabot PR Readiness Checked
-
-              Release Workflow **${{ needs.release.result }}**
-              - Build **success**
-              - Unit testing **success**
 
               CIFuzz Workflow **${pr_runs_result.cifuzz.conclusion}**
               - Fuzzing tests **success**
@@ -139,13 +111,13 @@ jobs:
               ## Ready to Merge
               `;
             } else {
-              let names = ['Release','CIFuzz','Coverage report','Frogbot','Linter','Scorecard analysis'];
-              let conclusions = [ release_result,
+              let names = ['CIFuzz','Coverage report','Linter','Scorecard analysis'];
+              let conclusions = [
                 pr_runs_result.cifuzz.conclusion,
                 pr_runs_result.coverage.conclusion,
                 pr_runs_result.linter.conclusion,
                 pr_runs_result.scorecard.conclusion];
-              let urls = [release_url,
+              let urls = [
                 pr_runs_result.cifuzz.url,
                 pr_runs_result.coverage.url,
                 pr_runs_result.linter.url,
@@ -160,13 +132,13 @@ jobs:
               }
 
               output+='\n## Please DevOps or Development teams take a look at the possible issues.';
-            
-            } 
+
+            }
             const fs = require('fs');
             fs.writeFile('message.txt', output, (err) => {
               if (err) throw err;
             });
-                        
+
       - name: Post Comment
         uses: mshick/add-pr-comment@b8f338c590a895d50bcbfa6c5859251edc8952fc # v2.8.2
         with:

@@ -1,0 +1,14 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "version.txt"
+        }
+      ]
+    }
+  },
+  "always-update": true
+}
