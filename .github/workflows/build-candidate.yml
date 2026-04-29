@@ -13,17 +13,24 @@ concurrency:
 
 jobs:
   build-service:
-    # if: ${{ github.actor == 'beyondtrust-release-app[bot]' }}
+    if: ${{ github.actor == 'beyondtrust-release-app[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
+      id-token: write
       security-events: write
     env:
-      JF_ENV_1: ${{ secrets.ARTIFACTORY_DEPLOYER }}
+      JFROG_CLI_LOG_LEVEL: "DEBUG"
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Go
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
+          check-latest: true
 
       - name: Generate App token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
@@ -44,12 +51,8 @@ jobs:
       - name: Setup JFrog
         uses: ./.github/actions/setup-jfrog-cli
         id: configure
-
-      - name: Setup Go
-        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version-file: go.mod
-          check-latest: true
+          oidc-provider-name: "go-client-library-passwordsafe"
 
       - name: Retrieve version
         id: info
@@ -58,6 +61,7 @@ jobs:
 
       - name: Build library
         run: |
+          jf go-config --global --repo-resolve go --repo-deploy eng-go-qa-local
           jf go mod download
           jf go mod tidy
           go build
@@ -75,7 +79,7 @@ jobs:
 
       - name: Publish to JFrog
         run: |
-          jf go-publish eng-go-qa-local ${{ steps.info.outputs.version }}
+          jf go-publish v${{ steps.info.outputs.version }}
 
       - name: Create JFrog Release Bundle
         id: release-bundle
