@@ -54,6 +54,7 @@ jobs:
 
       - name: Build library
         run: |
+          jf go-config --global --repo-resolve go --repo-deploy eng-go-qa-local
           jf go mod download
           jf go mod tidy
           go build
