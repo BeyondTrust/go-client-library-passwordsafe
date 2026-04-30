@@ -70,7 +70,7 @@ jobs:
               '.release_bundles[] | select(.release_bundle_version | startswith($version)) | .release_bundle_version' \
             | head -n 1)
 
-          jf rbp --signing-key="${{ steps.setup-jfrog.outputs.evidence-signing-key-name }}" \
+          jf rbp --signing-key="${{ steps.configure.outputs.evidence-signing-key-name }}" \
             "$RELEASE_BUNDLE_NAME" "$RELEASE_BUNDLE_VERSION" "PROD"
 
   publish-pkg-go-dev:

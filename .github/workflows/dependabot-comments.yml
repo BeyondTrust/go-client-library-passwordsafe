@@ -48,7 +48,7 @@ jobs:
               head_sha: head_sha
             });
             workflow.data.workflow_runs.forEach(element => {
-              if (element.name === 'CIFuzz') {
+              if (element.name === 'Fuzzing Testing') {
                 results.cifuzz.conclusion = element.conclusion;
                 results.cifuzz.url = element.html_url;
               } else if (element.name === 'Code coverage report on PR') {
