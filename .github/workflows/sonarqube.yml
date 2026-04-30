@@ -16,6 +16,7 @@ jobs:
     permissions:
       actions: write
       contents: read
+      id-token: write
     env:
       JFROG_CLI_LOG_LEVEL: "DEBUG"
     steps:
@@ -84,7 +85,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-      id-token: write
       pull-requests: write
     steps:
       - name: Checkout code
