@@ -2,7 +2,8 @@ name: SonarQube Analysis
 
 on:
   pull_request:
-    branches: [main]
+    branches: 
+      - main
   push:
     branches:
       - main
@@ -82,7 +83,6 @@ jobs:
     needs: [unit-testing]
     runs-on: ubuntu-latest
     permissions:
-      actions: write
       contents: read
       pull-requests: write
     steps:
@@ -91,34 +91,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate App token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
-        id: app-token
-        with:
-          app-id: ${{ vars.GH_APP_BT_ACTIONS_READER_APP_ID }}
-          private-key: ${{ secrets.GH_APP_BT_ACTIONS_READER_PEM }}
-          owner: BeyondTrust
-
-      - name: Checkout sonarqube action
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: BeyondTrust/workflows
-          ref: 51e9f52f8446a28edae9c7277ce1a612b86570ea # v4.13.1
-          token: ${{ steps.app-token.outputs.token }}
-          path: ./.github/actions/sonarqube
-
       - name: Download coverage
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: coverage-report
 
-      - name: SonarQube Scan
-        uses: ./.github/actions/sonarqube
+      - name: SonarQube Scan on PR
+        if: github.event_name == 'pull_request'
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
-          coverage_artifact: coverage-report
-          coverage_artifact_path: .
-          required_coverage_files: coverage.out
-          extra_flags: >-
+          args: >
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.pullrequest.key=${{ github.event.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
+
+      - name: SonarQube Scan on Branch
+        if: github.event_name == 'push'
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
+        with:
+          args: >
+            -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.branch.name=${{ github.ref_name }}
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
         env:
