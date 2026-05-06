@@ -112,11 +112,21 @@ type FolderResponse struct {
 	Description string
 }
 
+// SecretListResponse is the v3.2+ wrapper shape returned by GET secrets-safe/secrets
+// (and the path-lookup variant). v3.0/v3.1 return a bare array instead — the library
+// normalizes both shapes through decodeSecretListResponse.
+type SecretListResponse struct {
+	TotalCount int      `json:"TotalCount"`
+	Data       []Secret `json:"Data"`
+}
+
 type CreateSecretResponse struct {
 	Id          string
 	Title       string
 	Description string
 	FolderId    string
+	// SecretValueModifiedOn is populated by API v3.2+ responses; empty on v3.0/v3.1.
+	SecretValueModifiedOn string `json:",omitempty"`
 }
 
 type SecretCredentialDetailsConfig30 struct {
@@ -130,6 +140,16 @@ type SecretCredentialDetailsConfig30 struct {
 }
 
 type SecretCredentialDetailsConfig31 struct {
+	SecretDetailsBaseConfig
+	Username       string                `json:",omitempty" validate:"required"`
+	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
+	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
+}
+
+// SecretCredentialDetailsConfig32 is the v3.2 credential request payload.
+// Per the API spec the request shape is identical to v3.1; v3.2 only enriches the response.
+type SecretCredentialDetailsConfig32 struct {
 	SecretDetailsBaseConfig
 	Username       string                `json:",omitempty" validate:"required"`
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
@@ -160,6 +180,15 @@ type SecretTextDetailsConfig31 struct {
 	FolderId uuid.UUID             `json:",omitempty" validate:"omitempty"`
 }
 
+// SecretTextDetailsConfig32 is the v3.2 text-secret request payload.
+// Per the API spec the request shape is identical to v3.1; v3.2 only enriches the response.
+type SecretTextDetailsConfig32 struct {
+	SecretDetailsBaseConfig
+	Text     string                `json:",omitempty" validate:"required,max=4096"`
+	Owners   []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
+	FolderId uuid.UUID             `json:",omitempty" validate:"omitempty"`
+}
+
 type SecretFileDetailsConfig30 struct {
 	SecretDetailsBaseConfig
 	OwnerId     int                   `json:",omitempty" validate:"required_if=OwnerType Group"`
@@ -174,6 +203,50 @@ type SecretFileDetailsConfig31 struct {
 	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	FileName    string                `json:",omitempty" validate:"required,max=256"`
 	FileContent string                `json:",omitempty" validate:"required,max=5000000"`
+}
+
+// SecretFileDetailsConfig32 is the v3.2 file-secret request payload.
+// Per the API spec the request shape is identical to v3.1; v3.2 only enriches the response.
+type SecretFileDetailsConfig32 struct {
+	SecretDetailsBaseConfig
+	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
+	FileName    string                `json:",omitempty" validate:"required,max=256"`
+	FileContent string                `json:",omitempty" validate:"required,max=5000000"`
+}
+
+// SecretCredentialInput is a version-neutral input for creating credential secrets.
+// CreateSecretFlow selects Config30 or Config31 based on the authenticated API version.
+type SecretCredentialInput struct {
+	SecretDetailsBaseConfig
+	Username        string
+	Password        string
+	OwnerId         int
+	OwnerType       string
+	OwnersByOwnerId []OwnerDetailsOwnerId
+	OwnersByGroupId []OwnerDetailsGroupId
+}
+
+// SecretTextInput is a version-neutral input for creating text secrets.
+// CreateSecretFlow selects Config30 or Config31 based on the authenticated API version.
+type SecretTextInput struct {
+	SecretDetailsBaseConfig
+	Text            string
+	OwnerId         int
+	OwnerType       string
+	OwnersByOwnerId []OwnerDetailsOwnerId
+	OwnersByGroupId []OwnerDetailsGroupId
+}
+
+// SecretFileInput is a version-neutral input for creating file secrets.
+// CreateSecretFlow selects Config30 or Config31 based on the authenticated API version.
+type SecretFileInput struct {
+	SecretDetailsBaseConfig
+	FileName        string
+	FileContent     string
+	OwnerId         int
+	OwnerType       string
+	OwnersByOwnerId []OwnerDetailsOwnerId
+	OwnersByGroupId []OwnerDetailsGroupId
 }
 
 type OwnerDetailsOwnerId struct {

@@ -1845,3 +1845,391 @@ func TestSearchSecretByTitleFlowSecretNotFound(t *testing.T) {
 		t.Error("Test case Failed: Expected error for 404 response")
 	}
 }
+
+// TestBuildCredentialSecretConfig covers the per-version dispatch in the credential build helper.
+func TestBuildCredentialSecretConfig(t *testing.T) {
+	in := entities.SecretCredentialInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T", Description: "D", Notes: "N"},
+		Username:                "u",
+		Password:                "p",
+		OwnerId:                 1,
+		OwnerType:               "User",
+		OwnersByOwnerId:         []entities.OwnerDetailsOwnerId{{OwnerId: 1, Owner: "a", Email: "x@y"}},
+		OwnersByGroupId:         []entities.OwnerDetailsGroupId{{GroupId: 7, UserId: 1, Name: "a", Email: "x@y"}},
+	}
+
+	t.Run("v3.0 returns Config30 with OwnersByOwnerId", func(t *testing.T) {
+		got, err := buildCredentialSecretConfig(in, "3.0")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cfg, ok := got.(entities.SecretCredentialDetailsConfig30)
+		if !ok {
+			t.Fatalf("expected SecretCredentialDetailsConfig30, got %T", got)
+		}
+		if cfg.Username != "u" || cfg.Password != "p" || cfg.OwnerId != 1 || cfg.OwnerType != "User" {
+			t.Errorf("fields not mapped: %+v", cfg)
+		}
+		if len(cfg.Owners) != 1 || cfg.Owners[0].Owner != "a" {
+			t.Errorf("expected OwnersByOwnerId, got %+v", cfg.Owners)
+		}
+	})
+
+	t.Run("v3.1 returns Config31 with OwnersByGroupId", func(t *testing.T) {
+		got, err := buildCredentialSecretConfig(in, "3.1")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cfg, ok := got.(entities.SecretCredentialDetailsConfig31)
+		if !ok {
+			t.Fatalf("expected SecretCredentialDetailsConfig31, got %T", got)
+		}
+		if cfg.Username != "u" || cfg.Password != "p" {
+			t.Errorf("fields not mapped: %+v", cfg)
+		}
+		if len(cfg.Owners) != 1 || cfg.Owners[0].GroupId != 7 {
+			t.Errorf("expected OwnersByGroupId, got %+v", cfg.Owners)
+		}
+	})
+
+	t.Run("v3.2 returns Config32 with OwnersByGroupId", func(t *testing.T) {
+		got, err := buildCredentialSecretConfig(in, "3.2")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cfg, ok := got.(entities.SecretCredentialDetailsConfig32)
+		if !ok {
+			t.Fatalf("expected SecretCredentialDetailsConfig32, got %T", got)
+		}
+		if cfg.Username != "u" || cfg.Password != "p" {
+			t.Errorf("fields not mapped: %+v", cfg)
+		}
+		if len(cfg.Owners) != 1 || cfg.Owners[0].GroupId != 7 {
+			t.Errorf("expected OwnersByGroupId, got %+v", cfg.Owners)
+		}
+	})
+
+	t.Run("unsupported version returns error", func(t *testing.T) {
+		_, err := buildCredentialSecretConfig(in, "9.9")
+		if err == nil || !strings.Contains(err.Error(), "unsupported API version") {
+			t.Errorf("expected unsupported API version error, got %v", err)
+		}
+	})
+}
+
+// TestBuildTextSecretConfig covers the per-version dispatch in the text build helper.
+func TestBuildTextSecretConfig(t *testing.T) {
+	in := entities.SecretTextInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Text:                    "secret-text",
+		OwnerId:                 1,
+		OwnerType:               "User",
+		OwnersByOwnerId:         []entities.OwnerDetailsOwnerId{{OwnerId: 1, Owner: "a", Email: "x@y"}},
+		OwnersByGroupId:         []entities.OwnerDetailsGroupId{{GroupId: 7, UserId: 1, Name: "a", Email: "x@y"}},
+	}
+
+	t.Run("v3.0 returns Config30", func(t *testing.T) {
+		got, err := buildTextSecretConfig(in, "3.0")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cfg, ok := got.(entities.SecretTextDetailsConfig30)
+		if !ok {
+			t.Fatalf("expected SecretTextDetailsConfig30, got %T", got)
+		}
+		if cfg.Text != "secret-text" || cfg.OwnerId != 1 || cfg.OwnerType != "User" {
+			t.Errorf("fields not mapped: %+v", cfg)
+		}
+	})
+
+	t.Run("v3.1 returns Config31", func(t *testing.T) {
+		got, err := buildTextSecretConfig(in, "3.1")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if _, ok := got.(entities.SecretTextDetailsConfig31); !ok {
+			t.Fatalf("expected SecretTextDetailsConfig31, got %T", got)
+		}
+	})
+
+	t.Run("v3.2 returns Config32", func(t *testing.T) {
+		got, err := buildTextSecretConfig(in, "3.2")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if _, ok := got.(entities.SecretTextDetailsConfig32); !ok {
+			t.Fatalf("expected SecretTextDetailsConfig32, got %T", got)
+		}
+	})
+
+	t.Run("unsupported version returns error", func(t *testing.T) {
+		_, err := buildTextSecretConfig(in, "9.9")
+		if err == nil || !strings.Contains(err.Error(), "unsupported API version") {
+			t.Errorf("expected unsupported API version error, got %v", err)
+		}
+	})
+}
+
+// TestBuildFileSecretConfig covers the per-version dispatch in the file build helper.
+func TestBuildFileSecretConfig(t *testing.T) {
+	in := entities.SecretFileInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		FileName:                "config.json",
+		FileContent:             "file-content",
+		OwnerId:                 1,
+		OwnerType:               "User",
+		OwnersByOwnerId:         []entities.OwnerDetailsOwnerId{{OwnerId: 1, Owner: "a", Email: "x@y"}},
+		OwnersByGroupId:         []entities.OwnerDetailsGroupId{{GroupId: 7, UserId: 1, Name: "a", Email: "x@y"}},
+	}
+
+	t.Run("v3.0 returns Config30", func(t *testing.T) {
+		got, err := buildFileSecretConfig(in, "3.0")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		cfg, ok := got.(entities.SecretFileDetailsConfig30)
+		if !ok {
+			t.Fatalf("expected SecretFileDetailsConfig30, got %T", got)
+		}
+		if cfg.FileName != "config.json" || cfg.FileContent != "file-content" {
+			t.Errorf("fields not mapped: %+v", cfg)
+		}
+	})
+
+	t.Run("v3.1 returns Config31", func(t *testing.T) {
+		got, err := buildFileSecretConfig(in, "3.1")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if _, ok := got.(entities.SecretFileDetailsConfig31); !ok {
+			t.Fatalf("expected SecretFileDetailsConfig31, got %T", got)
+		}
+	})
+
+	t.Run("v3.2 returns Config32", func(t *testing.T) {
+		got, err := buildFileSecretConfig(in, "3.2")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if _, ok := got.(entities.SecretFileDetailsConfig32); !ok {
+			t.Fatalf("expected SecretFileDetailsConfig32, got %T", got)
+		}
+	})
+
+	t.Run("unsupported version returns error", func(t *testing.T) {
+		_, err := buildFileSecretConfig(in, "9.9")
+		if err == nil || !strings.Contains(err.Error(), "unsupported API version") {
+			t.Errorf("expected unsupported API version error, got %v", err)
+		}
+	})
+}
+
+// TestDecodeSecretListResponse covers normalization of v3.0/v3.1 array and v3.2 wrapper shapes.
+func TestDecodeSecretListResponse(t *testing.T) {
+	cases := []struct {
+		name      string
+		body      string
+		wantLen   int
+		wantTitle string
+		wantErr   bool
+	}{
+		{
+			name:      "v3.0/v3.1 bare array with one item",
+			body:      `[{"Id":"id-1","Title":"T1"}]`,
+			wantLen:   1,
+			wantTitle: "T1",
+		},
+		{
+			name:    "empty array",
+			body:    `[]`,
+			wantLen: 0,
+		},
+		{
+			name:      "v3.2 wrapped object with one item",
+			body:      `{"TotalCount":1,"Data":[{"Id":"id-1","Title":"T2"}]}`,
+			wantLen:   1,
+			wantTitle: "T2",
+		},
+		{
+			name:    "v3.2 wrapped object with empty Data",
+			body:    `{"TotalCount":0,"Data":[]}`,
+			wantLen: 0,
+		},
+		{
+			name:    "leading whitespace before array still parses",
+			body:    "   \n[{\"Id\":\"id-1\",\"Title\":\"T1\"}]",
+			wantLen: 1,
+		},
+		{
+			name:    "invalid JSON returns error",
+			body:    `not json`,
+			wantErr: true,
+		},
+	}
+	for _, c := range cases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			got, err := decodeSecretListResponse([]byte(c.body))
+			if c.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(got) != c.wantLen {
+				t.Fatalf("got %d items, want %d", len(got), c.wantLen)
+			}
+			if c.wantTitle != "" && got[0].Title != c.wantTitle {
+				t.Errorf("got Title=%q, want %q", got[0].Title, c.wantTitle)
+			}
+		})
+	}
+}
+
+// TestCreateSecretFlowWithNeutralInputs verifies CreateSecretFlow accepts the new
+// version-neutral inputs and dispatches correctly across v3.0/v3.1/v3.2.
+func TestCreateSecretFlowWithNeutralInputs(t *testing.T) {
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/secrets-safe/folders/":
+			_, _ = w.Write([]byte(`[{"Id":"folder-id","Name":"folder1"}]`))
+		case "/secrets-safe/folders/folder-id/secrets",
+			"/secrets-safe/folders/folder-id/secrets/text",
+			"/secrets-safe/folders/folder-id/secrets/file":
+			_, _ = w.Write([]byte(`{"Id":"new-secret-id","Title":"T","Description":"D"}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
+
+	base := entities.SecretDetailsBaseConfig{Title: "T", Description: "D"}
+	ownerById := []entities.OwnerDetailsOwnerId{{OwnerId: 1, Owner: "a", Email: "x@y"}}
+	ownerByGroup := []entities.OwnerDetailsGroupId{{GroupId: 7, UserId: 1, Name: "a", Email: "x@y"}}
+
+	for _, v := range []string{"3.0", "3.1", "3.2"} {
+		v := v
+		secretObj.authenticationObj.ApiVersion = v
+
+		t.Run("credential v"+v, func(t *testing.T) {
+			in := entities.SecretCredentialInput{
+				SecretDetailsBaseConfig: base,
+				Username:                "u",
+				Password:                "p",
+				OwnerId:                 1,
+				OwnerType:               "User",
+				OwnersByOwnerId:         ownerById,
+				OwnersByGroupId:         ownerByGroup,
+			}
+			resp, err := secretObj.CreateSecretFlow("folder1", in)
+			if err != nil {
+				t.Fatalf("CreateSecretFlow error for v%s: %v", v, err)
+			}
+			if resp.Id != "new-secret-id" {
+				t.Errorf("expected new-secret-id, got %+v", resp)
+			}
+		})
+
+		t.Run("text v"+v, func(t *testing.T) {
+			in := entities.SecretTextInput{
+				SecretDetailsBaseConfig: base,
+				Text:                    "secret-text",
+				OwnerId:                 1,
+				OwnerType:               "User",
+				OwnersByOwnerId:         ownerById,
+				OwnersByGroupId:         ownerByGroup,
+			}
+			resp, err := secretObj.CreateSecretFlow("folder1", in)
+			if err != nil {
+				t.Fatalf("CreateSecretFlow error for v%s: %v", v, err)
+			}
+			if resp.Id != "new-secret-id" {
+				t.Errorf("expected new-secret-id, got %+v", resp)
+			}
+		})
+	}
+}
+
+// TestCreateSecretFlowUnsupportedVersionRejected verifies an unsupported API version
+// surfaces the centralized error.
+func TestCreateSecretFlowUnsupportedVersionRejected(t *testing.T) {
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
+	secretObj.authenticationObj.ApiVersion = "9.9"
+
+	in := entities.SecretCredentialInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                "u",
+		Password:                "p",
+	}
+	_, err := secretObj.CreateSecretFlow("folder1", in)
+	if err == nil || !strings.Contains(err.Error(), "unsupported API version") {
+		t.Fatalf("expected unsupported API version error, got %v", err)
+	}
+}
+
+// TestSearchSecretByTitleFlowWithV32WrappedResponse verifies decodeSecretListResponse
+// is wired into SearchSecretByTitle and unwraps the v3.2 envelope transparently.
+func TestSearchSecretByTitleFlowWithV32WrappedResponse(t *testing.T) {
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(`{"TotalCount":1,"Data":[{"Password":"secret_password","Id":"9152f5b6-07d6-4955-175a-08db047219ce","Title":"secret_title"}]}`))
+		if err != nil {
+			t.Error("Test case Failed")
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
+
+	response, err := secretObj.SearchSecretByTitleFlow("secret_title")
+	if err != nil {
+		t.Fatalf("Test case Failed: %v", err)
+	}
+	if response.Id != "9152f5b6-07d6-4955-175a-08db047219ce" || response.Title != "secret_title" {
+		t.Errorf("Test case Failed: got %+v", response)
+	}
+}
+
+// TestSecretGetSecretByPathWithV32WrappedResponse verifies the path-lookup variant
+// also accepts the v3.2 wrapped response.
+func TestSecretGetSecretByPathWithV32WrappedResponse(t *testing.T) {
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(`{"TotalCount":1,"Data":[{"SecretType":"TEXT","Password":"secret_password","Id":"id-1","Title":"fake_title"}]}`))
+		if err != nil {
+			t.Error("Test case Failed")
+		}
+	}))
+	defer server.Close()
+
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
+
+	response, err := secretObj.SecretGetSecretByPath("path1/path2/", "fake_title", "/", "secrets-safe/secrets")
+	if err != nil {
+		t.Fatalf("Test case Failed: %v", err)
+	}
+	if response.Id != "id-1" || response.Title != "fake_title" {
+		t.Errorf("Test case Failed: got %+v", response)
+	}
+}
