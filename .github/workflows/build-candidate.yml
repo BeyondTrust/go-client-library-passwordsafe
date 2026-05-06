@@ -1,0 +1,127 @@
+name: "Build artifacts before release"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-service:
+    if: ${{ github.actor == 'beyondtrust-release-app[bot]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Go
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Generate App token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_BT_ACTIONS_READER_APP_ID }}
+          private-key: ${{ secrets.GH_APP_BT_ACTIONS_READER_PEM }}
+          owner: BeyondTrust
+
+      - name: Checkout setup-jfrog-cli action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: "BeyondTrust/setup-jfrog-cli"
+          ref: "26d84636538c322aed2f822374a0b976b23caa81" # v2.4.3
+          token: ${{ steps.app-token.outputs.token }}
+          path: ./.github/actions/setup-jfrog-cli
+
+      - name: Setup JFrog
+        uses: ./.github/actions/setup-jfrog-cli
+        id: configure
+        with:
+          oidc-provider-name: "go-client-library-passwordsafe"
+
+      - name: Retrieve version
+        id: info
+        run: |
+          echo "version=$(grep -oP '[\d]+\.[\d]+\.[\d]+' version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Build library
+        run: |
+          jf go-config --global --repo-resolve go --repo-deploy eng-go-qa-local
+          jf go mod download
+          jf go mod tidy
+          go build
+
+      - name: Checkout dependency-vulnerability-scan action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: "BeyondTrust/dependency-vulnerability-scan"
+          ref: "f263be345e51426f77ca2a8fc73c8b481d3e5062" # v3.0.9
+          token: ${{ steps.app-token.outputs.token }}
+          path: ./.github/actions/dependency-vulnerability-scan
+
+      - name: Scan dependencies
+        uses: ./.github/actions/dependency-vulnerability-scan
+
+      - name: Publish to JFrog
+        run: |
+          jf go-publish v${{ steps.info.outputs.version }}
+
+      - name: Create JFrog Release Bundle
+        id: release-bundle
+        shell: bash
+        run: |
+          cat > /tmp/go_spec.json << EOF
+          {
+            "files": [
+              {
+                "pattern": "eng-go-qa-local/github.com/beyondtrust/go-client-library-passwordsafe/@v/v${{ steps.info.outputs.version }}.*"
+              }
+            ]
+          }
+          EOF
+
+          jf rbc --signing-key="${{ steps.configure.outputs.evidence-signing-key-name }}" \
+            "${{ steps.configure.outputs.build-name }}" "${{ steps.info.outputs.version }}-${{ github.run_number }}" \
+            --spec=/tmp/go_spec.json
+
+  build-validate:
+    runs-on: ubuntu-latest
+    needs: [build-service]
+    permissions:
+      contents: read
+      security-events: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Generate App token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_BT_ACTIONS_READER_APP_ID }}
+          private-key: ${{ secrets.GH_APP_BT_ACTIONS_READER_PEM }}
+          owner: BeyondTrust
+
+      - name: Checkout security-validation-action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: "BeyondTrust/security-validation-action"
+          ref: "6a9cc1a4f0e5cc4650e3423430cfb56942f6bd7e" # v2.2.0
+          token: ${{ steps.app-token.outputs.token }}
+          path: ./.github/actions/security-validation-action
+
+      - name: Validate security center
+        uses: ./.github/actions/security-validation-action

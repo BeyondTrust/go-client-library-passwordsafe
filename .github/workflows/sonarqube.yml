@@ -1,23 +1,23 @@
 name: SonarQube Analysis
 
-env:
-  SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-
 on:
   pull_request:
-    branches: [main]
+    branches: 
+      - main
   push:
     branches:
       - main
-  workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   unit-testing:
     runs-on: ubuntu-latest
     environment: unit_test
+    permissions:
+      actions: write
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -29,9 +29,33 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Generate App token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_APP_BT_ACTIONS_READER_APP_ID }}
+          private-key: ${{ secrets.GH_APP_BT_ACTIONS_READER_PEM }}
+          owner: BeyondTrust
+
+      - name: Checkout setup-jfrog-cli action
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: "BeyondTrust/setup-jfrog-cli"
+          ref: "26d84636538c322aed2f822374a0b976b23caa81" # v2.4.3
+          token: ${{ steps.app-token.outputs.token }}
+          path: ./.github/actions/setup-jfrog-cli
+
+      - name: Setup JFrog
+        uses: ./.github/actions/setup-jfrog-cli
+        id: configure
+        with:
+          oidc-provider-name: "go-client-library-passwordsafe"
+
       - name: Build library
         run: |
-          go mod tidy
+          jf go-config --global --repo-resolve go --repo-deploy eng-go-qa-local
+          jf go mod download
+          jf go mod tidy
           go build
 
       - name: Run unit tests
@@ -52,12 +76,15 @@ jobs:
       - name: Save unit tests coverage
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: coverage
+          name: coverage-report
           path: api/coverage.out
 
   sonarqube:
-    needs: unit-testing
+    needs: [unit-testing]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -67,13 +94,12 @@ jobs:
       - name: Download coverage
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: coverage
+          name: coverage-report
 
       - name: SonarQube Scan on PR
-        if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name == 'pull_request' ||  github.event_name == 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+        if: github.event_name == 'pull_request'
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
-          projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
             -Dsonar.pullrequest.key=${{ github.event.number }}
@@ -82,25 +108,18 @@ jobs:
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
 
-      - name: SonarQube Scan on branch
-        if: ${{ github.actor != 'dependabot[bot]' && ( github.event_name != 'pull_request' &&  github.event_name != 'pull_request_target' ) }}
-        uses: sonarsource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6.0.0
+      - name: SonarQube Scan on Branch
+        if: github.event_name == 'push'
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
-          projectBaseDir: .
           args: >
             -Dsonar.projectKey=${{ github.event.repository.name }}
+            -Dsonar.branch.name=${{ github.ref_name }}
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.exclusions=api/**/**_test.go,api/entities/**,api/logging/**,api/utils/**,TestClient.go,performancetest/PerformanceTest.go,fuzzing/**
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           SONAR_HOST_URL: https://sonar.dev.beyondtrust.com
-
-      - name: SonarQube Quality Gate check
-        if: ${{ github.actor != 'dependabot[bot]' }}
-        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
