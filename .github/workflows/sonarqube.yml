@@ -29,27 +29,12 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Generate App token
-        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
-        id: app-token
-        with:
-          app-id: ${{ vars.GH_APP_BT_ACTIONS_READER_APP_ID }}
-          private-key: ${{ secrets.GH_APP_BT_ACTIONS_READER_PEM }}
-          owner: BeyondTrust
-
-      - name: Checkout setup-jfrog-cli action
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          repository: "BeyondTrust/setup-jfrog-cli"
-          ref: "26d84636538c322aed2f822374a0b976b23caa81" # v2.4.3
-          token: ${{ steps.app-token.outputs.token }}
-          path: ./.github/actions/setup-jfrog-cli
-
       - name: Setup JFrog
-        uses: ./.github/actions/setup-jfrog-cli
-        id: configure
+        uses: jfrog/setup-jfrog-cli@1641575d87647fb969c0545f0b6a76873e328b7c # v5.0.0
         with:
           oidc-provider-name: "go-client-library-passwordsafe"
+        env:
+          JF_URL: "https://beyondtrust.jfrog.io"
 
       - name: Build library
         run: |
