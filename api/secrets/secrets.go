@@ -200,8 +200,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 		return entities.Secret{}, err
 	}
 
-	var SecretObjectList []entities.Secret
-	err = json.Unmarshal([]byte(bodyBytes), &SecretObjectList)
+	SecretObjectList, err := decodeSecretListResponse(bodyBytes)
 	if err != nil {
 		err = errors.New(err.Error() + ", Ensure Password Safe version is 23.1 or greater.")
 		return entities.Secret{}, err
@@ -264,13 +263,33 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 
 }
 
-// CreateSecretCredentialFlow is responsible for creating secrets in Password Safe.
+// CreateSecretFlow is responsible for creating secrets in Password Safe.
+// secretDetails accepts either a version-neutral input (SecretCredentialInput,
+// SecretTextInput, SecretFileInput) — in which case the matching Config30/Config31
+// is selected here based on the authenticated API version — or a Config30/Config31
+// directly, which is passed through unchanged for backward compatibility.
 func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
 	var folder *entities.FolderResponse
 	var createResponse entities.CreateSecretResponse
+	var err error
 
-	err := utils.ValidateData(secretDetails)
+	// Translate version-neutral inputs into the Config30/Config31 the API expects;
+	// callers passing Config30/Config31 directly fall through unchanged.
+	switch in := secretDetails.(type) {
+	case entities.SecretCredentialInput:
+		secretDetails, err = buildCredentialSecretConfig(in, secretObj.authenticationObj.ApiVersion)
+	case entities.SecretTextInput:
+		secretDetails, err = buildTextSecretConfig(in, secretObj.authenticationObj.ApiVersion)
+	case entities.SecretFileInput:
+		secretDetails, err = buildFileSecretConfig(in, secretObj.authenticationObj.ApiVersion)
+	}
+
+	if err != nil {
+		return createResponse, err
+	}
+
+	err = utils.ValidateData(secretDetails)
 
 	if err != nil {
 		return createResponse, err
@@ -302,6 +321,109 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 	return createResponse, nil
 }
 
+// buildCredentialSecretConfig selects the credential secret config struct matching apiVersion.
+func buildCredentialSecretConfig(in entities.SecretCredentialInput, apiVersion string) (interface{}, error) {
+	switch apiVersion {
+	case "3.0":
+		return entities.SecretCredentialDetailsConfig30{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Username:                in.Username,
+			Password:                in.Password,
+			OwnerId:                 in.OwnerId,
+			OwnerType:               in.OwnerType,
+			Owners:                  in.OwnersByOwnerId,
+		}, nil
+	case "3.1":
+		return entities.SecretCredentialDetailsConfig31{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Username:                in.Username,
+			Password:                in.Password,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	case "3.2":
+		return entities.SecretCredentialDetailsConfig32{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Username:                in.Username,
+			Password:                in.Password,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	}
+	return nil, fmt.Errorf("unsupported API version: %v", apiVersion)
+}
+
+// buildTextSecretConfig selects the text secret config struct matching apiVersion.
+func buildTextSecretConfig(in entities.SecretTextInput, apiVersion string) (interface{}, error) {
+	switch apiVersion {
+	case "3.0":
+		return entities.SecretTextDetailsConfig30{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Text:                    in.Text,
+			OwnerId:                 in.OwnerId,
+			OwnerType:               in.OwnerType,
+			Owners:                  in.OwnersByOwnerId,
+		}, nil
+	case "3.1":
+		return entities.SecretTextDetailsConfig31{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Text:                    in.Text,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	case "3.2":
+		return entities.SecretTextDetailsConfig32{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Text:                    in.Text,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	}
+	return nil, fmt.Errorf("unsupported API version: %v", apiVersion)
+}
+
+// buildFileSecretConfig selects the file secret config struct matching apiVersion.
+func buildFileSecretConfig(in entities.SecretFileInput, apiVersion string) (interface{}, error) {
+	switch apiVersion {
+	case "3.0":
+		return entities.SecretFileDetailsConfig30{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			FileName:                in.FileName,
+			FileContent:             in.FileContent,
+			OwnerId:                 in.OwnerId,
+			OwnerType:               in.OwnerType,
+			Owners:                  in.OwnersByOwnerId,
+		}, nil
+	case "3.1":
+		return entities.SecretFileDetailsConfig31{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			FileName:                in.FileName,
+			FileContent:             in.FileContent,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	case "3.2":
+		return entities.SecretFileDetailsConfig32{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			FileName:                in.FileName,
+			FileContent:             in.FileContent,
+			Owners:                  in.OwnersByGroupId,
+		}, nil
+	}
+	return nil, fmt.Errorf("unsupported API version: %v", apiVersion)
+}
+
+// decodeSecretListResponse normalizes the secrets-safe/secrets response shape across API versions.
+// v3.0/v3.1 return a bare JSON array; v3.2+ wraps it as {"TotalCount": N, "Data": [...]}.
+// Try the wrapper first; if the body is the bare array shape, the struct unmarshal fails
+// and we fall through to decode it as a list. Mirrors the TS idiom:
+//
+//	Array.isArray(data) ? data : data.Data
+func decodeSecretListResponse(body []byte) ([]entities.Secret, error) {
+	var wrapped entities.SecretListResponse
+	if err := json.Unmarshal(body, &wrapped); err == nil {
+		return wrapped.Data, nil
+	}
+	var list []entities.Secret
+	err := json.Unmarshal(body, &list)
+	return list, err
+}
+
 // SecretCreateFileSecret create a secret of type file.
 func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string, payload string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
@@ -315,6 +437,9 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 		fileName = fileSecret.FileName
 		fileContent = fileSecret.FileContent
 	case entities.SecretFileDetailsConfig31:
+		fileName = fileSecret.FileName
+		fileContent = fileSecret.FileContent
+	case entities.SecretFileDetailsConfig32:
 		fileName = fileSecret.FileName
 		fileContent = fileSecret.FileContent
 	}
@@ -427,13 +552,19 @@ func (secretObj *SecretObj) GetPathToCreateSecret(secretDetails interface{}) str
 		path = "secrets"
 	case entities.SecretCredentialDetailsConfig31:
 		path = "secrets"
+	case entities.SecretCredentialDetailsConfig32:
+		path = "secrets"
 	case entities.SecretTextDetailsConfig30:
 		path = "secrets/text"
 	case entities.SecretTextDetailsConfig31:
 		path = "secrets/text"
+	case entities.SecretTextDetailsConfig32:
+		path = "secrets/text"
 	case entities.SecretFileDetailsConfig30:
 		path = "secrets/file"
 	case entities.SecretFileDetailsConfig31:
+		path = "secrets/file"
+	case entities.SecretFileDetailsConfig32:
 		path = "secrets/file"
 	}
 	return path
@@ -734,9 +865,9 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 		return secretResponse, err
 	}
 
-	err = json.Unmarshal(response, &secretResponse)
+	secretResponse, err = decodeSecretListResponse(response)
 	if err != nil {
-		return secretResponse, err
+		return nil, err
 	}
 
 	return secretResponse, nil
