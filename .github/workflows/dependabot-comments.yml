@@ -2,7 +2,11 @@ name: Dependabot comment
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
 
 permissions: {}
 
@@ -51,7 +55,7 @@ jobs:
               if (element.name === 'Fuzzing Testing') {
                 results.cifuzz.conclusion = element.conclusion;
                 results.cifuzz.url = element.html_url;
-              } else if (element.name === 'Code coverage report on PR') {
+              } else if (element.name === 'SonarQube Analysis') {
                 results.coverage.conclusion = element.conclusion;
                 results.coverage.url = element.html_url;
               } else if (element.name === 'Go Lint and Code Complexity') {

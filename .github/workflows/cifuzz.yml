@@ -2,7 +2,8 @@ name: Fuzzing Testing
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
   push:
     branches:
       - main
@@ -15,8 +16,6 @@ permissions:
 jobs:
   fuzzing:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
     steps:
     - name: Build Fuzzers
       id: build

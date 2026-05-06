@@ -2,7 +2,8 @@ name: Go Lint and Code Complexity
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
   push:
     branches:
       - main
