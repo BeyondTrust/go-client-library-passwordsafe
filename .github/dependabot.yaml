@@ -11,6 +11,11 @@ updates:
       - "**/*"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     groups:
       minor-gomod:
         update-types:
@@ -23,6 +28,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     groups:
       minor-gh-actions:
         update-types:
@@ -36,6 +46,11 @@ updates:
       - "**/*"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     registries:
       - docker-private
     commit-message:
