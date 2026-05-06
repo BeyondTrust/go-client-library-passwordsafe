@@ -3,8 +3,7 @@ registries:
   docker-private:
     type: docker-registry
     url: https://beyondtrust-docker.jfrog.io
-    username: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN_USER }}
-    password: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN }}
+    jfrog-oidc-provider-name: "go-client-library-passwordsafe"
 updates:
   - package-ecosystem: gomod
     directories:
