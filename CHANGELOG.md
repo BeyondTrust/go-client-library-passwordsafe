@@ -1,5 +1,17 @@
 # Changelog
 
+### [1.3.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.2.1...v1.3.0) / 2026-05-06
+
+#### Features
+
+* BIPS-32651 add API v3.2 support for creating secrets ([#299](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/299))
+* feat: add API v3.2 support and version-neutral secret creation
+
+#### Bug Fixes
+
+* ci workflows and trigger a release ([#300](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/300))
+* release bundle spec ([#302](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/302))
+
 ### [1.2.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.2.0...v1.2.1) / 2026-03-19
 
 #### Bug Fixes
