@@ -3,14 +3,18 @@ registries:
   docker-private:
     type: docker-registry
     url: https://beyondtrust-docker.jfrog.io
-    username: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN_USER }}
-    password: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN }}
+    jfrog-oidc-provider-name: "go-client-library-passwordsafe"
 updates:
   - package-ecosystem: gomod
     directories:
       - "**/*"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     groups:
       minor-gomod:
         update-types:
@@ -23,6 +27,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     groups:
       minor-gh-actions:
         update-types:
@@ -36,6 +45,11 @@ updates:
       - "**/*"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 14
+      exclude:
+        - "beyondtrust/*"
+        - "BeyondTrust/*"
     registries:
       - docker-private
     commit-message:
