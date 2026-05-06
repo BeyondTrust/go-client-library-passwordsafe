@@ -1,5 +1,11 @@
 # Changelog
 
+### [1.3.1](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.0...v1.3.1) / 2026-05-06
+
+#### Bug Fixes
+
+* missing permissions for ci on promote ([#309](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/309))
+
 ### [1.3.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.2.1...v1.3.0) / 2026-05-06
 
 #### Features
