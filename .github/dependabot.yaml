@@ -1,10 +1,16 @@
 version: 2
+registries:
+  docker-private:
+    type: docker-registry
+    url: https://beyondtrust-docker.jfrog.io
+    username: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN_USER }}
+    password: ${{ secrets.JFROG_READONLY_PLAIN_ACCESS_TOKEN }}
 updates:
   - package-ecosystem: gomod
-    directories: 
+    directories:
       - "**/*"
     schedule:
-      interval: "weekly"
+      interval: weekly
     groups:
       minor-gomod:
         update-types:
@@ -14,9 +20,9 @@ updates:
         update-types:
           - major
   - package-ecosystem: github-actions
-    directory: "/"
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     groups:
       minor-gh-actions:
         update-types:
@@ -25,3 +31,16 @@ updates:
       major-gh-actions:
         update-types:
           - major
+  - package-ecosystem: docker
+    directories:
+      - "**/*"
+    schedule:
+      interval: weekly
+    registries:
+      - docker-private
+    commit-message:
+      prefix: build(deps)
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
