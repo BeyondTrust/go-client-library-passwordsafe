@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build-service:
-    if: ${{ github.actor == 'beyondtrust-release-app[bot]' }}
+    # if: ${{ github.actor == 'beyondtrust-release-app[bot]' }}
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -83,11 +83,11 @@ jobs:
         id: release-bundle
         shell: bash
         run: |
-          cat > /tmp/go_spec.json << EOF
+          cat > /tmp/spec.json << EOF
           {
             "files": [
               {
-                "pattern": "eng-go-qa-local/github.com/beyondtrust/go-client-library-passwordsafe/@v/v${{ steps.info.outputs.version }}.*"
+                "pattern": "eng-go-qa-local/github.com/BeyondTrust/go-client-library-passwordsafe/@v/v${{ steps.info.outputs.version }}.*"
               }
             ]
           }
@@ -95,7 +95,7 @@ jobs:
 
           jf rbc --signing-key="${{ steps.configure.outputs.evidence-signing-key-name }}" \
             "${{ steps.configure.outputs.build-name }}" "${{ steps.info.outputs.version }}-${{ github.run_number }}" \
-            --spec=/tmp/go_spec.json
+            --spec=/tmp/spec.json
 
   build-validate:
     runs-on: ubuntu-latest
