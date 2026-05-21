@@ -1,4 +1,4 @@
-FROM gcr.io/oss-fuzz-base/base-builder-go@sha256:b21dc1629f40008e552d1bf692f930938898efd47eda727067deaf28a1d309a7
+FROM gcr.io/oss-fuzz-base/base-builder-go@sha256:3c67aeaa287543e8f9fdbbdc170cb1656b35115a7d7da7d3093a4f81d731eb4e
 
 RUN apt-get update && apt-get install -y make autoconf automake libtool
 
