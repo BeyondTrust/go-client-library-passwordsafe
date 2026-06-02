@@ -4,6 +4,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 
@@ -43,6 +44,21 @@ func DeleteResourceByID(
 	exponentialBackOff *backoff.ExponentialBackOff,
 	logger logging.Logger,
 ) error {
+	return DeleteResourceByIDWithContext(context.Background(), resourceID, resourceType, methodConstant, urlBuilder, validateAsUUID, httpClient, exponentialBackOff, logger)
+}
+
+// DeleteResourceByIDWithContext is a reusable function for deleting resources by ID with context.
+func DeleteResourceByIDWithContext(
+	ctx context.Context,
+	resourceID string,
+	resourceType string,
+	methodConstant string,
+	urlBuilder func(id string) string,
+	validateAsUUID bool,
+	httpClient *HttpClientObj,
+	exponentialBackOff *backoff.ExponentialBackOff,
+	logger logging.Logger,
+) error {
 	// Validate ID format based on requirements
 	err := validateResourceID(resourceID, resourceType, validateAsUUID)
 	if err != nil {
@@ -54,6 +70,7 @@ func DeleteResourceByID(
 	logger.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "DELETE",
 		Body:        bytes.Buffer{},
@@ -68,7 +85,7 @@ func DeleteResourceByID(
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		_, _, technicalError, businessError = httpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		_, _, technicalError, businessError = httpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, exponentialBackOff)
 
@@ -80,7 +97,6 @@ func DeleteResourceByID(
 	}
 	return nil
 }
-
 
 // GetOwnerDetailsOwnerIdList get Owners details list.
 func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsOwnerId {
@@ -119,7 +135,6 @@ func GetOwnerDetailsOwnerIdList(data map[string]interface{}, signAppinResponse e
 
 	return owners
 }
-
 
 // GetOwnerDetailsGroupIdList constructs a list of owner details with group IDs from the provided data map.
 func GetOwnerDetailsGroupIdList(data map[string]interface{}, groupId int, signAppinResponse entities.SignAppinResponse) []entities.OwnerDetailsGroupId {
@@ -192,6 +207,7 @@ func GetUrlsDetailsList(d map[string]interface{}) []entities.UrlDetails {
 
 	return urls
 }
+
 // GetStringField retrieves a string field from a map, returning a default value if the key does not exist.
 func GetStringField(data map[string]interface{}, key string, defaultValue string) string {
 	val, exists := data[key]
@@ -211,10 +227,10 @@ func GetIntField(data map[string]interface{}, key string, defaultValue int) int 
 		return defaultValue
 	}
 	switch v := val.(type) {
-		case float64:
-			return int(v)
-		case int:
-			return v
+	case float64:
+		return int(v)
+	case int:
+		return v
 	}
 	return defaultValue
 }

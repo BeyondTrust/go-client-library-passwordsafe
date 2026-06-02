@@ -127,8 +127,16 @@ func GetPFXContent(clientCertificatePath string, clientCertificateName string, c
 //func (client *HttpClientObj) CallSecretSafeAPI(url string, httpMethod string, body bytes.Buffer, method string, accessToken string, apiKey string, contentType string) (io.ReadCloser, int, error, error) {
 
 func (client *HttpClientObj) CallSecretSafeAPI(callSecretSafeAPIObj entities.CallSecretSafeAPIObj) (io.ReadCloser, int, error, error) {
+	return client.CallSecretSafeAPIWithContext(context.Background(), callSecretSafeAPIObj)
+}
 
-	response, scode, technicalError, businessError := client.HttpRequest(callSecretSafeAPIObj.Url,
+// CallSecretSafeAPIWithContext prepares http call.
+func (client *HttpClientObj) CallSecretSafeAPIWithContext(ctx context.Context, callSecretSafeAPIObj entities.CallSecretSafeAPIObj) (io.ReadCloser, int, error, error) {
+	if callSecretSafeAPIObj.Ctx != nil {
+		ctx = callSecretSafeAPIObj.Ctx
+	}
+
+	response, scode, technicalError, businessError := client.HttpRequestWithContext(ctx, callSecretSafeAPIObj.Url,
 		callSecretSafeAPIObj.HttpMethod,
 		callSecretSafeAPIObj.Body,
 		callSecretSafeAPIObj.AccessToken,
@@ -182,14 +190,6 @@ func (client *HttpClientObj) SetApiVersion(url string, apiVersion string) string
 	return url
 }
 
-// resolveContext returns ctx if non-nil, otherwise context.Background().
-func resolveContext(ctx context.Context) context.Context {
-	if ctx == nil {
-		return context.Background()
-	}
-	return ctx
-}
-
 // handleDoError builds the appropriate return values when http.Client.Do returns an error.
 func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.ReadCloser, int, error, error) {
 	client.log.Debug(fmt.Sprintf("%v %v", "Error Making request: ", err.Error()))
@@ -222,10 +222,15 @@ func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method st
 
 // HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (io.ReadCloser, int, error, error) {
+	return client.HttpRequestWithContext(context.Background(), url, method, body, accessToken, apiKey, contentType, apiVersion)
+}
+
+// HttpRequestWithContext makes http request to the server with context.
+func (client *HttpClientObj) HttpRequestWithContext(ctx context.Context, url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (io.ReadCloser, int, error, error) {
 	url = client.SetApiVersion(url, apiVersion)
 	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
 
-	req, err := http.NewRequestWithContext(resolveContext(client.Context), method, url, &body)
+	req, err := http.NewRequestWithContext(ctx, method, url, &body)
 	if err != nil {
 		return nil, 0, err, nil
 	}
@@ -244,6 +249,11 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 // CreateMultipartRequest creates and sends multipart request.
 func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
+	return client.CreateMultiPartRequestWithContext(context.Background(), url, fileName, metadata, fileContent, apiVersion)
+}
+
+// CreateMultiPartRequestWithContext creates and sends multipart request.
+func (client *HttpClientObj) CreateMultiPartRequestWithContext(ctx context.Context, url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
 
 	var requestBody bytes.Buffer
 
@@ -272,6 +282,7 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 	}
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		ApiVersion:  apiVersion,
 		Url:         url,
 		HttpMethod:  "POST",
@@ -282,7 +293,7 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 		ContentType: multipartWriter.FormDataContentType(),
 	}
 
-	body, _, technicalError, businessError := client.CallSecretSafeAPI(*callSecretSafeAPIObj)
+	body, _, technicalError, businessError := client.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 
 	if technicalError != nil {
 		return body, technicalError
@@ -297,13 +308,18 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 
 // MakeRequest Make http request to API.
 func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecretSafeAPIObj, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
+	return client.MakeRequestWithContext(context.Background(), callSecretSafeAPIObj, exponentialBackOff)
+}
+
+// MakeRequestWithContext makes http request to API with context.
+func (client *HttpClientObj) MakeRequestWithContext(ctx context.Context, callSecretSafeAPIObj *entities.CallSecretSafeAPIObj, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
 
 	var body io.ReadCloser
 	var technicalError error
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = client.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = client.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, exponentialBackOff)
 
@@ -327,8 +343,14 @@ func (client *HttpClientObj) MakeRequest(callSecretSafeAPIObj *entities.CallSecr
 
 // GetGeneralList get list for any module.
 func (client *HttpClientObj) GetGeneralList(url string, apiVersion string, method string, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
+	return client.GetGeneralListWithContext(context.Background(), url, apiVersion, method, exponentialBackOff)
+}
+
+// GetGeneralListWithContext gets list for any module with context.
+func (client *HttpClientObj) GetGeneralListWithContext(ctx context.Context, url string, apiVersion string, method string, exponentialBackOff *backoff.ExponentialBackOff) ([]byte, error) {
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -339,7 +361,7 @@ func (client *HttpClientObj) GetGeneralList(url string, apiVersion string, metho
 		ApiVersion:  apiVersion,
 	}
 
-	response, err := client.MakeRequest(callSecretSafeAPIObj, exponentialBackOff)
+	response, err := client.MakeRequestWithContext(ctx, callSecretSafeAPIObj, exponentialBackOff)
 
 	if err != nil {
 		return nil, err

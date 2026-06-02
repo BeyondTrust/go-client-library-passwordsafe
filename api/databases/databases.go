@@ -4,6 +4,7 @@ package databases
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,11 @@ func NewDatabaseObj(authentication authentication.AuthenticationObj, logger logg
 
 // CreateDatabaseFlow is responsible for creating databases in Password Safe.
 func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetails entities.DatabaseDetails) (entities.DatabaseResponse, error) {
+	return databaseObj.CreateDatabaseFlowWithContext(context.Background(), assetId, databaseDetails)
+}
+
+// CreateDatabaseFlowWithContext is responsible for creating databases in Password Safe.
+func (databaseObj *DatabaseObj) CreateDatabaseFlowWithContext(ctx context.Context, assetId string, databaseDetails entities.DatabaseDetails) (entities.DatabaseResponse, error) {
 
 	var databaseResponse entities.DatabaseResponse
 
@@ -49,7 +55,7 @@ func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetai
 		return databaseResponse, err
 	}
 
-	databaseResponse, err = databaseObj.createDatabase(assetId, databaseDetails)
+	databaseResponse, err = databaseObj.createDatabase(ctx, assetId, databaseDetails)
 
 	if err != nil {
 		return databaseResponse, err
@@ -59,7 +65,7 @@ func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetai
 }
 
 // createDatabase calls Password Safe API enpoint to create databases.
-func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities.DatabaseDetails) (entities.DatabaseResponse, error) {
+func (databaseObj *DatabaseObj) createDatabase(ctx context.Context, assetId string, database entities.DatabaseDetails) (entities.DatabaseResponse, error) {
 
 	path := "Assets/{id}/Databases"
 	path = strings.Replace(path, "{id}", assetId, 1)
@@ -87,6 +93,7 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         createDatabaseUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -98,7 +105,7 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = databaseObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = databaseObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, databaseObj.authenticationObj.ExponentialBackOff)
 
@@ -130,12 +137,23 @@ func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities
 
 // GetDatabasesListFlow get databases list.
 func (databaseObj *DatabaseObj) GetDatabasesListFlow() ([]entities.DatabaseResponse, error) {
-	return databaseObj.GetDatabasesList("Databases", constants.GetDataBasesList)
+	return databaseObj.GetDatabasesListFlowWithContext(context.Background())
+}
+
+// GetDatabasesListFlowWithContext gets databases list.
+func (databaseObj *DatabaseObj) GetDatabasesListFlowWithContext(ctx context.Context) ([]entities.DatabaseResponse, error) {
+	return databaseObj.GetDatabasesListWithContext(ctx, "Databases", constants.GetDataBasesList)
 }
 
 // GetDatabasesList call Databases enpoint
 // and returns databases list
 func (databaseObj *DatabaseObj) GetDatabasesList(endpointPath string, method string) ([]entities.DatabaseResponse, error) {
+	return databaseObj.GetDatabasesListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetDatabasesListWithContext calls Databases endpoint
+// and returns databases list
+func (databaseObj *DatabaseObj) GetDatabasesListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.DatabaseResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	databaseObj.log.Debug(messageLog)
 
@@ -143,7 +161,7 @@ func (databaseObj *DatabaseObj) GetDatabasesList(endpointPath string, method str
 
 	var databasesList []entities.DatabaseResponse
 
-	response, err := databaseObj.authenticationObj.HttpClient.GetGeneralList(url, databaseObj.authenticationObj.ApiVersion, method, databaseObj.authenticationObj.ExponentialBackOff)
+	response, err := databaseObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, databaseObj.authenticationObj.ApiVersion, method, databaseObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return databasesList, err
@@ -165,10 +183,16 @@ func (databaseObj *DatabaseObj) GetDatabasesList(endpointPath string, method str
 
 // DeleteDatabaseById deletes a database by its ID.
 func (databaseObj *DatabaseObj) DeleteDatabaseById(databaseID int) error {
+	return databaseObj.DeleteDatabaseByIdWithContext(context.Background(), databaseID)
+}
+
+// DeleteDatabaseByIdWithContext deletes a database by its ID.
+func (databaseObj *DatabaseObj) DeleteDatabaseByIdWithContext(ctx context.Context, databaseID int) error {
 	urlBuilder := func(id string) string {
 		return databaseObj.authenticationObj.ApiUrl.JoinPath("Databases", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		fmt.Sprintf("%d", databaseID),
 		"database",
 		constants.DeleteDatabase,

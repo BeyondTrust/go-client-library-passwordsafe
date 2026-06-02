@@ -4,6 +4,7 @@ package workgroups
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,6 +35,11 @@ func NewWorkGroupObj(authentication authentication.AuthenticationObj, logger log
 
 // CreateWorkGroupFlow is responsible for creating workgroups in Password Safe.
 func (workGroupObj *WorkGroupObj) CreateWorkGroupFlow(workGroupDetails entities.WorkGroupDetails) (entities.WorkGroupResponse, error) {
+	return workGroupObj.CreateWorkGroupFlowWithContext(context.Background(), workGroupDetails)
+}
+
+// CreateWorkGroupFlowWithContext is responsible for creating workgroups in Password Safe.
+func (workGroupObj *WorkGroupObj) CreateWorkGroupFlowWithContext(ctx context.Context, workGroupDetails entities.WorkGroupDetails) (entities.WorkGroupResponse, error) {
 
 	var workGroupResponse entities.WorkGroupResponse
 
@@ -43,7 +49,7 @@ func (workGroupObj *WorkGroupObj) CreateWorkGroupFlow(workGroupDetails entities.
 		return workGroupResponse, err
 	}
 
-	workGroupResponse, err = workGroupObj.createWorkGroup(workGroupDetails)
+	workGroupResponse, err = workGroupObj.createWorkGroup(ctx, workGroupDetails)
 
 	if err != nil {
 		return workGroupResponse, err
@@ -53,7 +59,7 @@ func (workGroupObj *WorkGroupObj) CreateWorkGroupFlow(workGroupDetails entities.
 }
 
 // createWorkGroup calls Password Safe API enpoint to create workgroups.
-func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDetails) (entities.WorkGroupResponse, error) {
+func (workGroupObj *WorkGroupObj) createWorkGroup(ctx context.Context, workGroup entities.WorkGroupDetails) (entities.WorkGroupResponse, error) {
 
 	path := "Workgroups"
 	method := constants.CreateWorkGroup
@@ -78,6 +84,7 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         createWorkGroupUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -89,7 +96,7 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = workGroupObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = workGroupObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, workGroupObj.authenticationObj.ExponentialBackOff)
 
@@ -121,12 +128,23 @@ func (workGroupObj *WorkGroupObj) createWorkGroup(workGroup entities.WorkGroupDe
 
 // GetWorkgroupListFlow get workgroup list.
 func (workGroupObj *WorkGroupObj) GetWorkgroupListFlow() ([]entities.WorkGroupResponse, error) {
-	return workGroupObj.GetWorkgroupList("Workgroups", constants.GetWorkGroupsList)
+	return workGroupObj.GetWorkgroupListFlowWithContext(context.Background())
+}
+
+// GetWorkgroupListFlowWithContext gets workgroup list.
+func (workGroupObj *WorkGroupObj) GetWorkgroupListFlowWithContext(ctx context.Context) ([]entities.WorkGroupResponse, error) {
+	return workGroupObj.GetWorkgroupListWithContext(ctx, "Workgroups", constants.GetWorkGroupsList)
 }
 
 // GetWorkgroupList call Workgroups enpoint
 // and returns workgroups list
 func (workGroupObj *WorkGroupObj) GetWorkgroupList(endpointPath string, method string) ([]entities.WorkGroupResponse, error) {
+	return workGroupObj.GetWorkgroupListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetWorkgroupListWithContext calls Workgroups endpoint
+// and returns workgroups list
+func (workGroupObj *WorkGroupObj) GetWorkgroupListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.WorkGroupResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	workGroupObj.log.Debug(messageLog)
 
@@ -134,7 +152,7 @@ func (workGroupObj *WorkGroupObj) GetWorkgroupList(endpointPath string, method s
 
 	var workgroupList []entities.WorkGroupResponse
 
-	response, err := workGroupObj.authenticationObj.HttpClient.GetGeneralList(url, workGroupObj.authenticationObj.ApiVersion, method, workGroupObj.authenticationObj.ExponentialBackOff)
+	response, err := workGroupObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, workGroupObj.authenticationObj.ApiVersion, method, workGroupObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return workgroupList, err

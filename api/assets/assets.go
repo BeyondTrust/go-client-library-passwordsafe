@@ -4,6 +4,7 @@ package assets
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,7 +34,7 @@ func NewAssetObj(authentication authentication.AuthenticationObj, logger logging
 }
 
 // createAssetFlow is responsible for creating assets in Password Safe.
-func (assetObj *AssetObj) createAssetFlow(parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
+func (assetObj *AssetObj) createAssetFlow(ctx context.Context, parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
 	var assetResponse entities.AssetResponse
 
@@ -43,7 +44,7 @@ func (assetObj *AssetObj) createAssetFlow(parameter string, assetDetails entitie
 		return assetResponse, err
 	}
 
-	assetResponse, err = assetObj.createAsset(parameter, assetDetails)
+	assetResponse, err = assetObj.createAsset(ctx, parameter, assetDetails)
 
 	if err != nil {
 		return assetResponse, err
@@ -54,26 +55,36 @@ func (assetObj *AssetObj) createAssetFlow(parameter string, assetDetails entitie
 
 // CreateAssetByworkgroupIDFlow is responsible for creating assets using workgroup id in Password Safe.
 func (assetObj *AssetObj) CreateAssetByworkgroupIDFlow(workGroupId string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
+	return assetObj.CreateAssetByworkgroupIDFlowWithContext(context.Background(), workGroupId, assetDetails)
+}
+
+// CreateAssetByworkgroupIDFlowWithContext is responsible for creating assets using workgroup id in Password Safe.
+func (assetObj *AssetObj) CreateAssetByworkgroupIDFlowWithContext(ctx context.Context, workGroupId string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
 	if workGroupId == "" {
 		return entities.AssetResponse{}, errors.New("work groupId is empty, please send a valid workgroup id")
 	}
 
-	return assetObj.createAssetFlow(workGroupId, assetDetails)
+	return assetObj.createAssetFlow(ctx, workGroupId, assetDetails)
 }
 
 // CreateAssetByWorkGroupNameFlow is responsible for creating assets using workgroup name in Password Safe.
 func (assetObj *AssetObj) CreateAssetByWorkGroupNameFlow(workGroupName string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
+	return assetObj.CreateAssetByWorkGroupNameFlowWithContext(context.Background(), workGroupName, assetDetails)
+}
+
+// CreateAssetByWorkGroupNameFlowWithContext is responsible for creating assets using workgroup name in Password Safe.
+func (assetObj *AssetObj) CreateAssetByWorkGroupNameFlowWithContext(ctx context.Context, workGroupName string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
 	if workGroupName == "" {
 		return entities.AssetResponse{}, errors.New("workGroup name is empty, please send a valid workgroup name")
 	}
 
-	return assetObj.createAssetFlow(workGroupName, assetDetails)
+	return assetObj.createAssetFlow(ctx, workGroupName, assetDetails)
 }
 
 // createAsset calls Password Safe API enpoint to create assets.
-func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
+func (assetObj *AssetObj) createAsset(ctx context.Context, parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
 	path := fmt.Sprintf("workgroups/%s/assets", parameter)
 
@@ -98,6 +109,7 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         createAssetUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -109,7 +121,7 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = assetObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = assetObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, assetObj.authenticationObj.ExponentialBackOff)
 
@@ -142,19 +154,35 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 
 // GetAssetsListByWorkgroupIdFlow get assets list by workgroup Id.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupIdFlow(workgroupId string) ([]entities.AssetResponse, error) {
+	return platformObj.GetAssetsListByWorkgroupIdFlowWithContext(context.Background(), workgroupId)
+}
+
+// GetAssetsListByWorkgroupIdFlowWithContext get assets list by workgroup Id.
+func (platformObj *AssetObj) GetAssetsListByWorkgroupIdFlowWithContext(ctx context.Context, workgroupId string) ([]entities.AssetResponse, error) {
 	path := fmt.Sprintf("workgroups/%s/assets", workgroupId)
-	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupId)
+	return platformObj.GetAssetsListWithContext(ctx, path, constants.GetAssetsListByWorkgroupId)
 }
 
 // GetAssetsListByWorkgroupNameFlow get assets list by workgroup name.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupNameFlow(workgroupName string) ([]entities.AssetResponse, error) {
+	return platformObj.GetAssetsListByWorkgroupNameFlowWithContext(context.Background(), workgroupName)
+}
+
+// GetAssetsListByWorkgroupNameFlowWithContext get assets list by workgroup name.
+func (platformObj *AssetObj) GetAssetsListByWorkgroupNameFlowWithContext(ctx context.Context, workgroupName string) ([]entities.AssetResponse, error) {
 	path := fmt.Sprintf("workgroups/%s/assets", workgroupName)
-	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupName)
+	return platformObj.GetAssetsListWithContext(ctx, path, constants.GetAssetsListByWorkgroupName)
 }
 
 // GetAssetsList call assets enpoint
 // and returns assets list
 func (platformObj *AssetObj) GetAssetsList(endpointPath string, method string) ([]entities.AssetResponse, error) {
+	return platformObj.GetAssetsListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetAssetsListWithContext call assets enpoint
+// and returns assets list
+func (platformObj *AssetObj) GetAssetsListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.AssetResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	platformObj.log.Debug(messageLog)
 
@@ -162,7 +190,7 @@ func (platformObj *AssetObj) GetAssetsList(endpointPath string, method string) (
 
 	var assetsList []entities.AssetResponse
 
-	response, err := platformObj.authenticationObj.HttpClient.GetGeneralList(url, platformObj.authenticationObj.ApiVersion, method, platformObj.authenticationObj.ExponentialBackOff)
+	response, err := platformObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, platformObj.authenticationObj.ApiVersion, method, platformObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		platformObj.log.Error(err.Error())
@@ -185,10 +213,16 @@ func (platformObj *AssetObj) GetAssetsList(endpointPath string, method string) (
 
 // DeleteAssetById deletes an asset by its ID.
 func (assetObj *AssetObj) DeleteAssetById(assetID int) error {
+	return assetObj.DeleteAssetByIdWithContext(context.Background(), assetID)
+}
+
+// DeleteAssetByIdWithContext deletes an asset by its ID.
+func (assetObj *AssetObj) DeleteAssetByIdWithContext(ctx context.Context, assetID int) error {
 	urlBuilder := func(id string) string {
 		return assetObj.authenticationObj.ApiUrl.JoinPath("Assets", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		fmt.Sprintf("%d", assetID),
 		"asset",
 		constants.DeleteAsset,

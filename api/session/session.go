@@ -108,7 +108,7 @@ func NewSessionFromToken(ctx context.Context, accessToken string, params Paramet
 	}
 
 	signInURL := authObj.ApiUrl.JoinPath("Auth/SignAppIn").String()
-	_, err = authObj.SignAppin(signInURL, accessToken, "")
+	_, err = authObj.SignAppinWithContext(ctx, signInURL, accessToken, "")
 	if err != nil {
 		return nil, fmt.Errorf("session: SignAppin failed: %w", err)
 	}
@@ -133,25 +133,50 @@ func NewSessionFromToken(ctx context.Context, accessToken string, params Paramet
 
 // GetSecret returns the secret value for a single Secrets Safe path.
 func (s *Session) GetSecret(secretPath string, separator string) (string, error) {
-	return s.secretObj.GetSecret(secretPath, separator)
+	return s.GetSecretWithContext(context.Background(), secretPath, separator)
+}
+
+// GetSecretWithContext returns the secret value for a single Secrets Safe path.
+func (s *Session) GetSecretWithContext(ctx context.Context, secretPath string, separator string) (string, error) {
+	return s.secretObj.GetSecretWithContext(ctx, secretPath, separator)
 }
 
 // GetSecrets returns secret values for a list of Secrets Safe paths.
 func (s *Session) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	return s.secretObj.GetSecrets(secretPaths, separator)
+	return s.GetSecretsWithContext(context.Background(), secretPaths, separator)
+}
+
+// GetSecretsWithContext returns secret values for a list of Secrets Safe paths.
+func (s *Session) GetSecretsWithContext(ctx context.Context, secretPaths []string, separator string) (map[string]string, error) {
+	return s.secretObj.GetSecretsWithContext(ctx, secretPaths, separator)
 }
 
 // GetManagedAccount returns the password for a single managed account.
 func (s *Session) GetManagedAccount(secretPath string, separator string) (string, error) {
-	return s.maObj.GetSecret(secretPath, separator)
+	return s.GetManagedAccountWithContext(context.Background(), secretPath, separator)
+}
+
+// GetManagedAccountWithContext returns the password for a single managed account.
+func (s *Session) GetManagedAccountWithContext(ctx context.Context, secretPath string, separator string) (string, error) {
+	return s.maObj.GetSecretWithContext(ctx, secretPath, separator)
 }
 
 // GetManagedAccounts returns passwords for a list of managed accounts.
 func (s *Session) GetManagedAccounts(secretPaths []string, separator string) (map[string]string, error) {
-	return s.maObj.GetSecrets(secretPaths, separator)
+	return s.GetManagedAccountsWithContext(context.Background(), secretPaths, separator)
+}
+
+// GetManagedAccountsWithContext returns passwords for a list of managed accounts.
+func (s *Session) GetManagedAccountsWithContext(ctx context.Context, secretPaths []string, separator string) (map[string]string, error) {
+	return s.maObj.GetSecretsWithContext(ctx, secretPaths, separator)
 }
 
 // Close signs out of the BeyondTrust API session.
 func (s *Session) Close() error {
-	return s.authObj.SignOut()
+	return s.CloseWithContext(context.Background())
+}
+
+// CloseWithContext signs out of the BeyondTrust API session.
+func (s *Session) CloseWithContext(ctx context.Context) error {
+	return s.authObj.SignOutWithContext(ctx)
 }

@@ -4,6 +4,7 @@ package entities
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/google/uuid"
 )
@@ -285,6 +286,7 @@ type FolderDetails struct {
 }
 
 type CallSecretSafeAPIObj struct {
+	Ctx         context.Context
 	Url         string
 	HttpMethod  string
 	Body        bytes.Buffer
