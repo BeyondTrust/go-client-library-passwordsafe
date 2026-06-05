@@ -19,6 +19,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: unit_test  # provides the PASSWORD_SAFE_FAKE_* test-fixture variables
     permissions:
       contents: read
     steps:
