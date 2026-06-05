@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,10 +31,14 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
 
+      # Installed and run directly (rather than via golangci/golangci-lint-action)
+      # because the org Actions allowlist permits only GitHub-owned and verified-creator
+      # actions, and golangci is an unverified publisher.
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
+
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
-        with:
-          version: latest
+        run: golangci-lint run ./...
 
   complexity:
     name: Cognitive Complexity

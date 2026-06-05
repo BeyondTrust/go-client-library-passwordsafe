@@ -22,39 +22,21 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      pull-requests: write
     steps:
-      - name: Validate PR title
-        # Keeps PR titles conventional-commit compliant, which release-please relies on.
-        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
-        id: validate_pr_title
+      # Inline check rather than amannn/action-semantic-pull-request: the org Actions
+      # allowlist permits only GitHub-owned and verified-creator actions, and that action
+      # (and the comment action it pairs with) are unverified publishers. Keeping PR
+      # titles Conventional-Commits compliant matters because release-please derives the
+      # version bump and CHANGELOG from them.
+      - name: Validate PR title (Conventional Commits)
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Comment on failed validation
-        # Fork PRs get a read-only token, so commenting would 403. The check status
-        # already reflects the result, so gate to same-repo PRs and stay best-effort.
-        if: failure() && github.event.pull_request.head.repo.full_name == github.repository
-        continue-on-error: true
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
-        with:
-          comment-tag: validate-pr-title
-          message: |
-            ❌ **PR title validation failed**
-
-            Your PR title must follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
-
-            ```
-            ${{ steps.validate_pr_title.outputs.error_message }}
-            ```
-
-      - name: Comment on successful validation
-        if: success() && github.event.pull_request.head.repo.full_name == github.repository
-        continue-on-error: true
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
-        with:
-          comment-tag: validate-pr-title
-          create-if-not-exists: false
-          mode: upsert
-          message: |
-            ✅ PR title is valid.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "PR title: ${PR_TITLE}"
+          pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9 ._,-]+\))?!?: .+'
+          if echo "${PR_TITLE}" | grep -qiE "${pattern}"; then
+            echo "✅ PR title follows Conventional Commits."
+          else
+            echo "::error title=Invalid PR title::PR title must follow Conventional Commits, e.g. 'feat: add X' or 'fix(auth): correct Y'."
+            exit 1
+          fi
