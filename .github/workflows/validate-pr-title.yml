@@ -23,11 +23,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      # Inline check rather than amannn/action-semantic-pull-request: the org Actions
-      # allowlist permits only GitHub-owned and verified-creator actions, and that action
-      # (and the comment action it pairs with) are unverified publishers. Keeping PR
-      # titles Conventional-Commits compliant matters because release-please derives the
-      # version bump and CHANGELOG from them.
       - name: Validate PR title (Conventional Commits)
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}

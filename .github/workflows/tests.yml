@@ -56,9 +56,6 @@ jobs:
           name: coverage-report
           path: api/coverage.out
 
-      # Codecov is a verified-creator action (allowed by the org Actions allowlist) and
-      # posts the coverage summary/PR comment itself — replaces fgrosse/go-coverage-report,
-      # which is an unverified publisher and therefore blocked.
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         if: always()
