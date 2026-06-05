@@ -1,9 +1,4 @@
 version: 2
-registries:
-  docker-private:
-    type: docker-registry
-    url: https://beyondtrust-docker.jfrog.io
-    jfrog-oidc-provider-name: "go-client-library-passwordsafe"
 updates:
   - package-ecosystem: gomod
     directories:
@@ -40,21 +35,3 @@ updates:
       major-gh-actions:
         update-types:
           - major
-  - package-ecosystem: docker
-    directories:
-      - "**/*"
-    schedule:
-      interval: weekly
-    cooldown:
-      default-days: 14
-      exclude:
-        - "beyondtrust/*"
-        - "BeyondTrust/*"
-    registries:
-      - docker-private
-    commit-message:
-      prefix: build(deps)
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - version-update:semver-major

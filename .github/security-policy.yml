@@ -1,0 +1,21 @@
+# GHAS Policy as Code — remediation SLA policy.
+# Reference: https://github.com/advanced-security/policy-as-code
+#
+# Consumed by the `security-gate` composite action, which fails a build/release when an
+# open alert has been open longer than the SLA (in days) for its severity (zero
+# tolerance once past SLA). Alerts still within their window do not block.
+#
+# Settings live in `general` so they apply to every enabled check. Only Code Scanning is
+# enabled in the gate — Dependabot, secret-scanning and dependency/licensing are disabled
+# there (they require a GitHub App/PAT to read).
+#
+# SLA (max age in days): critical 10 | high 15 | medium 20 | low 90
+general:
+  # `low` scopes the gate to the four security severities below; the remediate windows
+  # decide what blocks, so nothing fails for existing — only for being past SLA.
+  level: low
+  remediate:
+    critical: 10
+    high: 15
+    medium: 20
+    low: 90

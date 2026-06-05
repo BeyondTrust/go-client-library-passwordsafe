@@ -1,0 +1,84 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+
+      # Compile gate — validates the whole module builds (replaces the old
+      # JFrog-backed build step, which resolved modules from an internal registry).
+      - name: Build
+        run: go build ./...
+
+      - name: Run unit tests
+        run: |
+          cd api
+          go test -race -coverprofile=coverage.out -v ./...
+          go tool cover -func="coverage.out"
+        env:
+          PASSWORD_SAFE_FAKE_CERTIFICATE_KEY: ${{ vars.PASSWORD_SAFE_FAKE_CERTIFICATE_KEY }}
+          PASSWORD_SAFE_FAKE_CERTIFICATE: ${{ vars.PASSWORD_SAFE_FAKE_CERTIFICATE }}
+          PASSWORD_SAFE_FAKE_CLIENT_ID: ${{ vars.PASSWORD_SAFE_FAKE_CLIENT_ID }}
+          PASSWORD_SAFE_FAKE_CLIENT_SECRET: ${{ vars.PASSWORD_SAFE_FAKE_CLIENT_SECRET }}
+          PASSWORD_SAFE_FAKE_API_KEY: ${{ vars.PASSWORD_SAFE_FAKE_API_KEY }}
+          PASSWORD_SAFE_API_PATH: ${{ vars.PASSWORD_SAFE_API_PATH }}
+          PASSWORD_SAFE_FAKE_API_URL: ${{ vars.PASSWORD_SAFE_FAKE_API_URL }}
+          PASSWORD_SAFE_FAKE_PASSWORD: ${{ vars.PASSWORD_SAFE_FAKE_PASSWORD }}
+
+      - name: Save unit tests coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-report
+          path: api/coverage.out
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        if: always()
+        with:
+          files: api/coverage.out
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [unit-tests]
+    # The report is posted as a PR comment, which needs a writable token that fork
+    # and Dependabot PRs do not get — gate to same-repo PRs and stay best-effort.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Generate coverage report
+        uses: fgrosse/go-coverage-report@cbeb2ab2e32591d690337146ba02a911cc566f3f # v1.3.0
+        with:
+          coverage-artifact-name: "coverage-report"
+          coverage-file-name: "coverage.out"
