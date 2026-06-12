@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -300,4 +301,50 @@ func TestGetGeneralListBadRequest(t *testing.T) {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
+}
+
+func TestRedactSensitiveURL(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "CredentialByRequestId masks the request id",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc-123-def",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****",
+		},
+		{
+			name:     "CredentialByRequestId masks the request id with version query",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc-123-def?version=3.1",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****?version=3.1",
+		},
+		{
+			name:     "ManagedAccountRequestCheckIn masks the request id",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Requests/abc-123-def/checkin",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Requests/****/checkin",
+		},
+		{
+			name:     "Requests create endpoint has no request id to mask",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Requests",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Requests",
+		},
+		{
+			name:     "Unrelated endpoint is left untouched",
+			input:    "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
+			expected: "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := RedactSensitiveURL(testCase.input)
+			if result != testCase.expected {
+				t.Errorf("Test case Failed: expected %q, got %q", testCase.expected, result)
+			}
+			if testCase.input != testCase.expected && strings.Contains(result, "abc-123-def") {
+				t.Errorf("Test case Failed: sensitive request id leaked in %q", result)
+			}
+		})
+	}
 }
