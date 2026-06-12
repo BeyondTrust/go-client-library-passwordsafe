@@ -56,7 +56,6 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 			InsecureSkipVerify: !verifyCa,
 			Certificates:       []tls.Certificate{cert},
 			MinVersion:         tls.VersionTLS12,
-			MaxVersion:         tls.VersionTLS12,
 		},
 	}
 
