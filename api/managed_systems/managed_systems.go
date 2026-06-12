@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
@@ -64,7 +65,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Assets/%s/ManagedSystems", assetId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Assets/%s/ManagedSystems", url.PathEscape(assetId))
 
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByAssetId, path, managedSystemJson)
 
@@ -109,7 +112,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", workGroupId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", url.PathEscape(workGroupId))
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
 
 	if err != nil {
@@ -149,7 +154,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Databases/%s/ManagedSystems", workGroupId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Databases/%s/ManagedSystems", url.PathEscape(workGroupId))
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
 
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
@@ -61,8 +62,10 @@ func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetai
 // createDatabase calls Password Safe API enpoint to create databases.
 func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities.DatabaseDetails) (entities.DatabaseResponse, error) {
 
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
 	path := "Assets/{id}/Databases"
-	path = strings.Replace(path, "{id}", assetId, 1)
+	path = strings.Replace(path, "{id}", url.PathEscape(assetId), 1)
 
 	method := constants.CreateDatabase
 

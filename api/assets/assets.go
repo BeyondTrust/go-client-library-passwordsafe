@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
@@ -75,7 +76,9 @@ func (assetObj *AssetObj) CreateAssetByWorkGroupNameFlow(workGroupName string, a
 // createAsset calls Password Safe API enpoint to create assets.
 func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
-	path := fmt.Sprintf("workgroups/%s/assets", parameter)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(parameter))
 
 	assetsJson, err := json.Marshal(assetDetails)
 
@@ -142,13 +145,13 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 
 // GetAssetsListByWorkgroupIdFlow get assets list by workgroup Id.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupIdFlow(workgroupId string) ([]entities.AssetResponse, error) {
-	path := fmt.Sprintf("workgroups/%s/assets", workgroupId)
+	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(workgroupId))
 	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupId)
 }
 
 // GetAssetsListByWorkgroupNameFlow get assets list by workgroup name.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupNameFlow(workgroupName string) ([]entities.AssetResponse, error) {
-	path := fmt.Sprintf("workgroups/%s/assets", workgroupName)
+	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(workgroupName))
 	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupName)
 }
 
