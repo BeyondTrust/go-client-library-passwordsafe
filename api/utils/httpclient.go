@@ -220,10 +220,47 @@ func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method st
 	return resp.Body, resp.StatusCode, nil, nil
 }
 
+// RedactSensitiveURL masks sensitive path components (such as credential
+// request IDs) so they never appear in clear text in log output. The request
+// ID is the short-lived token that, presented to GET /Credentials/{requestId},
+// returns a plaintext managed-account password, so it must be redacted at every
+// log emission point.
+func RedactSensitiveURL(rawURL string) string {
+	parsedUrl, err := urlnet.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	escapedPath := parsedUrl.EscapedPath()
+	segments := strings.Split(escapedPath, "/")
+	redacted := false
+	for i, segment := range segments {
+		// .../Credentials/<requestId> and .../Requests/<requestId>/checkin
+		// carry the sensitive request ID in the segment immediately
+		// following the resource name.
+		switch strings.ToLower(segment) {
+		case "credentials", "requests":
+			if i+1 < len(segments) && segments[i+1] != "" {
+				segments[i+1] = "****"
+				redacted = true
+			}
+		}
+	}
+
+	if !redacted {
+		return rawURL
+	}
+
+	// Swap the original path for the redacted one in place so the rest of
+	// the URL (scheme, host, query string) is preserved exactly and the
+	// "****" mask is not percent-encoded.
+	return strings.Replace(rawURL, escapedPath, strings.Join(segments, "/"), 1)
+}
+
 // HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (io.ReadCloser, int, error, error) {
 	url = client.SetApiVersion(url, apiVersion)
-	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
+	client.log.Debug(fmt.Sprintf("Entire URL: %s", RedactSensitiveURL(url)))
 
 	req, err := http.NewRequestWithContext(resolveContext(client.Context), method, url, &body)
 	if err != nil {
