@@ -203,7 +203,10 @@ func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.R
 func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, body bytes.Buffer) (io.ReadCloser, int, error, error) {
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
 		_ = resp.Body.Close()
-		err := fmt.Errorf("error %s: StatusCode: %d, Status: %s, Body: %s", method, resp.StatusCode, resp.Status, body.String())
+		// Do not include the outbound request body in error logs: it may contain
+		// authentication credentials or secret material (and, due to concurrent
+		// write/read in the HTTP transport, may still hold unsent secret bytes).
+		err := fmt.Errorf("error %s: StatusCode: %d, Status: %s", method, resp.StatusCode, resp.Status)
 		client.log.Error(err.Error())
 		return nil, resp.StatusCode, err, nil
 	}
