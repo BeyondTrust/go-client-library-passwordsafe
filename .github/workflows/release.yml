@@ -1,0 +1,181 @@
+name: Release
+
+# Release pipeline (designed for immutable releases). release-please keeps a release
+# PR up to date on every push to main (version bump + CHANGELOG). When that PR is
+# merged, release-please creates the git tag and a DRAFT GitHub release. The workflow
+# then attaches every asset (source archive, SBOM, checksums, SLSA provenance) to the
+# DRAFT, and only once everything is present does it publish the release — this matters
+# under immutable releases, where assets cannot be added after publishing. Publishing
+# the release happens before pkg.go.dev is asked to index the new version.
+#
+# Everything runs as dependent jobs in a SINGLE workflow run and uses only the default
+# GITHUB_TOKEN — no PAT or GitHub App token, and no internal infra. `force-tag-creation`
+# in release-please-config.json ensures the git tag exists even while the GitHub release
+# is still a draft, so we can build from it.
+#
+# Reference: https://github.com/googleapis/release-please
+
+on:
+  push:
+    branches:
+      - main
+
+# Serialize releases: only one release pipeline runs at a time. cancel-in-progress is
+# false so a newer push queues behind the in-flight run instead of cancelling it — a
+# cancelled run could leave a partially-populated draft release/tag, and overlapping
+# runs could race on the same draft release/tag.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write       # create the git tag and the draft release
+      pull-requests: write  # maintain the release PR
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Run release-please
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  security-gate:
+    name: Security Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: read
+      security-events: read  # read Code Scanning alerts to evaluate the SLA policy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Security gate
+        uses: ./.github/actions/security-gate
+
+  artifacts:
+    name: Build & Attest Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [release-please, security-gate]
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write     # upload assets to the draft release
+      id-token: write     # OIDC for keyless signing of the build provenance attestation
+      attestations: write # store the build provenance attestation
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Build release artifacts
+        id: artifacts
+        run: |
+          VERSION="${TAG_NAME#v}"
+          PREFIX="go-client-library-passwordsafe_${VERSION}"
+
+          # Reproducible source archive of the tagged tree.
+          SRC_ARCHIVE="${PREFIX}_source.tar.gz"
+          git archive --format=tar.gz \
+            --prefix="go-client-library-passwordsafe-${VERSION}/" \
+            -o "${SRC_ARCHIVE}" HEAD
+
+          # Dependency-graph SBOM (SPDX 2.3) from GitHub's REST API.
+          SBOM="${PREFIX}_sbom.spdx.json"
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" \
+            --jq '.sbom' > "${SBOM}"
+
+          # Checksums manifest over every published asset.
+          SUMS="${PREFIX}_SHA256SUMS"
+          sha256sum "${SRC_ARCHIVE}" "${SBOM}" > "${SUMS}"
+
+          {
+            echo "src_archive=${SRC_ARCHIVE}"
+            echo "sbom=${SBOM}"
+            echo "sums=${SUMS}"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Attest build provenance
+        # Signed SLSA provenance (keyless, OIDC) for the source archive, SBOM, and the
+        # SHA256SUMS manifest — the manifest is the integrity anchor consumers verify
+        # against. Verify with `gh attestation verify <file> --repo <owner>/<repo>`.
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: |
+            ${{ steps.artifacts.outputs.src_archive }}
+            ${{ steps.artifacts.outputs.sbom }}
+            ${{ steps.artifacts.outputs.sums }}
+
+      - name: Upload assets to draft release
+        run: |
+          gh release upload --clobber "$TAG_NAME" \
+            "${{ steps.artifacts.outputs.src_archive }}" \
+            "${{ steps.artifacts.outputs.sbom }}" \
+            "${{ steps.artifacts.outputs.sums }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [release-please, artifacts]
+    # All assets are built, attested, and attached. Under immutable releases the
+    # release contents are frozen once published, so we only flip out of draft after
+    # `artifacts` has succeeded (no `always()` — an incomplete release must not publish).
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write  # flip the release out of draft
+    steps:
+      - name: Publish GitHub release
+        run: gh release edit "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+
+  publish-pkg-go-dev:
+    name: Publish to pkg.go.dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [release-please, publish]
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+
+      - name: Trigger pkg.go.dev indexing
+        # Requesting the module from the public proxy makes pkg.go.dev fetch and index
+        # the now-published version. No registry credentials or internal infra involved.
+        run: GOPROXY=proxy.golang.org go list -m "github.com/BeyondTrust/go-client-library-passwordsafe@${TAG_NAME}"
+        env:
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
