@@ -477,3 +477,31 @@ func TestDeleteDatabaseById_NotFound(t *testing.T) {
 		t.Errorf("Expected error message '%s', but got '%s'", expectedErrorMessage, err.Error())
 	}
 }
+
+// TestCreateDatabaseFlowRejectsDotSegmentAssetId ensures that callers cannot
+// pass dot-segments (".", "..") as the assetId, because url.PathEscape does
+// not encode "." and the resulting URL could be normalized into a different
+// endpoint.
+func TestCreateDatabaseFlowRejectsDotSegmentAssetId(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, _ := authentication.Authenticate(*authParams)
+	databaseObj, _ := NewDatabaseObj(*authenticate, zapLogger)
+
+	databaseDetails := entities.DatabaseDetails{
+		PlatformID:        9,
+		InstanceName:      "PrimaryDB",
+		IsDefaultInstance: true,
+		Port:              5432,
+		Version:           "15.2",
+		Template:          "StandardTemplate",
+	}
+
+	// CreateDatabaseFlow already rejects "" with its own message; we also
+	// require that "." and ".." are rejected before any HTTP call.
+	for _, bad := range []string{".", ".."} {
+		if _, err := databaseObj.CreateDatabaseFlow(bad, databaseDetails); err == nil {
+			t.Errorf("CreateDatabaseFlow(%q): expected validation error, got nil", bad)
+		}
+	}
+}

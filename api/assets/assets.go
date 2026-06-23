@@ -76,6 +76,12 @@ func (assetObj *AssetObj) CreateAssetByWorkGroupNameFlow(workGroupName string, a
 // createAsset calls Password Safe API enpoint to create assets.
 func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.AssetDetails) (entities.AssetResponse, error) {
 
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err := utils.ValidatePathSegment("workgroup identifier", parameter); err != nil {
+		return entities.AssetResponse{}, err
+	}
+
 	// Treat the caller-supplied identifier as a single opaque path segment so it
 	// cannot redirect the authenticated request to a different API endpoint.
 	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(parameter))
@@ -145,12 +151,22 @@ func (assetObj *AssetObj) createAsset(parameter string, assetDetails entities.As
 
 // GetAssetsListByWorkgroupIdFlow get assets list by workgroup Id.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupIdFlow(workgroupId string) ([]entities.AssetResponse, error) {
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err := utils.ValidatePathSegment("workgroupId", workgroupId); err != nil {
+		return nil, err
+	}
 	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(workgroupId))
 	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupId)
 }
 
 // GetAssetsListByWorkgroupNameFlow get assets list by workgroup name.
 func (platformObj *AssetObj) GetAssetsListByWorkgroupNameFlow(workgroupName string) ([]entities.AssetResponse, error) {
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err := utils.ValidatePathSegment("workgroupName", workgroupName); err != nil {
+		return nil, err
+	}
 	path := fmt.Sprintf("workgroups/%s/assets", url.PathEscape(workgroupName))
 	return platformObj.GetAssetsList(path, constants.GetAssetsListByWorkgroupName)
 }

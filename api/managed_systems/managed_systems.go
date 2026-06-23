@@ -44,6 +44,12 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 		return managedSystemResponse, errors.New("asset id is empty, please send a valid asset id")
 	}
 
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("assetId", assetId); err != nil {
+		return managedSystemResponse, err
+	}
+
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
 
 	// validate request body according to the API Version.
@@ -90,6 +96,12 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 		return managedSystemResponse, errors.New("workGroup Id is empty, please send a valid workGroup Id")
 	}
 
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("workGroupId", workGroupId); err != nil {
+		return managedSystemResponse, err
+	}
+
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
 
 	// validate request body according to the API Version.
@@ -134,6 +146,12 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 
 	if workGroupId == "" {
 		return managedSystemResponse, errors.New("database Id is empty, please send a valid Database Id")
+	}
+
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("databaseId", workGroupId); err != nil {
+		return managedSystemResponse, err
 	}
 
 	// just one payload

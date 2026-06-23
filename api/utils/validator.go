@@ -207,6 +207,19 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 	return newSecretPaths
 }
 
+// ValidatePathSegment rejects identifiers that would alter URL meaning when
+// interpolated into a path segment. url.PathEscape does NOT escape "." or "..",
+// so a caller passing one of those could produce a URL containing "/./" or
+// "/../" which clients/servers may normalize, redirecting the authenticated
+// request to a different endpoint. This is defense-in-depth for callers that
+// embed user-supplied identifiers into REST paths.
+func ValidatePathSegment(name, value string) error {
+	if value == "" || value == "." || value == ".." {
+		return fmt.Errorf("invalid %s: %q", name, value)
+	}
+	return nil
+}
+
 // ValidateURL responsible for validating the Password Safe API URL.
 func ValidateURL(apiUrl string) error {
 	val, err := url.Parse(apiUrl)

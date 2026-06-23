@@ -62,6 +62,12 @@ func (databaseObj *DatabaseObj) CreateDatabaseFlow(assetId string, databaseDetai
 // createDatabase calls Password Safe API enpoint to create databases.
 func (databaseObj *DatabaseObj) createDatabase(assetId string, database entities.DatabaseDetails) (entities.DatabaseResponse, error) {
 
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err := utils.ValidatePathSegment("assetId", assetId); err != nil {
+		return entities.DatabaseResponse{}, err
+	}
+
 	// Treat the caller-supplied identifier as a single opaque path segment so it
 	// cannot redirect the authenticated request to a different API endpoint.
 	path := "Assets/{id}/Databases"

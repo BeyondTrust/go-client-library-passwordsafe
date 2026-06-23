@@ -199,7 +199,11 @@ func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.R
 }
 
 // handleResponseStatus inspects resp.StatusCode and returns the appropriate values.
-func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, body bytes.Buffer) (io.ReadCloser, int, error, error) {
+// The trailing bytes.Buffer parameter is intentionally unused: it previously held the
+// outbound request body for logging, but that was removed for security reasons (the
+// body may contain credentials or in-flight secret material). The parameter is kept
+// for call-site compatibility and named "_" to make the unused status explicit.
+func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, _ bytes.Buffer) (io.ReadCloser, int, error, error) {
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
 		_ = resp.Body.Close()
 		// Do not include the outbound request body in error logs: it may contain
