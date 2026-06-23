@@ -7,7 +7,9 @@
           "type": "generic",
           "path": "version.txt"
         }
-      ]
+      ],
+      "draft": true,
+      "force-tag-creation": true
     }
   },
   "always-update": true

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/BeyondTrust/go-client-library-passwordsafe/security/policy
+    about: Do NOT open a public issue for security problems. Report them per SECURITY.md.
+  - name: Support & questions
+    url: https://www.beyondtrust.com/docs/index.htm
+    about: For product usage questions and support options, see the BeyondTrust documentation and support channels.
