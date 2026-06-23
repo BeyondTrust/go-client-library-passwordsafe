@@ -270,7 +270,6 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	}, authenticationObj.ExponentialBackOff)
 
 	if technicalError != nil {
-		authenticationObj.log.Error(technicalError.Error())
 		return technicalError
 	}
 
