@@ -4,6 +4,7 @@ package functional_accounts
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -32,6 +33,11 @@ func NewFuncionalAccount(authentication authentication.AuthenticationObj, logger
 
 // CreateFunctionalAccountFlow is responsible for creating functional accounts in Password Safe.
 func (functionalAccount *FunctionalAccount) CreateFunctionalAccountFlow(functionalAccountDetails entities.FunctionalAccountDetails) (entities.FunctionalAccountResponse, error) {
+	return functionalAccount.CreateFunctionalAccountFlowWithContext(context.Background(), functionalAccountDetails)
+}
+
+// CreateFunctionalAccountFlowWithContext is responsible for creating functional accounts in Password Safe.
+func (functionalAccount *FunctionalAccount) CreateFunctionalAccountFlowWithContext(ctx context.Context, functionalAccountDetails entities.FunctionalAccountDetails) (entities.FunctionalAccountResponse, error) {
 
 	var functionalAccountResponse entities.FunctionalAccountResponse
 	var err error
@@ -41,7 +47,7 @@ func (functionalAccount *FunctionalAccount) CreateFunctionalAccountFlow(function
 		return functionalAccountResponse, err
 	}
 
-	functionalAccountResponse, err = functionalAccount.createFunctionalAccount(constants.CreateFunctionalAccount, "POST", endpointPath, functionalAccountDetails)
+	functionalAccountResponse, err = functionalAccount.createFunctionalAccount(ctx, constants.CreateFunctionalAccount, "POST", endpointPath, functionalAccountDetails)
 
 	if err != nil {
 		return functionalAccountResponse, err
@@ -53,11 +59,16 @@ func (functionalAccount *FunctionalAccount) CreateFunctionalAccountFlow(function
 
 // GetFunctionalAccountsFlow is responsible for getting functional accounts list from Password Safe.
 func (functionalAccount *FunctionalAccount) GetFunctionalAccountsFlow() ([]entities.FunctionalAccountResponse, error) {
+	return functionalAccount.GetFunctionalAccountsFlowWithContext(context.Background())
+}
+
+// GetFunctionalAccountsFlowWithContext is responsible for getting functional accounts list from Password Safe.
+func (functionalAccount *FunctionalAccount) GetFunctionalAccountsFlowWithContext(ctx context.Context) ([]entities.FunctionalAccountResponse, error) {
 
 	var functionalAccountResponse []entities.FunctionalAccountResponse
 	var err error
 
-	functionalAccountResponse, err = functionalAccount.GetFunctionalAccountsListFlow(constants.GetFunctionalAccount, "GET", endpointPath)
+	functionalAccountResponse, err = functionalAccount.GetFunctionalAccountsListFlowWithContext(ctx, constants.GetFunctionalAccount, "GET", endpointPath)
 
 	if err != nil {
 		return functionalAccountResponse, err
@@ -68,7 +79,7 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsFlow() ([]entit
 }
 
 // createFunctionalAccount calls Password Safe API enpoint to create functional account.
-func (functionalAccount *FunctionalAccount) createFunctionalAccount(method string, httpMethod string, path string, functionalAccountDetails entities.FunctionalAccountDetails) (entities.FunctionalAccountResponse, error) {
+func (functionalAccount *FunctionalAccount) createFunctionalAccount(ctx context.Context, method string, httpMethod string, path string, functionalAccountDetails entities.FunctionalAccountDetails) (entities.FunctionalAccountResponse, error) {
 
 	var err error
 	var functionalAccountResponse entities.FunctionalAccountResponse
@@ -87,6 +98,7 @@ func (functionalAccount *FunctionalAccount) createFunctionalAccount(method strin
 	functionalAccount.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         createManagedSystemUrl,
 		HttpMethod:  httpMethod,
 		Body:        *b,
@@ -97,7 +109,7 @@ func (functionalAccount *FunctionalAccount) createFunctionalAccount(method strin
 		ApiVersion:  functionalAccount.authenticationObj.ApiVersion,
 	}
 
-	response, err := functionalAccount.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, functionalAccount.authenticationObj.ExponentialBackOff)
+	response, err := functionalAccount.authenticationObj.HttpClient.MakeRequestWithContext(ctx, callSecretSafeAPIObj, functionalAccount.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return functionalAccountResponse, err
@@ -114,6 +126,11 @@ func (functionalAccount *FunctionalAccount) createFunctionalAccount(method strin
 
 // GetFunctionalAccountsListFlow calls Password Safe API enpoint to get functional accounts list.
 func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlow(method string, httpMethod string, path string) ([]entities.FunctionalAccountResponse, error) {
+	return functionalAccount.GetFunctionalAccountsListFlowWithContext(context.Background(), method, httpMethod, path)
+}
+
+// GetFunctionalAccountsListFlowWithContext calls Password Safe API endpoint to get functional accounts list.
+func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlowWithContext(ctx context.Context, method string, httpMethod string, path string) ([]entities.FunctionalAccountResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", path)
 	functionalAccount.log.Debug(messageLog)
 
@@ -122,7 +139,7 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlow(method
 
 	createManagedSystemUrl := functionalAccount.authenticationObj.ApiUrl.JoinPath(path).String()
 
-	response, err := functionalAccount.authenticationObj.HttpClient.GetGeneralList(createManagedSystemUrl, functionalAccount.authenticationObj.ApiVersion, method, functionalAccount.authenticationObj.ExponentialBackOff)
+	response, err := functionalAccount.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, createManagedSystemUrl, functionalAccount.authenticationObj.ApiVersion, method, functionalAccount.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return functionalAccountResponse, err
@@ -144,10 +161,16 @@ func (functionalAccount *FunctionalAccount) GetFunctionalAccountsListFlow(method
 
 // DeleteFunctionalAccountById deletes a functional account by its ID.
 func (functionalAccount *FunctionalAccount) DeleteFunctionalAccountById(functionalAccountID int) error {
+	return functionalAccount.DeleteFunctionalAccountByIdWithContext(context.Background(), functionalAccountID)
+}
+
+// DeleteFunctionalAccountByIdWithContext deletes a functional account by its ID.
+func (functionalAccount *FunctionalAccount) DeleteFunctionalAccountByIdWithContext(ctx context.Context, functionalAccountID int) error {
 	urlBuilder := func(id string) string {
 		return functionalAccount.authenticationObj.ApiUrl.JoinPath("FunctionalAccounts", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		fmt.Sprintf("%d", functionalAccountID),
 		"functional account",
 		constants.DeleteFunctionalAccount,

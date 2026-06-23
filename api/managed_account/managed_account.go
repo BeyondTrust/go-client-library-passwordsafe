@@ -4,6 +4,7 @@ package managed_accounts
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,19 +38,34 @@ func NewManagedAccountObj(authentication authentication.AuthenticationObj, logge
 
 // GetSecrets is responsible for getting a list of managed account secret values based on the list of systems and account names.
 func (managedAccountObj *ManagedAccountstObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	return managedAccountObj.ManageAccountFlow(secretPaths, separator)
+	return managedAccountObj.GetSecretsWithContext(context.Background(), secretPaths, separator)
+}
+
+// GetSecretsWithContext is responsible for getting a list of managed account secret values based on the list of systems and account names.
+func (managedAccountObj *ManagedAccountstObj) GetSecretsWithContext(ctx context.Context, secretPaths []string, separator string) (map[string]string, error) {
+	return managedAccountObj.ManageAccountFlowWithContext(ctx, secretPaths, separator)
 }
 
 // GetSecret returns secret value for a specific System Name and Account Name.
 func (managedAccountObj *ManagedAccountstObj) GetSecret(secretPath string, separator string) (string, error) {
+	return managedAccountObj.GetSecretWithContext(context.Background(), secretPath, separator)
+}
+
+// GetSecretWithContext returns secret value for a specific System Name and Account Name.
+func (managedAccountObj *ManagedAccountstObj) GetSecretWithContext(ctx context.Context, secretPath string, separator string) (string, error) {
 	managedAccountList := []string{}
-	secrets, err := managedAccountObj.ManageAccountFlow(append(managedAccountList, secretPath), separator)
+	secrets, err := managedAccountObj.ManageAccountFlowWithContext(ctx, append(managedAccountList, secretPath), separator)
 	secretValue := secrets[secretPath]
 	return secretValue, err
 }
 
 // ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
 func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
+	return managedAccountObj.ManageAccountFlowWithContext(context.Background(), secretsToRetrieve, separator)
+}
+
+// ManageAccountFlowWithContext is responsible for creating a dictionary of managed account system/name and secret key-value pairs.
+func (managedAccountObj *ManagedAccountstObj) ManageAccountFlowWithContext(ctx context.Context, secretsToRetrieve []string, separator string) (map[string]string, error) {
 
 	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, true, separator, managedAccountObj.log)
 	managedAccountObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
@@ -72,7 +88,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 		var err error
 
 		ManagedAccountGetUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts").String() + "?" + v.Encode()
-		managedAccount, err := managedAccountObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
+		managedAccount, err := managedAccountObj.ManagedAccountGetWithContext(ctx, systemName, accountName, ManagedAccountGetUrl)
 		if err != nil {
 			saveLastErr = err
 			managedAccountObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
@@ -80,7 +96,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 		}
 
 		ManagedAccountCreateRequestUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests").String()
-		requestId, err := managedAccountObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
+		requestId, err := managedAccountObj.ManagedAccountCreateRequestWithContext(ctx, managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
 		if err != nil {
 			saveLastErr = err
 			managedAccountObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
@@ -88,7 +104,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 		}
 
 		CredentialByRequestIdUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Credentials", requestId).String()
-		secret, err := managedAccountObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
+		secret, err := managedAccountObj.CredentialByRequestIdWithContext(ctx, requestId, CredentialByRequestIdUrl)
 		if err != nil {
 			saveLastErr = err
 			managedAccountObj.log.Error(fmt.Sprintf("%v secretsPath: %v %v %v", err.Error(), systemName, separator, accountName))
@@ -96,7 +112,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 		}
 
 		ManagedAccountRequestCheckInUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests", requestId, "checkin").String()
-		_, err = managedAccountObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
+		_, err = managedAccountObj.ManagedAccountRequestCheckInWithContext(ctx, requestId, ManagedAccountRequestCheckInUrl)
 
 		if err != nil {
 			saveLastErr = err
@@ -114,6 +130,11 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountFlow(secretsToRetriev
 
 // ManagedAccountGet is responsible for retrieving a managed account secret based on the system and name.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName string, accountName string, url string) (entities.ManagedAccount, error) {
+	return managedAccountObj.ManagedAccountGetWithContext(context.Background(), systemName, accountName, url)
+}
+
+// ManagedAccountGetWithContext is responsible for retrieving a managed account secret based on the system and name.
+func (managedAccountObj *ManagedAccountstObj) ManagedAccountGetWithContext(ctx context.Context, systemName string, accountName string, url string) (entities.ManagedAccount, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	managedAccountObj.log.Debug(messageLog)
 
@@ -122,6 +143,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -133,7 +155,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		if technicalError != nil {
 			return technicalError
 		}
@@ -169,27 +191,43 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountGet(systemName strin
 
 // ManagedAccountCreateRequest calls Secret Safe API Requests enpoint and returns a request Id as string.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequest(systemName int, accountName int, url string) (string, error) {
+	return managedAccountObj.ManagedAccountCreateRequestWithContext(context.Background(), systemName, accountName, url)
+}
+
+// ManagedAccountCreateRequestWithContext calls Secret Safe API Requests endpoint and returns a request Id as string.
+func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateRequestWithContext(ctx context.Context, systemName int, accountName int, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "POST", url)
 	managedAccountObj.log.Debug(messageLog)
 
 	data := fmt.Sprintf(`{"SystemID":%v, "AccountID":%v, "DurationMinutes":5, "Reason":"Tesr", "ConflictOption": "reuse"}`, systemName, accountName)
 	b := bytes.NewBufferString(data)
 
-	return managedAccountObj.sendRequestAndGetSingleString("POST", url, constants.ManagedAccountCreateRequest, *b)
+	return managedAccountObj.sendRequestAndGetSingleString(ctx, "POST", url, constants.ManagedAccountCreateRequest, *b)
 
 }
 
 // CredentialByRequestId calls Secret Safe API Credentials/<request_id>
 // enpoint and returns secret value by request Id.
 func (managedAccountObj *ManagedAccountstObj) CredentialByRequestId(requestId string, url string) (string, error) {
+	return managedAccountObj.CredentialByRequestIdWithContext(context.Background(), requestId, url)
+}
+
+// CredentialByRequestIdWithContext calls Secret Safe API Credentials/<request_id>
+// endpoint and returns secret value by request Id.
+func (managedAccountObj *ManagedAccountstObj) CredentialByRequestIdWithContext(ctx context.Context, requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
-	return managedAccountObj.sendRequestAndGetSingleString("GET", url, constants.CredentialByRequestId, bytes.Buffer{})
+	return managedAccountObj.sendRequestAndGetSingleString(ctx, "GET", url, constants.CredentialByRequestId, bytes.Buffer{})
 
 }
 
 // ManagedAccountRequestCheckIn calls Secret Safe API "Requests/<request_id>/checkin enpoint.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(requestId string, url string) (string, error) {
+	return managedAccountObj.ManagedAccountRequestCheckInWithContext(context.Background(), requestId, url)
+}
+
+// ManagedAccountRequestCheckInWithContext calls Secret Safe API "Requests/<request_id>/checkin endpoint.
+func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckInWithContext(ctx context.Context, requestId string, url string) (string, error) {
 	messageLog := fmt.Sprintf("%v %v", "PUT", url)
 	managedAccountObj.log.Debug(strings.ReplaceAll(messageLog, requestId, "****"))
 
@@ -200,6 +238,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "PUT",
 		Body:        *b,
@@ -211,7 +250,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 	}
 
 	technicalError = backoff.Retry(func() error {
-		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -228,6 +267,11 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountRequestCheckIn(reque
 
 // ManageAccountCreateFlow is responsible for creating a managed accounts in Password Safe.
 func (managedAccountObj *ManagedAccountstObj) ManageAccountCreateFlow(systemNameTarget string, accountDetails entities.AccountDetails) (entities.CreateManagedAccountsResponse, error) {
+	return managedAccountObj.ManageAccountCreateFlowWithContext(context.Background(), systemNameTarget, accountDetails)
+}
+
+// ManageAccountCreateFlowWithContext is responsible for creating a managed accounts in Password Safe.
+func (managedAccountObj *ManagedAccountstObj) ManageAccountCreateFlowWithContext(ctx context.Context, systemNameTarget string, accountDetails entities.AccountDetails) (entities.CreateManagedAccountsResponse, error) {
 
 	var managedSystem *entities.ManagedSystemResponse
 	var createResponse entities.CreateManagedAccountsResponse
@@ -239,7 +283,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountCreateFlow(systemName
 	}
 
 	ManagedAccountSystemUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems").String()
-	managedSystemGetSystemsResponse, err := managedAccountObj.ManagedSystemGetSystems(ManagedAccountSystemUrl)
+	managedSystemGetSystemsResponse, err := managedAccountObj.ManagedSystemGetSystemsWithContext(ctx, ManagedAccountSystemUrl)
 
 	if err != nil {
 		return createResponse, err
@@ -257,7 +301,7 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountCreateFlow(systemName
 	}
 
 	ManagedAccountCreateManagedAccountUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems", fmt.Sprintf("%d", managedSystem.ManagedSystemID), "ManagedAccounts").String()
-	createResponse, err = managedAccountObj.ManagedAccountCreateManagedAccount(accountDetails, ManagedAccountCreateManagedAccountUrl)
+	createResponse, err = managedAccountObj.ManagedAccountCreateManagedAccountWithContext(ctx, accountDetails, ManagedAccountCreateManagedAccountUrl)
 
 	if err != nil {
 		return createResponse, err
@@ -269,6 +313,11 @@ func (managedAccountObj *ManagedAccountstObj) ManageAccountCreateFlow(systemName
 
 // ManagedAccountCreateManagedAccount calls Secret Safe API Requests enpoint to create managed accounts.
 func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount(accountDetails entities.AccountDetails, url string) (entities.CreateManagedAccountsResponse, error) {
+	return managedAccountObj.ManagedAccountCreateManagedAccountWithContext(context.Background(), accountDetails, url)
+}
+
+// ManagedAccountCreateManagedAccountWithContext calls Secret Safe API Requests endpoint to create managed accounts.
+func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccountWithContext(ctx context.Context, accountDetails entities.AccountDetails, url string) (entities.CreateManagedAccountsResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "POST", url)
 	managedAccountObj.log.Debug(messageLog)
 
@@ -286,6 +335,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -297,7 +347,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 
@@ -331,6 +381,11 @@ func (managedAccountObj *ManagedAccountstObj) ManagedAccountCreateManagedAccount
 
 // ManagedAccountGetSystem is responsible for retrieving managed systems list
 func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string) ([]entities.ManagedSystemResponse, error) {
+	return managedAccountObj.ManagedSystemGetSystemsWithContext(context.Background(), url)
+}
+
+// ManagedSystemGetSystemsWithContext is responsible for retrieving managed systems list.
+func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystemsWithContext(ctx context.Context, url string) ([]entities.ManagedSystemResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", url)
 	managedAccountObj.log.Debug(messageLog)
 
@@ -339,6 +394,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -350,7 +406,7 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		if technicalError != nil {
 			return technicalError
 		}
@@ -391,12 +447,23 @@ func (managedAccountObj *ManagedAccountstObj) ManagedSystemGetSystems(url string
 
 // GetManagedAccountsListFlow get managed accounts list.
 func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListFlow() ([]entities.ManagedAccount, error) {
-	return managedAccountObj.GetManagedAccountsList("ManagedAccounts", constants.ManagedAccountCreate)
+	return managedAccountObj.GetManagedAccountsListFlowWithContext(context.Background())
+}
+
+// GetManagedAccountsListFlowWithContext gets managed accounts list.
+func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListFlowWithContext(ctx context.Context) ([]entities.ManagedAccount, error) {
+	return managedAccountObj.GetManagedAccountsListWithContext(ctx, "ManagedAccounts", constants.ManagedAccountCreate)
 }
 
 // GetManagedAccountsList call ManagedAccounts enpoint
 // and returns managed accounts list
 func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPath string, method string) ([]entities.ManagedAccount, error) {
+	return managedAccountObj.GetManagedAccountsListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetManagedAccountsListWithContext calls ManagedAccounts endpoint
+// and returns managed accounts list
+func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.ManagedAccount, error) {
 
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	managedAccountObj.log.Debug(messageLog)
@@ -405,7 +472,7 @@ func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPat
 
 	var managedAccountList []entities.ManagedAccount
 
-	response, err := managedAccountObj.authenticationObj.HttpClient.GetGeneralList(url, managedAccountObj.authenticationObj.ApiVersion, method, managedAccountObj.authenticationObj.ExponentialBackOff)
+	response, err := managedAccountObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, managedAccountObj.authenticationObj.ApiVersion, method, managedAccountObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return managedAccountList, err
@@ -426,13 +493,14 @@ func (managedAccountObj *ManagedAccountstObj) GetManagedAccountsList(endpointPat
 }
 
 // sendRequestAndGetSingleString send a request and get the response as string.
-func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(httpMethod string, url string, method string, b bytes.Buffer) (string, error) {
+func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(ctx context.Context, httpMethod string, url string, method string, b bytes.Buffer) (string, error) {
 
 	var body io.ReadCloser
 	var technicalError error
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  httpMethod,
 		Body:        b,
@@ -443,7 +511,7 @@ func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(http
 		ApiVersion:  "",
 	}
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 	if technicalError != nil {
@@ -464,11 +532,17 @@ func (managedAccountObj *ManagedAccountstObj) sendRequestAndGetSingleString(http
 
 // DeleteManagedAccountById deletes a managed account by its ID.
 func (managedAccountObj *ManagedAccountstObj) DeleteManagedAccountById(managedAccountID int) error {
+	return managedAccountObj.DeleteManagedAccountByIdWithContext(context.Background(), managedAccountID)
+}
+
+// DeleteManagedAccountByIdWithContext deletes a managed account by its ID.
+func (managedAccountObj *ManagedAccountstObj) DeleteManagedAccountByIdWithContext(ctx context.Context, managedAccountID int) error {
 	url := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts", strconv.Itoa(managedAccountID)).String()
 	messageLog := fmt.Sprintf("%v %v", "DELETE", url)
 	managedAccountObj.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "DELETE",
 		Body:        bytes.Buffer{},
@@ -483,7 +557,7 @@ func (managedAccountObj *ManagedAccountstObj) DeleteManagedAccountById(managedAc
 	var businessError error
 
 	technicalError = backoff.Retry(func() error {
-		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		_, _, technicalError, businessError = managedAccountObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, managedAccountObj.authenticationObj.ExponentialBackOff)
 

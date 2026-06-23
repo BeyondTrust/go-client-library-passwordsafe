@@ -3,6 +3,7 @@
 package platforms
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -29,12 +30,23 @@ func NewPlatformObj(authentication authentication.AuthenticationObj, logger logg
 
 // GetPlatformsListFlow get platforms list.
 func (platformObj *PlatformObj) GetPlatformsListFlow() ([]entities.PlatformResponse, error) {
-	return platformObj.GetPlatformsList("Platforms", constants.GetPlatformsList)
+	return platformObj.GetPlatformsListFlowWithContext(context.Background())
+}
+
+// GetPlatformsListFlowWithContext gets platforms list.
+func (platformObj *PlatformObj) GetPlatformsListFlowWithContext(ctx context.Context) ([]entities.PlatformResponse, error) {
+	return platformObj.GetPlatformsListWithContext(ctx, "Platforms", constants.GetPlatformsList)
 }
 
 // GetPlatformsList call Platforms enpoint
 // and returns platforms list
 func (platformObj *PlatformObj) GetPlatformsList(endpointPath string, method string) ([]entities.PlatformResponse, error) {
+	return platformObj.GetPlatformsListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetPlatformsListWithContext calls Platforms endpoint
+// and returns platforms list
+func (platformObj *PlatformObj) GetPlatformsListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.PlatformResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	platformObj.log.Debug(messageLog + endpointPath)
 
@@ -42,7 +54,7 @@ func (platformObj *PlatformObj) GetPlatformsList(endpointPath string, method str
 
 	var platformsList []entities.PlatformResponse
 
-	response, err := platformObj.authenticationObj.HttpClient.GetGeneralList(url, platformObj.authenticationObj.ApiVersion, method, platformObj.authenticationObj.ExponentialBackOff)
+	response, err := platformObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, platformObj.authenticationObj.ApiVersion, method, platformObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return platformsList, err

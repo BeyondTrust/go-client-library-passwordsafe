@@ -4,6 +4,7 @@ package managed_systems
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +35,11 @@ func NewManagedSystem(authentication authentication.AuthenticationObj, logger lo
 
 // CreateManagedSystemByAssetIdFlow is responsible for creating managed_systems by Asset Id in Password Safe.
 func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(assetId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.CreateManagedSystemByAssetIdFlowWithContext(context.Background(), assetId, managedSystemDetailsInterface)
+}
+
+// CreateManagedSystemByAssetIdFlowWithContext is responsible for creating managed_systems by Asset Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlowWithContext(ctx context.Context, assetId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
@@ -66,7 +72,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 
 	path := fmt.Sprintf("/Assets/%s/ManagedSystems", assetId)
 
-	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByAssetId, path, managedSystemJson)
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(ctx, constants.CreateManagedSystemByAssetId, path, managedSystemJson)
 
 	if err != nil {
 		return managedSystemResponse, err
@@ -78,6 +84,11 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 
 // CreateManagedSystemByWorkGroupIdFlow is responsible for creating managed_systems by WorkGroup Id in Password Safe.
 func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.CreateManagedSystemByWorkGroupIdFlowWithContext(context.Background(), workGroupId, managedSystemDetailsInterface)
+}
+
+// CreateManagedSystemByWorkGroupIdFlowWithContext is responsible for creating managed_systems by WorkGroup Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlowWithContext(ctx context.Context, workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
@@ -110,7 +121,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 	}
 
 	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", workGroupId)
-	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(ctx, constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
 
 	if err != nil {
 		return managedSystemResponse, err
@@ -122,6 +133,11 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 
 // CreateManagedSystemByDataBaseIdFlow is responsible for creating managed_systems by Database Id in Password Safe.
 func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.CreateManagedSystemByDataBaseIdFlowWithContext(context.Background(), workGroupId, managedSystemDetailsInterface)
+}
+
+// CreateManagedSystemByDataBaseIdFlowWithContext is responsible for creating managed_systems by Database Id in Password Safe.
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlowWithContext(ctx context.Context, workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
@@ -150,7 +166,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 	}
 
 	path := fmt.Sprintf("/Databases/%s/ManagedSystems", workGroupId)
-	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
+	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(ctx, constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
 
 	if err != nil {
 		return managedSystemResponse, err
@@ -161,7 +177,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 }
 
 // createManagedSystem calls Password Safe API enpoint to create managed_systems.
-func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, path string, payload string) (entities.ManagedSystemResponseCreate, error) {
+func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(ctx context.Context, method string, path string, payload string) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 
@@ -176,6 +192,7 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, pat
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         createManagedSystemUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -187,7 +204,7 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, pat
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = ManagedSystemObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = ManagedSystemObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, ManagedSystemObj.authenticationObj.ExponentialBackOff)
 
@@ -219,12 +236,23 @@ func (ManagedSystemObj *ManagedSystemObj) createManagedSystem(method string, pat
 
 // GetManagedSystemsListFlow get managed system list.
 func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsListFlow() ([]entities.ManagedSystemResponseCreate, error) {
-	return ManagedSystemObj.GetManagedSystemsList("ManagedSystems", constants.GetManagedSystemsList)
+	return ManagedSystemObj.GetManagedSystemsListFlowWithContext(context.Background())
+}
+
+// GetManagedSystemsListFlowWithContext gets managed system list.
+func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsListFlowWithContext(ctx context.Context) ([]entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.GetManagedSystemsListWithContext(ctx, "ManagedSystems", constants.GetManagedSystemsList)
 }
 
 // GetManagedSystemsList call ManagedSystems enpoint
 // and returns managed system list
 func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsList(endpointPath string, method string) ([]entities.ManagedSystemResponseCreate, error) {
+	return ManagedSystemObj.GetManagedSystemsListWithContext(context.Background(), endpointPath, method)
+}
+
+// GetManagedSystemsListWithContext calls ManagedSystems endpoint
+// and returns managed system list
+func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsListWithContext(ctx context.Context, endpointPath string, method string) ([]entities.ManagedSystemResponseCreate, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	ManagedSystemObj.log.Debug(messageLog + endpointPath)
 
@@ -232,7 +260,7 @@ func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsList(endpointPath str
 
 	var managedSystemsList []entities.ManagedSystemResponseCreate
 
-	response, err := ManagedSystemObj.authenticationObj.HttpClient.GetGeneralList(url, ManagedSystemObj.authenticationObj.ApiVersion, method, ManagedSystemObj.authenticationObj.ExponentialBackOff)
+	response, err := ManagedSystemObj.authenticationObj.HttpClient.GetGeneralListWithContext(ctx, url, ManagedSystemObj.authenticationObj.ApiVersion, method, ManagedSystemObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return managedSystemsList, err
@@ -254,10 +282,16 @@ func (ManagedSystemObj *ManagedSystemObj) GetManagedSystemsList(endpointPath str
 
 // DeleteManagedSystemById deletes a managed system by its ID.
 func (managedSystemObj *ManagedSystemObj) DeleteManagedSystemById(managedSystemID int) error {
+	return managedSystemObj.DeleteManagedSystemByIdWithContext(context.Background(), managedSystemID)
+}
+
+// DeleteManagedSystemByIdWithContext deletes a managed system by its ID.
+func (managedSystemObj *ManagedSystemObj) DeleteManagedSystemByIdWithContext(ctx context.Context, managedSystemID int) error {
 	urlBuilder := func(id string) string {
 		return managedSystemObj.authenticationObj.ApiUrl.JoinPath("ManagedSystems", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		fmt.Sprintf("%d", managedSystemID),
 		"managed system",
 		constants.DeleteManagedSystem,

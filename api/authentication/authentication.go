@@ -4,6 +4,7 @@ package authentication
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -90,17 +91,22 @@ func AuthenticateUsingApiKey(authenticationParametersObj AuthenticationParameter
 
 // GetPasswordSafeAuthentication is responsible for getting a token and signing in.
 func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (entities.SignAppinResponse, error) {
+	return authenticationObj.GetPasswordSafeAuthenticationWithContext(context.Background())
+}
+
+// GetPasswordSafeAuthenticationWithContext is responsible for getting a token and signing in.
+func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthenticationWithContext(ctx context.Context) (entities.SignAppinResponse, error) {
 	var accessToken string
 	var err error
 
 	if authenticationObj.clientId != "" && authenticationObj.clientSecret != "" {
-		accessToken, err = authenticationObj.GetToken(authenticationObj.ApiUrl.JoinPath("Auth/connect/token").String(), authenticationObj.clientId, authenticationObj.clientSecret)
+		accessToken, err = authenticationObj.GetTokenWithContext(ctx, authenticationObj.ApiUrl.JoinPath("Auth/connect/token").String(), authenticationObj.clientId, authenticationObj.clientSecret)
 		if err != nil {
 			return entities.SignAppinResponse{}, err
 		}
 	}
 
-	signApinResponse, err := authenticationObj.SignAppin(authenticationObj.ApiUrl.JoinPath("Auth/SignAppIn").String(), accessToken, authenticationObj.apiKey)
+	signApinResponse, err := authenticationObj.SignAppinWithContext(ctx, authenticationObj.ApiUrl.JoinPath("Auth/SignAppIn").String(), accessToken, authenticationObj.apiKey)
 	if err != nil {
 		return entities.SignAppinResponse{}, err
 	}
@@ -109,7 +115,12 @@ func (authenticationObj *AuthenticationObj) GetPasswordSafeAuthentication() (ent
 
 // GetToken is responsible for getting a token from the PS API.
 func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientId string, clientSecret string) (string, error) {
-	data, err := authenticationObj.GetTokenDetails(endpointUrl, clientId, clientSecret)
+	return authenticationObj.GetTokenWithContext(context.Background(), endpointUrl, clientId, clientSecret)
+}
+
+// GetTokenWithContext is responsible for getting a token from the PS API.
+func (authenticationObj *AuthenticationObj) GetTokenWithContext(ctx context.Context, endpointUrl string, clientId string, clientSecret string) (string, error) {
+	data, err := authenticationObj.GetTokenDetailsWithContext(ctx, endpointUrl, clientId, clientSecret)
 	if err != nil {
 		return "", err
 	}
@@ -122,6 +133,12 @@ func (authenticationObj *AuthenticationObj) GetToken(endpointUrl string, clientI
 // the complete entities.GetTokenResponse so callers can use expires_in to calculate
 // exact token expiry without relying on a hard-coded default lifetime.
 func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, clientId string, clientSecret string) (entities.GetTokenResponse, error) {
+	return authenticationObj.GetTokenDetailsWithContext(context.Background(), endpointUrl, clientId, clientSecret)
+}
+
+// GetTokenDetailsWithContext is responsible for getting a token from the PS API and returning
+// the full token response including expiry information.
+func (authenticationObj *AuthenticationObj) GetTokenDetailsWithContext(ctx context.Context, endpointUrl string, clientId string, clientSecret string) (entities.GetTokenResponse, error) {
 
 	params := url.Values{}
 	params.Add("client_id", clientId)
@@ -136,6 +153,7 @@ func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, 
 	buffer.WriteString(params.Encode())
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         endpointUrl,
 		HttpMethod:  "POST",
 		Body:        buffer,
@@ -150,7 +168,7 @@ func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, 
 	authenticationObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 
@@ -182,6 +200,11 @@ func (authenticationObj *AuthenticationObj) GetTokenDetails(endpointUrl string, 
 
 // SignAppin is responsible for creating a PS API session.
 func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, accessToken string, apiKey string) (entities.SignAppinResponse, error) {
+	return authenticationObj.SignAppinWithContext(context.Background(), endpointUrl, accessToken, apiKey)
+}
+
+// SignAppinWithContext is responsible for creating a PS API session.
+func (authenticationObj *AuthenticationObj) SignAppinWithContext(ctx context.Context, endpointUrl string, accessToken string, apiKey string) (entities.SignAppinResponse, error) {
 
 	var userObject entities.SignAppinResponse
 	var body io.ReadCloser
@@ -190,6 +213,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	var scode int
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         endpointUrl,
 		HttpMethod:  "POST",
 		Body:        bytes.Buffer{},
@@ -204,7 +228,7 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 	authenticationObj.log.Debug(messageLog)
 
 	err := backoff.Retry(func() error {
-		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, scode, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		if scode == 0 {
 			return nil
 		}
@@ -243,6 +267,13 @@ func (authenticationObj *AuthenticationObj) SignAppin(endpointUrl string, access
 // Warn: should only be called one time for all data sources. The session is closed server
 // side automatically after 20 minutes of uninterupted inactivity.
 func (authenticationObj *AuthenticationObj) SignOut() error {
+	return authenticationObj.SignOutWithContext(context.Background())
+}
+
+// SignOutWithContext is responsible for closing the PS API session and cleaning up idle connections.
+// Warn: should only be called one time for all data sources. The session is closed server
+// side automatically after 20 minutes of uninterupted inactivity.
+func (authenticationObj *AuthenticationObj) SignOutWithContext(ctx context.Context) error {
 
 	var technicalError error
 	var businessError error
@@ -251,6 +282,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	signOutUrl := authenticationObj.ApiUrl.JoinPath("Auth/Signout").String()
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         signOutUrl,
 		HttpMethod:  "POST",
 		Body:        bytes.Buffer{},
@@ -265,7 +297,7 @@ func (authenticationObj *AuthenticationObj) SignOut() error {
 	authenticationObj.log.Debug(messageLog)
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, authenticationObj.ExponentialBackOff)
 

@@ -4,6 +4,7 @@ package secrets
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,20 +43,35 @@ func NewSecretObj(authentication authentication.AuthenticationObj, logger loggin
 
 // GetSecrets returns secret value for a path and title list.
 func (secretObj *SecretObj) GetSecrets(secretPaths []string, separator string) (map[string]string, error) {
-	return secretObj.GetSecretFlow(secretPaths, separator)
+	return secretObj.GetSecretsWithContext(context.Background(), secretPaths, separator)
+}
+
+// GetSecretsWithContext returns secret value for a path and title list.
+func (secretObj *SecretObj) GetSecretsWithContext(ctx context.Context, secretPaths []string, separator string) (map[string]string, error) {
+	return secretObj.GetSecretFlowWithContext(ctx, secretPaths, separator)
 }
 
 // GetSecret returns secret value for a specific path and title.
 func (secretObj *SecretObj) GetSecret(secretPath string, separator string) (string, error) {
+	return secretObj.GetSecretWithContext(context.Background(), secretPath, separator)
+}
+
+// GetSecretWithContext returns secret value for a specific path and title.
+func (secretObj *SecretObj) GetSecretWithContext(ctx context.Context, secretPath string, separator string) (string, error) {
 	secretPaths := []string{}
-	secrets, err := secretObj.GetSecretFlow(append(secretPaths, secretPath), separator)
+	secrets, err := secretObj.GetSecretFlowWithContext(ctx, append(secretPaths, secretPath), separator)
 	secretValue := secrets[secretPath]
 	return secretValue, err
 }
 
 // GetFileSecret Get data of a file secret.
 func (secretObj *SecretObj) GetFileSecret(secret entities.Secret, secretPath string) (string, error) {
-	fileSecretContent, err := secretObj.SecretGetFileSecret(secret.Id, "secrets-safe/secrets/")
+	return secretObj.GetFileSecretWithContext(context.Background(), secret, secretPath)
+}
+
+// GetFileSecretWithContext gets data of a file secret.
+func (secretObj *SecretObj) GetFileSecretWithContext(ctx context.Context, secret entities.Secret, secretPath string) (string, error) {
+	fileSecretContent, err := secretObj.SecretGetFileSecretWithContext(ctx, secret.Id, "secrets-safe/secrets/")
 	if err != nil {
 		return "", err
 	}
@@ -71,9 +87,14 @@ func (secretObj *SecretObj) GetFileSecret(secret entities.Secret, secretPath str
 
 // GetGeneralSecret Get general data of a secret.
 func (secretObj *SecretObj) GetGeneralSecret(secretPath string, secretTitle string, separator string) (entities.Secret, error) {
+	return secretObj.GetGeneralSecretWithContext(context.Background(), secretPath, secretTitle, separator)
+}
+
+// GetGeneralSecretWithContext gets general data of a secret.
+func (secretObj *SecretObj) GetGeneralSecretWithContext(ctx context.Context, secretPath string, secretTitle string, separator string) (entities.Secret, error) {
 
 	var err error
-	secret, err := secretObj.SecretGetSecretByPath(secretPath, secretTitle, separator, "secrets-safe/secrets")
+	secret, err := secretObj.SecretGetSecretByPathWithContext(ctx, secretPath, secretTitle, separator, "secrets-safe/secrets")
 
 	entireSecretPath := secretPath + separator + secretTitle
 
@@ -100,6 +121,11 @@ func (secretObj *SecretObj) SplitGetSecretPathAndSecretTitle(secretToRetrieve st
 
 // GetSecretFlow is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
 func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator string) (map[string]string, error) {
+	return secretObj.GetSecretFlowWithContext(context.Background(), secretsToRetrieve, separator)
+}
+
+// GetSecretFlowWithContext is responsible for creating a dictionary of secrets safe secret paths and secret key-value pairs.
+func (secretObj *SecretObj) GetSecretFlowWithContext(ctx context.Context, secretsToRetrieve []string, separator string) (map[string]string, error) {
 
 	secretsToRetrieve = utils.ValidatePaths(secretsToRetrieve, false, separator, secretObj.log)
 	secretObj.log.Info(fmt.Sprintf("Retrieving %v Secrets", len(secretsToRetrieve)))
@@ -115,7 +141,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 		secretPath, secretTitle := secretObj.SplitGetSecretPathAndSecretTitle(secretToRetrieve, separator)
 		entireSecretPath := secretPath + separator + secretTitle
 
-		secret, err := secretObj.GetGeneralSecret(secretPath, secretTitle, separator)
+		secret, err := secretObj.GetGeneralSecretWithContext(ctx, secretPath, secretTitle, separator)
 
 		if err != nil {
 			saveLastErr = err
@@ -125,7 +151,7 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 
 		// When secret type is FILE, it calls SecretGetFileSecret method.
 		if strings.ToUpper(secret.SecretType) == "FILE" {
-			fileSecretContent, err := secretObj.GetFileSecret(secret, entireSecretPath)
+			fileSecretContent, err := secretObj.GetFileSecretWithContext(ctx, secret, entireSecretPath)
 			if err != nil {
 				saveLastErr = err
 				secretObj.log.Error(err.Error() + "secretPath:" + entireSecretPath)
@@ -143,6 +169,11 @@ func (secretObj *SecretObj) GetSecretFlow(secretsToRetrieve []string, separator 
 
 // SecretGetSecretByPath returns secret object for a specific path, title.
 func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle string, separator string, endpointPath string) (entities.Secret, error) {
+	return secretObj.SecretGetSecretByPathWithContext(context.Background(), secretPath, secretTitle, separator, endpointPath)
+}
+
+// SecretGetSecretByPathWithContext returns secret object for a specific path, title.
+func (secretObj *SecretObj) SecretGetSecretByPathWithContext(ctx context.Context, secretPath string, secretTitle string, separator string, endpointPath string) (entities.Secret, error) {
 
 	var body io.ReadCloser
 	var technicalError error
@@ -170,6 +201,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	secretObj.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         endpointUrl,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -181,7 +213,7 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -218,6 +250,12 @@ func (secretObj *SecretObj) SecretGetSecretByPath(secretPath string, secretTitle
 // SecretGetFileSecret call secrets-safe/secrets/<secret_id>/file/download enpoint
 // and returns file secret value.
 func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath string) (string, error) {
+	return secretObj.SecretGetFileSecretWithContext(context.Background(), secretId, endpointPath)
+}
+
+// SecretGetFileSecretWithContext calls secrets-safe/secrets/<secret_id>/file/download endpoint
+// and returns file secret value.
+func (secretObj *SecretObj) SecretGetFileSecretWithContext(ctx context.Context, secretId string, endpointPath string) (string, error) {
 
 	var body io.ReadCloser
 	var technicalError error
@@ -229,6 +267,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	secretObj.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -240,7 +279,7 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -269,6 +308,11 @@ func (secretObj *SecretObj) SecretGetFileSecret(secretId string, endpointPath st
 // is selected here based on the authenticated API version — or a Config30/Config31
 // directly, which is passed through unchanged for backward compatibility.
 func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
+	return secretObj.CreateSecretFlowWithContext(context.Background(), folderTarget, secretDetails)
+}
+
+// CreateSecretFlowWithContext is responsible for creating secrets in Password Safe.
+func (secretObj *SecretObj) CreateSecretFlowWithContext(ctx context.Context, folderTarget string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
 	var folder *entities.FolderResponse
 	var createResponse entities.CreateSecretResponse
@@ -295,7 +339,7 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, err
 	}
 
-	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
+	folders, err := secretObj.SecretGetFoldersAndSafesWithContext(ctx, "secrets-safe/folders/", constants.SecretGetFolders)
 
 	if err != nil {
 		return createResponse, err
@@ -312,7 +356,7 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, fmt.Errorf("folder %v was not found in folder list", folderTarget)
 	}
 
-	createResponse, err = secretObj.SecretCreateSecret(folder.Id, secretDetails)
+	createResponse, err = secretObj.SecretCreateSecretWithContext(ctx, folder.Id, secretDetails)
 
 	if err != nil {
 		return createResponse, err
@@ -426,6 +470,11 @@ func decodeSecretListResponse(body []byte) ([]entities.Secret, error) {
 
 // SecretCreateFileSecret create a secret of type file.
 func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string, payload string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
+	return secretObj.SecretCreateFileSecretWithContext(context.Background(), SecretCreateSecretUrl, payload, secretDetails)
+}
+
+// SecretCreateFileSecretWithContext creates a secret of type file.
+func (secretObj *SecretObj) SecretCreateFileSecretWithContext(ctx context.Context, SecretCreateSecretUrl string, payload string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
 	var fileName string
 	var fileContent string
@@ -444,7 +493,7 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 		fileContent = fileSecret.FileContent
 	}
 
-	body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequest(SecretCreateSecretUrl, fileName, []byte(payload), fileContent, secretObj.authenticationObj.ApiVersion)
+	body, err := secretObj.authenticationObj.HttpClient.CreateMultiPartRequestWithContext(ctx, SecretCreateSecretUrl, fileName, []byte(payload), fileContent, secretObj.authenticationObj.ApiVersion)
 	if err != nil {
 		return entities.CreateSecretResponse{}, err
 	}
@@ -468,6 +517,11 @@ func (secretObj *SecretObj) SecretCreateFileSecret(SecretCreateSecretUrl string,
 
 // SecretCreateSecret calls Secret Safe API Requests enpoint to create secrets in Password Safe.
 func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
+	return secretObj.SecretCreateSecretWithContext(context.Background(), folderId, secretDetails)
+}
+
+// SecretCreateSecretWithContext calls Secret Safe API Requests endpoint to create secrets in Password Safe.
+func (secretObj *SecretObj) SecretCreateSecretWithContext(ctx context.Context, folderId string, secretDetails interface{}) (entities.CreateSecretResponse, error) {
 
 	var CreateSecretResponse entities.CreateSecretResponse
 	var secretCredentialDetailsJson string
@@ -494,7 +548,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 
 	// file secrets have a special behavior, they need to be created using multipart request.
 	if path == "secrets/file" {
-		return secretObj.SecretCreateFileSecret(SecretCreateSecretUrl, payload, secretDetails)
+		return secretObj.SecretCreateFileSecretWithContext(ctx, SecretCreateSecretUrl, payload, secretDetails)
 	}
 
 	var body io.ReadCloser
@@ -502,6 +556,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         SecretCreateSecretUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -513,7 +568,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -572,17 +627,32 @@ func (secretObj *SecretObj) GetPathToCreateSecret(secretDetails interface{}) str
 
 // SecretGetFoldersFlow get folders list
 func (secretObj *SecretObj) SecretGetFoldersListFlow() ([]entities.FolderResponse, error) {
-	return secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
+	return secretObj.SecretGetFoldersListFlowWithContext(context.Background())
+}
+
+// SecretGetFoldersListFlowWithContext gets folders list.
+func (secretObj *SecretObj) SecretGetFoldersListFlowWithContext(ctx context.Context) ([]entities.FolderResponse, error) {
+	return secretObj.SecretGetFoldersAndSafesWithContext(ctx, "secrets-safe/folders/", constants.SecretGetFolders)
 }
 
 // SecretGetSafesFlow get safes list
 func (secretObj *SecretObj) SecretGetSafesListFlow() ([]entities.FolderResponse, error) {
-	return secretObj.SecretGetFoldersAndSafes("secrets-safe/safes/", constants.SecretGetSafes)
+	return secretObj.SecretGetSafesListFlowWithContext(context.Background())
+}
+
+// SecretGetSafesListFlowWithContext gets safes list.
+func (secretObj *SecretObj) SecretGetSafesListFlowWithContext(ctx context.Context) ([]entities.FolderResponse, error) {
+	return secretObj.SecretGetFoldersAndSafesWithContext(ctx, "secrets-safe/safes/", constants.SecretGetSafes)
 }
 
 // SecretGetFoldersAndSafes call secrets-safe/folders/ - secrets-safe/folders/  enpoint
 // and returns folder list - safe list
 func (secretObj *SecretObj) SecretGetFoldersAndSafes(endpointPath string, method string) ([]entities.FolderResponse, error) {
+	return secretObj.SecretGetFoldersAndSafesWithContext(context.Background(), endpointPath, method)
+}
+
+// SecretGetFoldersAndSafesWithContext calls folder/safe endpoints and returns lists.
+func (secretObj *SecretObj) SecretGetFoldersAndSafesWithContext(ctx context.Context, endpointPath string, method string) ([]entities.FolderResponse, error) {
 	messageLog := fmt.Sprintf("%v %v", "GET", endpointPath)
 	secretObj.log.Debug(messageLog + endpointPath)
 
@@ -591,6 +661,7 @@ func (secretObj *SecretObj) SecretGetFoldersAndSafes(endpointPath string, method
 	var foldersObj []entities.FolderResponse
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         url,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -601,7 +672,7 @@ func (secretObj *SecretObj) SecretGetFoldersAndSafes(endpointPath string, method
 		ApiVersion:  secretObj.authenticationObj.ApiVersion,
 	}
 
-	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequestWithContext(ctx, callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		secretObj.log.Error(err.Error())
@@ -624,6 +695,11 @@ func (secretObj *SecretObj) SecretGetFoldersAndSafes(endpointPath string, method
 
 // GetParentFolderId Get parent folder id using folder name.
 func (secretObj *SecretObj) GetParentFolderId(folderTarget string) (string, error) {
+	return secretObj.GetParentFolderIdWithContext(context.Background(), folderTarget)
+}
+
+// GetParentFolderIdWithContext gets parent folder id using folder name.
+func (secretObj *SecretObj) GetParentFolderIdWithContext(ctx context.Context, folderTarget string) (string, error) {
 
 	var parentFolder *entities.FolderResponse
 
@@ -631,7 +707,7 @@ func (secretObj *SecretObj) GetParentFolderId(folderTarget string) (string, erro
 		return "", fmt.Errorf("parent folder name must not be empty")
 	}
 
-	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
+	folders, err := secretObj.SecretGetFoldersAndSafesWithContext(ctx, "secrets-safe/folders/", constants.SecretGetFolders)
 
 	if err != nil {
 		return "", err
@@ -653,6 +729,11 @@ func (secretObj *SecretObj) GetParentFolderId(folderTarget string) (string, erro
 
 // CreateFolderFlow is responsible for creating folders/safes in Password Safe.
 func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
+	return secretObj.CreateFolderFlowWithContext(context.Background(), folderTarget, folderDetails)
+}
+
+// CreateFolderFlowWithContext is responsible for creating folders/safes in Password Safe.
+func (secretObj *SecretObj) CreateFolderFlowWithContext(ctx context.Context, folderTarget string, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
 
 	var createFolderesponse entities.CreateFolderResponse
 	var err error
@@ -665,7 +746,7 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 
 	// if it is folder
 	if folderDetails.FolderType == "FOLDER" {
-		parentFolderId, err := secretObj.GetParentFolderId(folderTarget)
+		parentFolderId, err := secretObj.GetParentFolderIdWithContext(ctx, folderTarget)
 		if err != nil {
 			return createFolderesponse, err
 		}
@@ -679,7 +760,7 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 		return createFolderesponse, err
 	}
 
-	createFolderesponse, err = secretObj.SecretCreateFolder(folderDetails)
+	createFolderesponse, err = secretObj.SecretCreateFolderWithContext(ctx, folderDetails)
 
 	if err != nil {
 		return createFolderesponse, err
@@ -690,6 +771,11 @@ func (secretObj *SecretObj) CreateFolderFlow(folderTarget string, folderDetails 
 
 // SecretCreateFolder calls Secret Safe API Requests enpoint to create folders/safes in Password Safe.
 func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
+	return secretObj.SecretCreateFolderWithContext(context.Background(), folderDetails)
+}
+
+// SecretCreateFolderWithContext calls Secret Safe API Requests endpoint to create folders/safes in Password Safe.
+func (secretObj *SecretObj) SecretCreateFolderWithContext(ctx context.Context, folderDetails entities.FolderDetails) (entities.CreateFolderResponse, error) {
 
 	path := "secrets-safe/folders/"
 	method := constants.SecretCreateFolder
@@ -719,6 +805,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	var businessError error
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         SecretCreateSecretUrl,
 		HttpMethod:  "POST",
 		Body:        *b,
@@ -730,7 +817,7 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 	}
 
 	technicalError = backoff.Retry(func() error {
-		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		body, _, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPIWithContext(ctx, *callSecretSafeAPIObj)
 		return technicalError
 	}, secretObj.authenticationObj.ExponentialBackOff)
 
@@ -762,10 +849,16 @@ func (secretObj *SecretObj) SecretCreateFolder(folderDetails entities.FolderDeta
 
 // DeleteSecretById deletes a secret by its ID.
 func (secretObj *SecretObj) DeleteSecretById(secretID string) error {
+	return secretObj.DeleteSecretByIdWithContext(context.Background(), secretID)
+}
+
+// DeleteSecretByIdWithContext deletes a secret by its ID.
+func (secretObj *SecretObj) DeleteSecretByIdWithContext(ctx context.Context, secretID string) error {
 	urlBuilder := func(id string) string {
 		return secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		secretID,
 		"secret",
 		constants.SecretDeleteSecret,
@@ -779,10 +872,16 @@ func (secretObj *SecretObj) DeleteSecretById(secretID string) error {
 
 // DeleteFolderById deletes a folder by its ID.
 func (secretObj *SecretObj) DeleteFolderById(folderID string) error {
+	return secretObj.DeleteFolderByIdWithContext(context.Background(), folderID)
+}
+
+// DeleteFolderByIdWithContext deletes a folder by its ID.
+func (secretObj *SecretObj) DeleteFolderByIdWithContext(ctx context.Context, folderID string) error {
 	urlBuilder := func(id string) string {
 		return secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/folders", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		folderID,
 		"folder",
 		constants.SecretDeleteFolder,
@@ -796,10 +895,16 @@ func (secretObj *SecretObj) DeleteFolderById(folderID string) error {
 
 // DeleteSafeById deletes a safe by its ID.
 func (secretObj *SecretObj) DeleteSafeById(safeID string) error {
+	return secretObj.DeleteSafeByIdWithContext(context.Background(), safeID)
+}
+
+// DeleteSafeByIdWithContext deletes a safe by its ID.
+func (secretObj *SecretObj) DeleteSafeByIdWithContext(ctx context.Context, safeID string) error {
 	urlBuilder := func(id string) string {
 		return secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/safes", id).String()
 	}
-	return utils.DeleteResourceByID(
+	return utils.DeleteResourceByIDWithContext(
+		ctx,
 		safeID,
 		"safe",
 		constants.SecretDeleteSafe,
@@ -813,8 +918,13 @@ func (secretObj *SecretObj) DeleteSafeById(safeID string) error {
 
 // SearchSecretByTitleFlow calls Password Safe API endpoint to search secrets by title.
 func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entities.Secret, error) {
+	return secretObj.SearchSecretByTitleFlowWithContext(context.Background(), secretTitle)
+}
+
+// SearchSecretByTitleFlowWithContext calls Password Safe API endpoint to search secrets by title.
+func (secretObj *SecretObj) SearchSecretByTitleFlowWithContext(ctx context.Context, secretTitle string) (entities.Secret, error) {
 	var secretResponse []entities.Secret
-	secretResponse, err := secretObj.SearchSecretByTitle("secrets-safe/secrets", secretTitle)
+	secretResponse, err := secretObj.SearchSecretByTitleWithContext(ctx, "secrets-safe/secrets", secretTitle)
 	if err != nil {
 		return entities.Secret{}, err
 	}
@@ -827,6 +937,11 @@ func (secretObj *SecretObj) SearchSecretByTitleFlow(secretTitle string) (entitie
 
 // SearchSecretByTitle calls secrets-safe/secrets endpoint
 func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title string) ([]entities.Secret, error) {
+	return secretObj.SearchSecretByTitleWithContext(context.Background(), endpointPath, title)
+}
+
+// SearchSecretByTitleWithContext calls secrets-safe/secrets endpoint.
+func (secretObj *SecretObj) SearchSecretByTitleWithContext(ctx context.Context, endpointPath string, title string) ([]entities.Secret, error) {
 
 	var secretResponse []entities.Secret
 
@@ -849,6 +964,7 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 	secretObj.log.Debug(messageLog)
 
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Ctx:         ctx,
 		Url:         endpointUrl,
 		HttpMethod:  "GET",
 		Body:        bytes.Buffer{},
@@ -859,7 +975,7 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 		ApiVersion:  "",
 	}
 
-	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequestWithContext(ctx, callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
 
 	if err != nil {
 		return secretResponse, err
