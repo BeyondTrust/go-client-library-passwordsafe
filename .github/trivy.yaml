@@ -1,0 +1,15 @@
+# Trivy configuration — used by the Trivy Scan job in .github/workflows/security.yml
+# Reference: https://trivy.dev/latest/docs/references/configuration/config-file/
+#
+# A single filesystem scan covers dependency vulnerabilities, leaked secrets, and
+# infrastructure misconfigurations (e.g. the fuzzing Dockerfile), so a separate
+# `config` scan is not needed.
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+
+severity:
+  - CRITICAL
+  - HIGH

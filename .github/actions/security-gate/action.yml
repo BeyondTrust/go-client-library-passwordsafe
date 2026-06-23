@@ -1,0 +1,14 @@
+name: "Security Gate"
+description: "Fail the build when an open Code Scanning alert is past its remediation SLA (GHAS Policy as Code). Code scanning only — uses the default GITHUB_TOKEN, no PAT required."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Evaluate code scanning SLA policy
+      uses: advanced-security/policy-as-code@5d028d04f396fd6ac54dec7441d9becf9227ac1a # v2.11.1
+      with:
+        policy-path: .github/security-policy.yml
+        # Code scanning is readable with the Actions token. Dependabot,
+        # secret-scanning and dependency/licensing alerts require a GitHub App/PAT,
+        # so disable them to keep this gate token-free.
+        argvs: "--disable-dependabot --disable-secret-scanning --disable-dependencies --disable-dependency-licensing"
