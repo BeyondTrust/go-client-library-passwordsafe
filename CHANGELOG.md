@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.2...v1.3.3) (2026-06-25)
+
+
+### Bug Fixes
+
+* Combine autopatch security fixes ([#326](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/326), [#327](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/327), [#328](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/328), [#329](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/329), [#330](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/330)) ([#335](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/335)) ([08b5510](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/08b55109b92d12f5c77c8af33ddb6487fe4e1ba1))
+
 ### [1.3.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.1...v1.3.2) / 2026-05-06
 
 #### Bug Fixes
