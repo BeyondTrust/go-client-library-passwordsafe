@@ -138,19 +138,19 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 }
 
 // CreateManagedSystemByDataBaseIdFlow is responsible for creating managed_systems by Database Id in Password Safe.
-func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(databaseId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
 	var err error
 
-	if workGroupId == "" {
+	if databaseId == "" {
 		return managedSystemResponse, errors.New("database Id is empty, please send a valid Database Id")
 	}
 
 	// Defense-in-depth: reject dot-segments before constructing the path because
 	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
-	if err = utils.ValidatePathSegment("databaseId", workGroupId); err != nil {
+	if err = utils.ValidatePathSegment("databaseId", databaseId); err != nil {
 		return managedSystemResponse, err
 	}
 
@@ -174,7 +174,7 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 
 	// Treat the caller-supplied identifier as a single opaque path segment so it
 	// cannot redirect the authenticated request to a different API endpoint.
-	path := fmt.Sprintf("/Databases/%s/ManagedSystems", url.PathEscape(workGroupId))
+	path := fmt.Sprintf("/Databases/%s/ManagedSystems", url.PathEscape(databaseId))
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
 
 	if err != nil {
