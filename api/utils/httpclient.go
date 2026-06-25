@@ -15,6 +15,7 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -56,7 +57,6 @@ func GetHttpClient(clientTimeOut int, verifyCa bool, certificate string, certifi
 			InsecureSkipVerify: !verifyCa,
 			Certificates:       []tls.Certificate{cert},
 			MinVersion:         tls.VersionTLS12,
-			MaxVersion:         tls.VersionTLS12,
 		},
 	}
 
@@ -200,10 +200,17 @@ func (client *HttpClientObj) handleDoError(resp *http.Response, err error) (io.R
 }
 
 // handleResponseStatus inspects resp.StatusCode and returns the appropriate values.
-func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, body bytes.Buffer) (io.ReadCloser, int, error, error) {
+// The trailing bytes.Buffer parameter is intentionally unused: it previously held the
+// outbound request body for logging, but that was removed for security reasons (the
+// body may contain credentials or in-flight secret material). The parameter is kept
+// for call-site compatibility and named "_" to make the unused status explicit.
+func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method string, _ bytes.Buffer) (io.ReadCloser, int, error, error) {
 	if resp.StatusCode >= http.StatusInternalServerError || resp.StatusCode == http.StatusRequestTimeout {
 		_ = resp.Body.Close()
-		err := fmt.Errorf("error %s: StatusCode: %d, Status: %s, Body: %s", method, resp.StatusCode, resp.Status, body.String())
+		// Do not include the outbound request body in error logs: it may contain
+		// authentication credentials or secret material (and, due to concurrent
+		// write/read in the HTTP transport, may still hold unsent secret bytes).
+		err := fmt.Errorf("error %s: StatusCode: %d, Status: %s", method, resp.StatusCode, resp.Status)
 		client.log.Error(err.Error())
 		return nil, resp.StatusCode, err, nil
 	}
@@ -220,10 +227,32 @@ func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method st
 	return resp.Body, resp.StatusCode, nil, nil
 }
 
+// sensitiveURLPathRE matches the credential-bearing path segment in
+// /Credentials/<requestId> and /Requests/<requestId>(/checkin). The capture
+// preserves the original case of the resource name; [^/?#]+ matches a single
+// path segment regardless of how it is percent-encoded.
+var sensitiveURLPathRE = regexp.MustCompile(`(?i)(/(?:credentials|requests))/[^/?#]+`)
+
+// RedactSensitiveURL masks sensitive path components (such as credential
+// request IDs) so they never appear in clear text in log output. The request
+// ID is the short-lived token that, presented to GET /Credentials/{requestId},
+// returns a plaintext managed-account password, so it must be redacted at every
+// log emission point.
+//
+// The redaction runs directly against the raw URL string. The previous
+// implementation parsed the URL, redacted the segments of EscapedPath(), and
+// then string-replaced EscapedPath() back into the original URL. That step
+// silently failed when EscapedPath() emitted a normalized form (e.g., %2A
+// decoded to "*", %41 decoded to "A") that did not appear byte-for-byte in
+// the input, returning the URL with the request ID intact.
+func RedactSensitiveURL(rawURL string) string {
+	return sensitiveURLPathRE.ReplaceAllString(rawURL, "$1/****")
+}
+
 // HttpRequest makes http request to the server.
 func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.Buffer, accessToken string, apiKey string, contentType string, apiVersion string) (io.ReadCloser, int, error, error) {
 	url = client.SetApiVersion(url, apiVersion)
-	client.log.Debug(fmt.Sprintf("Entire URL: %s", url))
+	client.log.Debug(fmt.Sprintf("Entire URL: %s", RedactSensitiveURL(url)))
 
 	req, err := http.NewRequestWithContext(resolveContext(client.Context), method, url, &body)
 	if err != nil {
