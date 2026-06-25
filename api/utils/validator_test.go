@@ -314,3 +314,22 @@ func TestValidateCertificateInfo(t *testing.T) {
 	}
 
 }
+
+// TestValidatePathSegment verifies that the helper rejects identifiers that
+// would alter URL meaning when interpolated into a path: empty strings and
+// dot-segments (".", ".."). All other values must pass.
+func TestValidatePathSegment(t *testing.T) {
+	rejectCases := []string{"", ".", ".."}
+	for _, value := range rejectCases {
+		if err := ValidatePathSegment("id", value); err == nil {
+			t.Errorf("ValidatePathSegment(%q) returned nil, expected error", value)
+		}
+	}
+
+	acceptCases := []string{"123", "abc", "a.b", "..abc", "abc..", "...", "a/b"}
+	for _, value := range acceptCases {
+		if err := ValidatePathSegment("id", value); err != nil {
+			t.Errorf("ValidatePathSegment(%q) returned %v, expected nil", value, err)
+		}
+	}
+}

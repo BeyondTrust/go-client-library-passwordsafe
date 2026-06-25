@@ -774,3 +774,69 @@ func TestDeleteManagedSystemById_NotFound(t *testing.T) {
 		t.Errorf("Expected 404 error but got: %v", err)
 	}
 }
+
+// TestManagedSystemsRejectDotSegmentIdentifiers ensures that callers cannot
+// pass dot-segments (".", "..") as path identifiers, because url.PathEscape
+// does not encode "." and the resulting URL could be normalized into a
+// different endpoint.
+func TestManagedSystemsRejectDotSegmentIdentifiers(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, _ := authentication.Authenticate(*authParams)
+	managedSystemObj, _ := NewManagedSystem(*authenticate, zapLogger)
+
+	// Payloads that pass body validation so we can confirm the rejection
+	// happens at the path-segment check (before any HTTP call).
+	byAssetIdDetails := entities.ManagedSystemsByAssetIdDetailsConfig31{
+		ManagedSystemsByAssetIdDetailsBaseConfig: entities.ManagedSystemsByAssetIdDetailsBaseConfig{
+			PlatformID:                        1001,
+			ContactEmail:                      "admin@example.com",
+			Description:                       "Validation test",
+			Port:                              8080,
+			Timeout:                           30,
+			ReleaseDuration:                   60,
+			MaxReleaseDuration:                120,
+			ISAReleaseDuration:                30,
+			AutoManagementFlag:                true,
+			FunctionalAccountID:               20,
+			CheckPasswordFlag:                 true,
+			ChangePasswordAfterAnyReleaseFlag: false,
+			ResetPasswordOnMismatchFlag:       true,
+			ChangeFrequencyType:               "first",
+			ChangeFrequencyDays:               7,
+			ChangeTime:                        "23:00",
+		},
+		RemoteClientType: "EPM",
+	}
+
+	byDatabaseIdDetails := entities.ManagedSystemsByDatabaseIdDetailsBaseConfig{
+		ContactEmail:                      "admin@example.com",
+		Description:                       "Validation test",
+		Timeout:                           30,
+		ReleaseDuration:                   120,
+		MaxReleaseDuration:                525600,
+		ISAReleaseDuration:                120,
+		AutoManagementFlag:                true,
+		FunctionalAccountID:               123,
+		CheckPasswordFlag:                 true,
+		ChangePasswordAfterAnyReleaseFlag: false,
+		ResetPasswordOnMismatchFlag:       true,
+		ChangeFrequencyType:               "xdays",
+		ChangeFrequencyDays:               30,
+		ChangeTime:                        "23:30",
+	}
+
+	// Empty-string rejection is already covered by pre-existing tests; here
+	// we exercise the dot-segment defense-in-depth check.
+	for _, bad := range []string{".", ".."} {
+		if _, err := managedSystemObj.CreateManagedSystemByAssetIdFlow(bad, byAssetIdDetails); err == nil {
+			t.Errorf("CreateManagedSystemByAssetIdFlow(%q): expected validation error, got nil", bad)
+		}
+		if _, err := managedSystemObj.CreateManagedSystemByWorkGroupIdFlow(bad, nil); err == nil {
+			t.Errorf("CreateManagedSystemByWorkGroupIdFlow(%q): expected validation error, got nil", bad)
+		}
+		if _, err := managedSystemObj.CreateManagedSystemByDataBaseIdFlow(bad, byDatabaseIdDetails); err == nil {
+			t.Errorf("CreateManagedSystemByDataBaseIdFlow(%q): expected validation error, got nil", bad)
+		}
+	}
+}
