@@ -404,3 +404,47 @@ func TestGetAssetsListByWorkgroupIdFlowEmptyList(t *testing.T) {
 	}
 
 }
+
+// TestAssetsRejectDotSegmentIdentifiers ensures that callers cannot pass
+// dot-segments (".", "..") or empty strings as path identifiers, because
+// url.PathEscape does not encode "." and the resulting URL could be normalized
+// into a different endpoint.
+func TestAssetsRejectDotSegmentIdentifiers(t *testing.T) {
+	InitializeGlobalConfig()
+
+	authenticate, _ := authentication.Authenticate(*authParams)
+	workGroupObj, _ := NewAssetObj(*authenticate, zapLogger)
+
+	assetDetails := entities.AssetDetails{
+		IPAddress:       "192.168.1.1",
+		AssetName:       "asset_dot_segment",
+		DnsName:         "host.local",
+		DomainName:      "local",
+		MacAddress:      "00:1A:2B:3C:4D:5E",
+		AssetType:       "Server",
+		Description:     "Asset to exercise path-segment validation",
+		OperatingSystem: "Ubuntu 22.04",
+	}
+
+	// CreateAssetByworkgroupIDFlow and CreateAssetByWorkGroupNameFlow already
+	// reject empty strings; we exercise the dot-segment rejection (which is
+	// enforced inside createAsset before any HTTP call).
+	for _, bad := range []string{".", ".."} {
+		if _, err := workGroupObj.CreateAssetByworkgroupIDFlow(bad, assetDetails); err == nil {
+			t.Errorf("CreateAssetByworkgroupIDFlow(%q): expected validation error, got nil", bad)
+		}
+		if _, err := workGroupObj.CreateAssetByWorkGroupNameFlow(bad, assetDetails); err == nil {
+			t.Errorf("CreateAssetByWorkGroupNameFlow(%q): expected validation error, got nil", bad)
+		}
+	}
+
+	// GetAssetsListByWorkgroup{Id,Name}Flow must reject "", ".", and "..".
+	for _, bad := range []string{"", ".", ".."} {
+		if _, err := workGroupObj.GetAssetsListByWorkgroupIdFlow(bad); err == nil {
+			t.Errorf("GetAssetsListByWorkgroupIdFlow(%q): expected validation error, got nil", bad)
+		}
+		if _, err := workGroupObj.GetAssetsListByWorkgroupNameFlow(bad); err == nil {
+			t.Errorf("GetAssetsListByWorkgroupNameFlow(%q): expected validation error, got nil", bad)
+		}
+	}
+}
