@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/authentication"
 	"github.com/BeyondTrust/go-client-library-passwordsafe/api/constants"
@@ -43,6 +44,12 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 		return managedSystemResponse, errors.New("asset id is empty, please send a valid asset id")
 	}
 
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("assetId", assetId); err != nil {
+		return managedSystemResponse, err
+	}
+
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
 
 	// validate request body according to the API Version.
@@ -64,7 +71,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByAssetIdFlow(asset
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Assets/%s/ManagedSystems", assetId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Assets/%s/ManagedSystems", url.PathEscape(assetId))
 
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByAssetId, path, managedSystemJson)
 
@@ -85,6 +94,12 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 
 	if workGroupId == "" {
 		return managedSystemResponse, errors.New("workGroup Id is empty, please send a valid workGroup Id")
+	}
+
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("workGroupId", workGroupId); err != nil {
+		return managedSystemResponse, err
 	}
 
 	switch managedSystemDetails := managedSystemDetailsInterface.(type) {
@@ -109,7 +124,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", workGroupId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Workgroups/%s/ManagedSystems", url.PathEscape(workGroupId))
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByWorkGroupId, path, managedSystemJson)
 
 	if err != nil {
@@ -121,14 +138,20 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByWorkGroupIdFlow(w
 }
 
 // CreateManagedSystemByDataBaseIdFlow is responsible for creating managed_systems by Database Id in Password Safe.
-func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(workGroupId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
+func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(databaseId string, managedSystemDetailsInterface interface{}) (entities.ManagedSystemResponseCreate, error) {
 
 	var managedSystemResponse entities.ManagedSystemResponseCreate
 	var managedSystemJson string
 	var err error
 
-	if workGroupId == "" {
+	if databaseId == "" {
 		return managedSystemResponse, errors.New("database Id is empty, please send a valid Database Id")
+	}
+
+	// Defense-in-depth: reject dot-segments before constructing the path because
+	// url.PathEscape does not escape "." or ".." and they could alter URL meaning.
+	if err = utils.ValidatePathSegment("databaseId", databaseId); err != nil {
+		return managedSystemResponse, err
 	}
 
 	// just one payload
@@ -149,7 +172,9 @@ func (ManagedSystemObj *ManagedSystemObj) CreateManagedSystemByDataBaseIdFlow(wo
 		managedSystemJson = string(bytes)
 	}
 
-	path := fmt.Sprintf("/Databases/%s/ManagedSystems", workGroupId)
+	// Treat the caller-supplied identifier as a single opaque path segment so it
+	// cannot redirect the authenticated request to a different API endpoint.
+	path := fmt.Sprintf("/Databases/%s/ManagedSystems", url.PathEscape(databaseId))
 	managedSystemResponse, err = ManagedSystemObj.createManagedSystem(constants.CreateManagedSystemByDataBaseId, path, managedSystemJson)
 
 	if err != nil {

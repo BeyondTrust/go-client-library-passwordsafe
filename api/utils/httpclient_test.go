@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -300,4 +301,60 @@ func TestGetGeneralListBadRequest(t *testing.T) {
 		t.Errorf("Test case Failed: %v", err)
 	}
 
+}
+
+func TestRedactSensitiveURL(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "CredentialByRequestId masks the request id",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc-123-def",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****",
+		},
+		{
+			name:     "CredentialByRequestId masks the request id with version query",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc-123-def?version=3.1",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****?version=3.1",
+		},
+		{
+			name:     "ManagedAccountRequestCheckIn masks the request id",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Requests/abc-123-def/checkin",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Requests/****/checkin",
+		},
+		{
+			name:     "Requests create endpoint has no request id to mask",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Requests",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Requests",
+		},
+		{
+			name:     "Unrelated endpoint is left untouched",
+			input:    "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
+			expected: "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
+		},
+		{
+			// Regression: when the request id segment contains a percent-
+			// encoded unreserved character (here "-" as %2D), EscapedPath()
+			// emits the normalized form (literal "-"), which the prior
+			// substring-replace would not find in rawURL — silently leaking
+			// the unredacted id into logs.
+			name:     "Percent-encoded request id is still redacted",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc%2D123%2Ddef",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			result := RedactSensitiveURL(testCase.input)
+			if result != testCase.expected {
+				t.Errorf("Test case Failed: expected %q, got %q", testCase.expected, result)
+			}
+			if testCase.input != testCase.expected && strings.Contains(result, "abc-123-def") {
+				t.Errorf("Test case Failed: sensitive request id leaked in %q", result)
+			}
+		})
+	}
 }
