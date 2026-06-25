@@ -334,6 +334,16 @@ func TestRedactSensitiveURL(t *testing.T) {
 			input:    "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
 			expected: "https://example.com/BeyondTrust/api/public/v3/ManagedAccounts?systemName=x&accountName=y",
 		},
+		{
+			// Regression: when the request id segment contains a percent-
+			// encoded unreserved character (here "-" as %2D), EscapedPath()
+			// emits the normalized form (literal "-"), which the prior
+			// substring-replace would not find in rawURL — silently leaking
+			// the unredacted id into logs.
+			name:     "Percent-encoded request id is still redacted",
+			input:    "https://example.com/BeyondTrust/api/public/v3/Credentials/abc%2D123%2Ddef",
+			expected: "https://example.com/BeyondTrust/api/public/v3/Credentials/****",
+		},
 	}
 
 	for _, testCase := range testCases {

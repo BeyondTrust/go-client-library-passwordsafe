@@ -15,6 +15,7 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -226,41 +227,26 @@ func (client *HttpClientObj) handleResponseStatus(resp *http.Response, method st
 	return resp.Body, resp.StatusCode, nil, nil
 }
 
+// sensitiveURLPathRE matches the credential-bearing path segment in
+// /Credentials/<requestId> and /Requests/<requestId>(/checkin). The capture
+// preserves the original case of the resource name; [^/?#]+ matches a single
+// path segment regardless of how it is percent-encoded.
+var sensitiveURLPathRE = regexp.MustCompile(`(?i)(/(?:credentials|requests))/[^/?#]+`)
+
 // RedactSensitiveURL masks sensitive path components (such as credential
 // request IDs) so they never appear in clear text in log output. The request
 // ID is the short-lived token that, presented to GET /Credentials/{requestId},
 // returns a plaintext managed-account password, so it must be redacted at every
 // log emission point.
+//
+// The redaction runs directly against the raw URL string. The previous
+// implementation parsed the URL, redacted the segments of EscapedPath(), and
+// then string-replaced EscapedPath() back into the original URL. That step
+// silently failed when EscapedPath() emitted a normalized form (e.g., %2A
+// decoded to "*", %41 decoded to "A") that did not appear byte-for-byte in
+// the input, returning the URL with the request ID intact.
 func RedactSensitiveURL(rawURL string) string {
-	parsedUrl, err := urlnet.Parse(rawURL)
-	if err != nil {
-		return rawURL
-	}
-
-	escapedPath := parsedUrl.EscapedPath()
-	segments := strings.Split(escapedPath, "/")
-	redacted := false
-	for i, segment := range segments {
-		// .../Credentials/<requestId> and .../Requests/<requestId>/checkin
-		// carry the sensitive request ID in the segment immediately
-		// following the resource name.
-		switch strings.ToLower(segment) {
-		case "credentials", "requests":
-			if i+1 < len(segments) && segments[i+1] != "" {
-				segments[i+1] = "****"
-				redacted = true
-			}
-		}
-	}
-
-	if !redacted {
-		return rawURL
-	}
-
-	// Swap the original path for the redacted one in place so the rest of
-	// the URL (scheme, host, query string) is preserved exactly and the
-	// "****" mask is not percent-encoded.
-	return strings.Replace(rawURL, escapedPath, strings.Join(segments, "/"), 1)
+	return sensitiveURLPathRE.ReplaceAllString(rawURL, "$1/****")
 }
 
 // HttpRequest makes http request to the server.
