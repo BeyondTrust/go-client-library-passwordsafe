@@ -147,9 +147,11 @@ func TestSignAppinWithWrongAPIURL(t *testing.T) {
 
 	var authenticate, _ = Authenticate(*authParamsOauth)
 
-	_, err := authenticate.SignAppin("https://fakeurl.com/BeyondTrust/"+"TestSignAppin", "", "")
+	// fakeurl.invalid uses the RFC 2606 reserved .invalid TLD, so it can never
+	// be registered and the request always fails before reaching a server.
+	_, err := authenticate.SignAppin("https://fakeurl.invalid/BeyondTrust/"+"TestSignAppin", "", "")
 
-	expectedResponse := `Post "https://fakeurl.com/BeyondTrust/TestSignAppin": dial tcp: lookup fakeurl.com`
+	expectedResponse := `Post "https://fakeurl.invalid/BeyondTrust/TestSignAppin": dial tcp`
 
 	if !strings.Contains(err.Error(), expectedResponse) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expectedResponse)
