@@ -153,6 +153,10 @@ func TestSignAppinWithWrongAPIURL(t *testing.T) {
 
 	expectedResponse := `Post "https://fakeurl.invalid/BeyondTrust/TestSignAppin": dial tcp`
 
+	if err == nil {
+		t.Fatalf("Test case Failed: expected an error but got nil")
+	}
+
 	if !strings.Contains(err.Error(), expectedResponse) {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expectedResponse)
 	}
