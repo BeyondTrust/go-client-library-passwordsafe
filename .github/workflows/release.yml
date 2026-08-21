@@ -60,7 +60,7 @@ jobs:
       security-events: read  # read Code Scanning alerts to evaluate the SLA policy
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -79,7 +79,7 @@ jobs:
       attestations: write # store the build provenance attestation
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ needs.release-please.outputs.tag_name }}
@@ -120,7 +120,7 @@ jobs:
         # Signed SLSA provenance (keyless, OIDC) for the source archive, SBOM, and the
         # SHA256SUMS manifest — the manifest is the integrity anchor consumers verify
         # against. Verify with `gh attestation verify <file> --repo <owner>/<repo>`.
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: |
             ${{ steps.artifacts.outputs.src_archive }}
@@ -165,7 +165,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: ${{ needs.release-please.outputs.tag_name }}
