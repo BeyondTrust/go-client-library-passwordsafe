@@ -77,7 +77,7 @@ jobs:
 
           # A vendor tree is canonical content, but publishing it would ship every
           # dependency's source to every consumer of this library.
-          grep -q "^${PREFIX}vendor/" <<<"${ENTRIES}" && fail "vendor/ must not be published"
+          [ ! -d "${GITHUB_WORKSPACE}/vendor" ] || fail "vendor/ must not be committed"
           grep -qxF "${PREFIX}go.mod" <<<"${ENTRIES}" || fail "go.mod missing"
           grep -qxF "${PREFIX}LICENSE" <<<"${ENTRIES}" || fail "LICENSE missing"
 
