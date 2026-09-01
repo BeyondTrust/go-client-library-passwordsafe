@@ -1,0 +1,86 @@
+name: Module Packaging
+
+# BIPS-40480. This module is published by tagging alone, and release-please creates that
+# tag the moment the release PR merges — after which the version is public and its checksum
+# is recorded permanently. A check in the release pipeline could therefore only ever detect
+# a bad package; the last point at which one can still be prevented is before that merge.
+# cmd/go guarantees the zip's structure, so only its content is asserted here.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  canonical-packaging:
+    name: Canonical Packaging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+
+      - name: Verify canonical module packaging
+        run: |
+          set -euo pipefail
+
+          # GOPROXY=direct makes cmd/go build the module zip itself, with the packaging
+          # proxy.golang.org will apply to the tag. Runs outside the checkout, where cmd/go
+          # would refuse to download the main module, with a throwaway GOMODCACHE so a
+          # cached copy cannot be returned as the result and GOSUMDB off as this is not a
+          # released version.
+          WORKDIR="$(mktemp -d)"
+          export GOMODCACHE="${WORKDIR}/modcache"
+          export GOPROXY=direct
+          export GOSUMDB=off
+          export GOFLAGS=-mod=mod
+          ( cd "${WORKDIR}" && go mod init canonical-packaging-check >/dev/null )
+
+          # go mod download -json reports failures inside the JSON, not on stderr.
+          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${HEAD_SHA}")" || true
+          if ! ZIP="$(jq -er '.Zip' <<<"${JSON}" 2>/dev/null)"; then
+            echo "::error::could not package ${MODULE}@${HEAD_SHA}"
+            echo "${JSON}"
+            exit 1
+          fi
+          PREFIX="${MODULE}@$(jq -er '.Version' <<<"${JSON}")/"
+
+          ENTRIES="$(zipinfo -1 "${ZIP}")"
+          FILE_COUNT="$(wc -l <<<"${ENTRIES}")"
+          ZIP_BYTES="$(stat -c %s "${ZIP}")"
+          echo "canonical zip: ${FILE_COUNT} entries, ${ZIP_BYTES} bytes"
+
+          FAILED=0
+          fail() { echo "::error::non-canonical module packaging: $*"; FAILED=1; }
+
+          # Checked against the tree rather than the zip: module zips exclude vendor
+          # directories, so a committed one never reaches a consumer. A repository rule.
+          [ ! -d "${GITHUB_WORKSPACE}/vendor" ] || fail "vendor/ must not be committed"
+          grep -qxF "${PREFIX}go.mod" <<<"${ENTRIES}" || fail "go.mod missing"
+          grep -qxF "${PREFIX}LICENSE" <<<"${ENTRIES}" || fail "LICENSE missing"
+
+          # An order of magnitude above this module (~118 KB zipped at v1.3.2) so ordinary
+          # growth never trips it; the BIPS-40480 artifact was 7.5 MB. Raise with review.
+          [ "${ZIP_BYTES}" -le 2097152 ] || fail "${ZIP_BYTES} bytes exceeds the 2 MiB limit"
+
+          [ "${FAILED}" -eq 0 ] || exit 1
+        env:
+          MODULE: github.com/BeyondTrust/go-client-library-passwordsafe
+          # Not github.sha: cmd/go cannot resolve refs/pull/N/merge ("invalid version:
+          # unknown revision"), as it is on no branch or tag. The head suffices for this
+          # gate — the release PR, the only one whose merge publishes, is cut from the tip
+          # of main and so is never stale.
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
