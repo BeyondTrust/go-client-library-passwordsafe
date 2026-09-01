@@ -48,8 +48,8 @@ jobs:
           # with golang.org/x/mod/zip — the same packaging proxy.golang.org will apply once
           # this content is tagged. Must run outside the checkout: inside it, cmd/go treats
           # this as the main module and refuses to download it. GOSUMDB is off because the
-          # merge commit resolves to a pseudo-version, not a released one, and a throwaway
-          # GOMODCACHE keeps a previously cached copy out of the result.
+          # pull request head resolves to a pseudo-version, not a released one, and a
+          # throwaway GOMODCACHE keeps a previously cached copy out of the result.
           WORKDIR="$(mktemp -d)"
           export GOMODCACHE="${WORKDIR}/modcache"
           export GOPROXY=direct
@@ -59,9 +59,9 @@ jobs:
 
           # `go mod download -json` reports a failure inside the JSON rather than on
           # stderr, so surface the whole object instead of dying on a null field.
-          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${MERGE_SHA}")" || true
+          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${HEAD_SHA}")" || true
           if ! ZIP="$(jq -er '.Zip' <<<"${JSON}" 2>/dev/null)"; then
-            echo "::error::could not package ${MODULE}@${MERGE_SHA}"
+            echo "::error::could not package ${MODULE}@${HEAD_SHA}"
             echo "${JSON}"
             exit 1
           fi
@@ -92,8 +92,17 @@ jobs:
           [ "${FAILED}" -eq 0 ] || exit 1
         env:
           MODULE: github.com/BeyondTrust/go-client-library-passwordsafe
-          # github.sha is the prospective MERGE commit for a pull_request event, not the
-          # branch head — deliberately. The head alone misses whatever the base branch
-          # contributes, so two pull requests each adding 1.5 MB would both pass while the
-          # merged tree exceeds the limit. Do not "simplify" this to head.sha.
-          MERGE_SHA: ${{ github.sha }}
+          # The branch head, not github.sha. Evaluating the prospective merge commit would
+          # be the stricter choice, but cmd/go cannot resolve it: refs/pull/N/merge is a
+          # synthetic ref reachable from no branch or tag, and `go mod download` rejects it
+          # with "invalid version: unknown revision" even though `git fetch` of that SHA
+          # succeeds. Doing it anyway would mean packaging the checkout with
+          # golang.org/x/mod/zip directly instead of resolving a revision.
+          #
+          # The head is sufficient for the guarantee this gate is here to make. A branch
+          # carries main's content as of its branch point, and the release pull request —
+          # the only one whose merge creates a tag, and therefore publishes — is cut by
+          # release-please from the tip of main, so it can never be stale. What the head
+          # misses is a stale branch merging on top of another that grew the module, which
+          # the next pull request off main then catches.
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
