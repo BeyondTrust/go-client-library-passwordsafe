@@ -57,8 +57,14 @@ jobs:
           export GOFLAGS=-mod=mod
           ( cd "${WORKDIR}" && go mod init canonical-packaging-check >/dev/null )
 
-          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${MERGE_SHA}")"
-          ZIP="$(jq -er '.Zip' <<<"${JSON}")"
+          # `go mod download -json` reports a failure inside the JSON rather than on
+          # stderr, so surface the whole object instead of dying on a null field.
+          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${MERGE_SHA}")" || true
+          if ! ZIP="$(jq -er '.Zip' <<<"${JSON}" 2>/dev/null)"; then
+            echo "::error::could not package ${MODULE}@${MERGE_SHA}"
+            echo "${JSON}"
+            exit 1
+          fi
           PREFIX="${MODULE}@$(jq -er '.Version' <<<"${JSON}")/"
 
           ENTRIES="$(zipinfo -1 "${ZIP}")"
