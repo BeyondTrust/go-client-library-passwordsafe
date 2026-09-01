@@ -47,9 +47,9 @@ jobs:
           # `GOPROXY=direct` makes cmd/go fetch the commit and build the module zip itself
           # with golang.org/x/mod/zip — the same packaging proxy.golang.org will apply once
           # this content is tagged. Must run outside the checkout: inside it, cmd/go treats
-          # this as the main module and refuses to download it. GOSUMDB is off because a
-          # pull request head is resolved to a pseudo-version, not a released one, and a
-          # throwaway GOMODCACHE keeps a previously cached copy out of the result.
+          # this as the main module and refuses to download it. GOSUMDB is off because the
+          # merge commit resolves to a pseudo-version, not a released one, and a throwaway
+          # GOMODCACHE keeps a previously cached copy out of the result.
           WORKDIR="$(mktemp -d)"
           export GOMODCACHE="${WORKDIR}/modcache"
           export GOPROXY=direct
@@ -57,7 +57,7 @@ jobs:
           export GOFLAGS=-mod=mod
           ( cd "${WORKDIR}" && go mod init canonical-packaging-check >/dev/null )
 
-          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${HEAD_SHA}")"
+          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${MERGE_SHA}")"
           ZIP="$(jq -er '.Zip' <<<"${JSON}")"
           PREFIX="${MODULE}@$(jq -er '.Version' <<<"${JSON}")/"
 
@@ -86,4 +86,8 @@ jobs:
           [ "${FAILED}" -eq 0 ] || exit 1
         env:
           MODULE: github.com/BeyondTrust/go-client-library-passwordsafe
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # github.sha is the prospective MERGE commit for a pull_request event, not the
+          # branch head — deliberately. The head alone misses whatever the base branch
+          # contributes, so two pull requests each adding 1.5 MB would both pass while the
+          # merged tree exceeds the limit. Do not "simplify" this to head.sha.
+          MERGE_SHA: ${{ github.sha }}
