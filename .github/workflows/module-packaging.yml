@@ -1,0 +1,89 @@
+name: Module Packaging
+
+# BIPS-40480: a non-canonical zip of this module (the whole checkout, 112 files / 7.5 MB
+# instead of the canonical 68 files / 118 KB) was once published to a registry, shadowing
+# the real module and breaking every consumer's go.sum.
+#
+# This module is published by tagging alone — proxy.golang.org packages the tag and
+# sum.golang.org records its checksums. release-please creates that tag the moment the
+# release PR merges, and from then on the version is public and its checksum is recorded
+# permanently. So the release pipeline can only ever DETECT a bad package; the last point
+# at which one can still be PREVENTED is before the merge that creates the tag — here.
+#
+# cmd/go guarantees the zip's structure (entry prefix, no VCS metadata, no symlinks). What
+# a pull request can still change is the module's CONTENT, which is what this job asserts.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  canonical-packaging:
+    name: Canonical Packaging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+
+      - name: Verify canonical module packaging
+        run: |
+          set -euo pipefail
+
+          # `GOPROXY=direct` makes cmd/go fetch the commit and build the module zip itself
+          # with golang.org/x/mod/zip — the same packaging proxy.golang.org will apply once
+          # this content is tagged. Must run outside the checkout: inside it, cmd/go treats
+          # this as the main module and refuses to download it. GOSUMDB is off because a
+          # pull request head is resolved to a pseudo-version, not a released one, and a
+          # throwaway GOMODCACHE keeps a previously cached copy out of the result.
+          WORKDIR="$(mktemp -d)"
+          export GOMODCACHE="${WORKDIR}/modcache"
+          export GOPROXY=direct
+          export GOSUMDB=off
+          export GOFLAGS=-mod=mod
+          ( cd "${WORKDIR}" && go mod init canonical-packaging-check >/dev/null )
+
+          JSON="$(cd "${WORKDIR}" && go mod download -json "${MODULE}@${HEAD_SHA}")"
+          ZIP="$(jq -er '.Zip' <<<"${JSON}")"
+          PREFIX="${MODULE}@$(jq -er '.Version' <<<"${JSON}")/"
+
+          ENTRIES="$(zipinfo -1 "${ZIP}")"
+          FILE_COUNT="$(wc -l <<<"${ENTRIES}")"
+          ZIP_BYTES="$(stat -c %s "${ZIP}")"
+          echo "canonical zip: ${FILE_COUNT} entries, ${ZIP_BYTES} bytes"
+
+          FAILED=0
+          fail() { echo "::error::non-canonical module packaging: $*"; FAILED=1; }
+
+          # A vendor tree is canonical content, but publishing it would ship every
+          # dependency's source to every consumer of this library.
+          grep -q "^${PREFIX}vendor/" <<<"${ENTRIES}" && fail "vendor/ must not be published"
+          grep -qxF "${PREFIX}go.mod" <<<"${ENTRIES}" || fail "go.mod missing"
+          grep -qxF "${PREFIX}LICENSE" <<<"${ENTRIES}" || fail "LICENSE missing"
+
+          # Bulk-content guard. Deliberately an order of magnitude above this module
+          # (~118 KB zipped at v1.3.2) so ordinary growth never trips it: it exists to
+          # catch a binary, a dump, or an archive of the working tree — the BIPS-40480
+          # artifact was 7.5 MB — not to police how large the module may get. A file
+          # count is not asserted: many small files harm nobody, and 112 of them did not
+          # make the bad artifact stand out. Size did.
+          [ "${ZIP_BYTES}" -le 2097152 ] || fail "${ZIP_BYTES} bytes exceeds the 2 MiB limit"
+
+          [ "${FAILED}" -eq 0 ] || exit 1
+        env:
+          MODULE: github.com/BeyondTrust/go-client-library-passwordsafe
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
