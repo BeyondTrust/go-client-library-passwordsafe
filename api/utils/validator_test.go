@@ -182,6 +182,72 @@ func TestValidatePaths(t *testing.T) {
 
 }
 
+// TestValidatePathsSkipsOnlyInvalidPath covers that an invalid path skips just
+// that entry, instead of dropping the paths that follow it (BIPS-37662).
+func TestValidatePathsSkipsOnlyInvalidPath(t *testing.T) {
+
+	logger, _ := zap.NewDevelopment()
+	zapLogger := logging.NewZapLogger(logger)
+
+	// The second path is too deep for a managed account, the third one is valid.
+	response := ValidatePaths([]string{"system1/account1", "system/with/separator/account2", "system3/account3"}, true, "/", zapLogger)
+
+	expetedResponse := []string{"system1/account1", "system3/account3"}
+
+	if !reflect.DeepEqual(response, expetedResponse) {
+		t.Errorf("Test case Failed %v, %v", response, expetedResponse)
+	}
+}
+
+func TestValidateManagedAccountNames(t *testing.T) {
+
+	// A system name containing the path separator is valid, no path is built.
+	err := ValidateManagedAccountNames("Accounts - AD/EntraID", "account1")
+
+	if err != nil {
+		t.Errorf("Test case Failed %v", err)
+	}
+
+	// Empty system name.
+	err = ValidateManagedAccountNames("   ", "account1")
+
+	expetedErrorMessage := "invalid system name length=0, valid length between 1 and 128"
+
+	if err == nil {
+		t.Fatalf("Test case Failed, expected error %v", expetedErrorMessage)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+	// System name longer than the maximum length.
+	err = ValidateManagedAccountNames(strings.Repeat("a", MaxSystemNameLength+1), "account1")
+
+	expetedErrorMessage = "invalid system name length=129, valid length between 1 and 128"
+
+	if err == nil {
+		t.Fatalf("Test case Failed, expected error %v", expetedErrorMessage)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+
+	// Account name longer than the maximum length.
+	err = ValidateManagedAccountNames("system1", strings.Repeat("a", MaxAccountNameLength+1))
+
+	expetedErrorMessage = "system name=system1 but found invalid account name length=246, valid length between 1 and 245"
+
+	if err == nil {
+		t.Fatalf("Test case Failed, expected error %v", expetedErrorMessage)
+	}
+
+	if err.Error() != expetedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expetedErrorMessage)
+	}
+}
+
 func TestValidateValidateSinglePath(t *testing.T) {
 
 	secretToRetrieve := "example_path/example_title"
