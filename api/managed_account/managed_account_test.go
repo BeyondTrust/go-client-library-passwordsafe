@@ -258,6 +258,165 @@ func TestManageAccountFlow(t *testing.T) {
 	}
 }
 
+// TestGetManagedAccountSecretSystemNameWithSeparator covers a system name that
+// contains the path separator, which is rejected by the path validation
+// GetSecret/ManageAccountFlow rely on (BIPS-37662).
+func TestGetManagedAccountSecretSystemNameWithSeparator(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	systemNameWithSeparator := "Accounts - AD/EntraID"
+
+	var gotSystemName, gotAccountName string
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	testConfig := ManagedAccountTestConfigStringResponse{
+		name: "TestGetManagedAccountSecretSystemNameWithSeparator",
+		server: httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+
+			// Mocking Response according to the endpoint path
+			switch r.URL.Path {
+
+			case "/Auth/SignAppin":
+				_, err = w.Write([]byte(`{"UserId":1, "EmailAddress":"test@beyondtrust.com"}`))
+
+			case "/Auth/Signout":
+				_, err = w.Write([]byte(``))
+
+			case "/ManagedAccounts":
+				gotSystemName = r.URL.Query().Get("systemName")
+				gotAccountName = r.URL.Query().Get("accountName")
+				_, err = w.Write([]byte(`{"SystemId":1,"AccountId":10}`))
+
+			case "/Requests":
+				_, err = w.Write([]byte(`124`))
+
+			case "/Credentials/124":
+				_, err = w.Write([]byte(`fake_credential`))
+
+			case "/Requests/124/checkin":
+				_, err = w.Write([]byte(``))
+
+			default:
+				http.NotFound(w, r)
+			}
+
+			if err != nil {
+				t.Error("Test case Failed")
+			}
+		})),
+		response: "fake_credential",
+	}
+	defer testConfig.server.Close()
+
+	apiUrl, _ := url.Parse(testConfig.server.URL)
+	authenticate.ApiUrl = *apiUrl
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	response, err := managedAccountObj.GetManagedAccountSecret(systemNameWithSeparator, "Test1")
+
+	if err != nil {
+		t.Errorf("Test case Failed: %v", err)
+	}
+
+	if response != testConfig.response {
+		t.Errorf("Test case Failed %v, %v", response, testConfig.response)
+	}
+
+	if gotSystemName != systemNameWithSeparator {
+		t.Errorf("Test case Failed %v, %v", gotSystemName, systemNameWithSeparator)
+	}
+
+	if gotAccountName != "Test1" {
+		t.Errorf("Test case Failed %v, %v", gotAccountName, "Test1")
+	}
+}
+
+func TestGetManagedAccountSecretInvalidNames(t *testing.T) {
+
+	InitializeGlobalConfig()
+
+	var authenticate, _ = authentication.Authenticate(*authParams)
+	managedAccountObj, _ := NewManagedAccountObj(*authenticate, zapLogger)
+
+	// Empty system name, no API call is made.
+	_, err := managedAccountObj.GetManagedAccountSecret("  ", "Test1")
+
+	expectedErrorMessage := "invalid system name length=2, valid length between 1 and 128"
+
+	if err == nil {
+		t.Fatalf("Test case Failed, expected error %v", expectedErrorMessage)
+	}
+
+	if err.Error() != expectedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expectedErrorMessage)
+	}
+
+	// Empty account name, no API call is made.
+	_, err = managedAccountObj.GetManagedAccountSecret("system01", "")
+
+	expectedErrorMessage = "system name=system01 but found invalid account name length=0, valid length between 1 and 245"
+
+	if err == nil {
+		t.Fatalf("Test case Failed, expected error %v", expectedErrorMessage)
+	}
+
+	if err.Error() != expectedErrorMessage {
+		t.Errorf("Test case Failed %v, %v", err.Error(), expectedErrorMessage)
+	}
+}
+
+func TestDecodeCredentialValue(t *testing.T) {
+
+	testCases := []struct {
+		name     string
+		raw      string
+		expected string
+	}{
+		{
+			name:     "quoted JSON string",
+			raw:      `"fake_credential"`,
+			expected: "fake_credential",
+		},
+		{
+			name:     "raw body that is not JSON",
+			raw:      `fake_credential`,
+			expected: "fake_credential",
+		},
+		{
+			name:     "literal null body falls back to the raw response",
+			raw:      `null`,
+			expected: "null",
+		},
+		{
+			name:     "bare JSON number falls back to the raw response",
+			raw:      `124`,
+			expected: "124",
+		},
+		{
+			name:     "JSON surrogate pair escape is decoded",
+			raw:      `"\ud83d\ude00"`,
+			expected: "\U0001F600",
+		},
+		{
+			name:     "empty JSON string",
+			raw:      `""`,
+			expected: "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			response := decodeCredentialValue(testCase.raw)
+
+			if response != testCase.expected {
+				t.Errorf("Test case Failed %v, %v", response, testCase.expected)
+			}
+		})
+	}
+}
+
 func TestManageAccountFlowNotFound(t *testing.T) {
 
 	var authenticate, _ = authentication.Authenticate(*authParams)
