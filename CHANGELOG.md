@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.3](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.2...v1.3.3) (2026-09-11)
+
+
+### Bug Fixes
+
+* bump Go toolchain to 1.26.5 to resolve crypto/tls govulncheck alert ([#339](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/339)) ([d760c9b](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/d760c9b3396ce78ee5f638b7aa6b46678ec72fef))
+* bump Go toolchain to 1.26.5 to resolve crypto/tls govulncheck alert (BIPS-40695) ([d760c9b](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/d760c9b3396ce78ee5f638b7aa6b46678ec72fef))
+* Combine autopatch security fixes ([#326](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/326), [#327](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/327), [#328](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/328), [#329](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/329), [#330](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/330)) ([#335](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/335)) ([08b5510](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/08b55109b92d12f5c77c8af33ddb6487fe4e1ba1))
+* Use reserved .invalid TLD in TestSignAppinWithWrongAPIURL (BIPS-41515) ([#344](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/344)) ([25f8798](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/25f87984265a6e0d9186ac32d0e19881e8d5f7f8))
+
 ### [1.3.2](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.1...v1.3.2) / 2026-05-06
 
 #### Bug Fixes
