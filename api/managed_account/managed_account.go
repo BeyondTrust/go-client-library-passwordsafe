@@ -70,38 +70,46 @@ func (managedAccountObj *ManagedAccountstObj) retrieveManagedAccountSecret(syste
 	v.Add("systemName", systemName)
 	v.Add("accountName", accountName)
 
-	ManagedAccountGetUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts").String() + "?" + v.Encode()
-	managedAccount, err := managedAccountObj.ManagedAccountGet(systemName, accountName, ManagedAccountGetUrl)
+	managedAccountGetUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("ManagedAccounts").String() + "?" + v.Encode()
+	managedAccount, err := managedAccountObj.ManagedAccountGet(systemName, accountName, managedAccountGetUrl)
 	if err != nil {
 		return "", err
 	}
 
-	ManagedAccountCreateRequestUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests").String()
-	requestId, err := managedAccountObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, ManagedAccountCreateRequestUrl)
+	managedAccountCreateRequestUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests").String()
+	requestId, err := managedAccountObj.ManagedAccountCreateRequest(managedAccount.SystemId, managedAccount.AccountId, managedAccountCreateRequestUrl)
 	if err != nil {
 		return "", err
 	}
 
-	CredentialByRequestIdUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Credentials", requestId).String()
-	secret, err := managedAccountObj.CredentialByRequestId(requestId, CredentialByRequestIdUrl)
+	credentialByRequestIdUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Credentials", requestId).String()
+	secret, err := managedAccountObj.CredentialByRequestId(requestId, credentialByRequestIdUrl)
 	if err != nil {
 		return "", err
 	}
 
-	ManagedAccountRequestCheckInUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests", requestId, "checkin").String()
-	_, err = managedAccountObj.ManagedAccountRequestCheckIn(requestId, ManagedAccountRequestCheckInUrl)
+	managedAccountRequestCheckInUrl := managedAccountObj.authenticationObj.ApiUrl.JoinPath("Requests", requestId, "checkin").String()
+	_, err = managedAccountObj.ManagedAccountRequestCheckIn(requestId, managedAccountRequestCheckInUrl)
 	if err != nil {
 		return "", err
 	}
 
-	secretValue, err := strconv.Unquote(secret)
-	if err != nil {
-		// the API returns the credential as a quoted JSON string, when it is
-		// not quoted the raw value is already the credential.
-		return secret, nil
+	return decodeCredentialValue(secret), nil
+}
+
+// decodeCredentialValue returns the credential carried by a Credentials
+// response. The API sends it as a JSON string, so it arrives quoted and
+// escaped. When the body is not a JSON string the raw response already is the
+// credential and is returned unchanged. A *string target is used so a literal
+// null body is told apart from an empty JSON string, since unmarshalling null
+// into a string is a no-op and would silently yield an empty credential.
+func decodeCredentialValue(rawCredential string) string {
+	var decoded *string
+	if err := json.Unmarshal([]byte(rawCredential), &decoded); err != nil || decoded == nil {
+		return rawCredential
 	}
 
-	return secretValue, nil
+	return *decoded
 }
 
 // ManageAccountFlow is responsible for creating a dictionary of managed account system/name and secret key-value pairs.

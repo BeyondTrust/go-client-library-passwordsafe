@@ -211,7 +211,7 @@ func TestValidateManagedAccountNames(t *testing.T) {
 	// Empty system name.
 	err = ValidateManagedAccountNames("   ", "account1")
 
-	expetedErrorMessage := "invalid system name length=0, valid length between 1 and 128"
+	expetedErrorMessage := "invalid system name length=3, valid length between 1 and 128"
 
 	if err == nil {
 		t.Fatalf("Test case Failed, expected error %v", expetedErrorMessage)

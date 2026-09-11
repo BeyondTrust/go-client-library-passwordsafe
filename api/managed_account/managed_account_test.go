@@ -293,7 +293,7 @@ func TestGetManagedAccountSecretSystemNameWithSeparator(t *testing.T) {
 				_, err = w.Write([]byte(`124`))
 
 			case "/Credentials/124":
-				_, err = w.Write([]byte(`"fake_credential"`))
+				_, err = w.Write([]byte(`fake_credential`))
 
 			case "/Requests/124/checkin":
 				_, err = w.Write([]byte(``))
@@ -343,7 +343,7 @@ func TestGetManagedAccountSecretInvalidNames(t *testing.T) {
 	// Empty system name, no API call is made.
 	_, err := managedAccountObj.GetManagedAccountSecret("  ", "Test1")
 
-	expectedErrorMessage := "invalid system name length=0, valid length between 1 and 128"
+	expectedErrorMessage := "invalid system name length=2, valid length between 1 and 128"
 
 	if err == nil {
 		t.Fatalf("Test case Failed, expected error %v", expectedErrorMessage)
@@ -364,6 +364,56 @@ func TestGetManagedAccountSecretInvalidNames(t *testing.T) {
 
 	if err.Error() != expectedErrorMessage {
 		t.Errorf("Test case Failed %v, %v", err.Error(), expectedErrorMessage)
+	}
+}
+
+func TestDecodeCredentialValue(t *testing.T) {
+
+	testCases := []struct {
+		name     string
+		raw      string
+		expected string
+	}{
+		{
+			name:     "quoted JSON string",
+			raw:      `"fake_credential"`,
+			expected: "fake_credential",
+		},
+		{
+			name:     "raw body that is not JSON",
+			raw:      `fake_credential`,
+			expected: "fake_credential",
+		},
+		{
+			name:     "literal null body falls back to the raw response",
+			raw:      `null`,
+			expected: "null",
+		},
+		{
+			name:     "bare JSON number falls back to the raw response",
+			raw:      `124`,
+			expected: "124",
+		},
+		{
+			name:     "JSON surrogate pair escape is decoded",
+			raw:      `"\ud83d\ude00"`,
+			expected: "\U0001F600",
+		},
+		{
+			name:     "empty JSON string",
+			raw:      `""`,
+			expected: "",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			response := decodeCredentialValue(testCase.raw)
+
+			if response != testCase.expected {
+				t.Errorf("Test case Failed %v, %v", response, testCase.expected)
+			}
+		})
 	}
 }
 

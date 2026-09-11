@@ -140,14 +140,14 @@ const (
 // system name and account name that are given as separate values, so no path
 // splitting is involved and either of them may contain the path separator.
 func ValidateManagedAccountNames(systemName string, accountName string) error {
-	systemName = strings.TrimSpace(systemName)
-	accountName = strings.TrimSpace(accountName)
-
-	if systemName == "" || len(systemName) > MaxSystemNameLength {
+	// TrimSpace is only used to detect blank or whitespace-only input, the
+	// length is measured on the original values because those are the ones
+	// sent to the API.
+	if strings.TrimSpace(systemName) == "" || len(systemName) > MaxSystemNameLength {
 		return fmt.Errorf("invalid system name length=%v, valid length between 1 and %v", len(systemName), MaxSystemNameLength)
 	}
 
-	if accountName == "" || len(accountName) > MaxAccountNameLength {
+	if strings.TrimSpace(accountName) == "" || len(accountName) > MaxAccountNameLength {
 		return fmt.Errorf("system name=%s but found invalid account name length=%v, valid length between 1 and %v", systemName, len(accountName), MaxAccountNameLength)
 	}
 
