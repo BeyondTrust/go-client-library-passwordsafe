@@ -129,6 +129,31 @@ func ValidateInputs(params ValidationParams) error {
 	return nil
 }
 
+const (
+	// MaxSystemNameLength is the maximum length the API accepts for a managed system name.
+	MaxSystemNameLength = 128
+	// MaxAccountNameLength is the maximum length the API accepts for a managed account name.
+	MaxAccountNameLength = 245
+)
+
+// ValidateManagedAccountNames is responsible for validating a managed account
+// system name and account name that are given as separate values, so no path
+// splitting is involved and either of them may contain the path separator.
+func ValidateManagedAccountNames(systemName string, accountName string) error {
+	// TrimSpace is only used to detect blank or whitespace-only input, the
+	// length is measured on the original values because those are the ones
+	// sent to the API.
+	if strings.TrimSpace(systemName) == "" || len(systemName) > MaxSystemNameLength {
+		return fmt.Errorf("invalid system name length=%v, valid length between 1 and %v", len(systemName), MaxSystemNameLength)
+	}
+
+	if strings.TrimSpace(accountName) == "" || len(accountName) > MaxAccountNameLength {
+		return fmt.Errorf("system name=%s but found invalid account name length=%v, valid length between 1 and %v", systemName, len(accountName), MaxAccountNameLength)
+	}
+
+	return nil
+}
+
 // ValidateSinglePath responsbile for validating that one path and one name are valid.
 func ValidateSinglePath(maxPath int, maxName int, invalidPathName string, invalidName string, maxPathDepth int, retrievalData []string, separator string) (string, error) {
 
@@ -166,8 +191,8 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 
 	newSecretPaths := []string{}
 
-	var maxAccountNameLength = 245
-	var maxSystemNameLength = 128
+	var maxAccountNameLength = MaxAccountNameLength
+	var maxSystemNameLength = MaxSystemNameLength
 	var maxPathLength = 1792
 	var maxTitleLength = 256
 
@@ -198,7 +223,8 @@ func ValidatePaths(secretPaths []string, isManagedAccount bool, separator string
 		newSecretPath, err := ValidateSinglePath(maxPath, maxName, invalidPathName, invalidName, maxPathDepth, retrievalData, separator)
 		if err != nil {
 			logger.Error(err.Error())
-			return newSecretPaths
+			// skip only the invalid path, the remaining ones are still valid.
+			continue
 		}
 
 		newSecretPaths = append(newSecretPaths, newSecretPath)
