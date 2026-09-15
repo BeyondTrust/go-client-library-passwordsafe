@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.3...v1.3.4) (2026-09-15)
+
+
+### Bug Fixes
+
+* BIPS-42439 clear release-blocking code scanning alerts (x/crypto CVEs + Trivy DS-0029) ([#353](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/353)) ([35e7928](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/35e792840f54540fa4ab77ef964b9af38276d842))
+
 ## [1.3.3](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.2...v1.3.3) (2026-09-14)
 
 
