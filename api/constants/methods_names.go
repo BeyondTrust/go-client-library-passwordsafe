@@ -14,6 +14,8 @@ const (
 	SecretDeleteFolder     = "SecretDeleteFolder"
 	SecretDeleteSafe       = "SecretDeleteSafe"
 	SecretGetSecretByTitle = "SecretGetSecretByTitle"
+	SecretUpdateSecret     = "SecretUpdateSecret"
+	SecretGetTotpCode      = "SecretGetTotpCode"
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"

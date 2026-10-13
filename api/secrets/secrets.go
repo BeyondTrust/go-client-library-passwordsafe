@@ -21,6 +21,13 @@ import (
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
+// ErrSecretNotCredential is returned by GetSecretTotpCode when the secret is a text or file secret (HTTP 400).
+var ErrSecretNotCredential = errors.New("secret is not a credential secret")
+
+// ErrSecretTotpNotAvailable is returned by GetSecretTotpCode when the secret was not found
+// or TOTP is not enabled for it (HTTP 404).
+var ErrSecretTotpNotAvailable = errors.New("secret not found or TOTP is not enabled for this secret")
+
 // SecretObj responsible for session requests.
 type SecretObj struct {
 	log                    logging.Logger
@@ -295,6 +302,12 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, err
 	}
 
+	if cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33); ok {
+		if err = utils.ValidateTotpSettings(cred33.TotpEnabled, cred33.TotpSecretKey); err != nil {
+			return createResponse, err
+		}
+	}
+
 	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
 
 	if err != nil {
@@ -323,6 +336,9 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 
 // buildCredentialSecretConfig selects the credential secret config struct matching apiVersion.
 func buildCredentialSecretConfig(in entities.SecretCredentialInput, apiVersion string) (interface{}, error) {
+	if apiVersion != constants.ApiVersion33 && (in.TotpEnabled != nil || in.TotpSecretKey != "") {
+		return nil, fmt.Errorf("TOTP fields require API version %v, got: %v", constants.ApiVersion33, apiVersion)
+	}
 	switch apiVersion {
 	case "3.0":
 		return entities.SecretCredentialDetailsConfig30{
@@ -347,6 +363,15 @@ func buildCredentialSecretConfig(in entities.SecretCredentialInput, apiVersion s
 			Password:                in.Password,
 			Owners:                  in.OwnersByGroupId,
 		}, nil
+	case "3.3":
+		return entities.SecretCredentialDetailsConfig33{
+			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
+			Username:                in.Username,
+			Password:                in.Password,
+			Owners:                  in.OwnersByGroupId,
+			TotpEnabled:             in.TotpEnabled,
+			TotpSecretKey:           in.TotpSecretKey,
+		}, nil
 	}
 	return nil, fmt.Errorf("unsupported API version: %v", apiVersion)
 }
@@ -368,7 +393,7 @@ func buildTextSecretConfig(in entities.SecretTextInput, apiVersion string) (inte
 			Text:                    in.Text,
 			Owners:                  in.OwnersByGroupId,
 		}, nil
-	case "3.2":
+	case "3.2", "3.3":
 		return entities.SecretTextDetailsConfig32{
 			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
 			Text:                    in.Text,
@@ -397,7 +422,7 @@ func buildFileSecretConfig(in entities.SecretFileInput, apiVersion string) (inte
 			FileContent:             in.FileContent,
 			Owners:                  in.OwnersByGroupId,
 		}, nil
-	case "3.2":
+	case "3.2", "3.3":
 		return entities.SecretFileDetailsConfig32{
 			SecretDetailsBaseConfig: in.SecretDetailsBaseConfig,
 			FileName:                in.FileName,
@@ -553,6 +578,8 @@ func (secretObj *SecretObj) GetPathToCreateSecret(secretDetails interface{}) str
 	case entities.SecretCredentialDetailsConfig31:
 		path = "secrets"
 	case entities.SecretCredentialDetailsConfig32:
+		path = "secrets"
+	case entities.SecretCredentialDetailsConfig33:
 		path = "secrets"
 	case entities.SecretTextDetailsConfig30:
 		path = "secrets/text"
@@ -871,4 +898,121 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 	}
 
 	return secretResponse, nil
+}
+
+// UpdateSecret updates a credential secret (PUT secrets-safe/secrets/{secretId}) using API v3.3.
+// TotpEnabled is tri-state: nil leaves TOTP untouched (neither TOTP field is sent),
+// false disables TOTP, true provisions or replaces the seed (TotpSecretKey required).
+func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.SecretCredentialUpdateConfig33) (entities.Secret, error) {
+
+	if secretObj.authenticationObj.ApiVersion != constants.ApiVersion33 {
+		return entities.Secret{}, fmt.Errorf("updating a secret requires API version %v, got: %v", constants.ApiVersion33, secretObj.authenticationObj.ApiVersion)
+	}
+
+	if _, err := uuid.Parse(secretId); err != nil {
+		return entities.Secret{}, fmt.Errorf("invalid secret ID: %w", err)
+	}
+
+	if err := utils.ValidateData(details); err != nil {
+		return entities.Secret{}, err
+	}
+
+	if err := utils.ValidateTotpSettings(details.TotpEnabled, details.TotpSecretKey); err != nil {
+		return entities.Secret{}, err
+	}
+
+	payload, err := json.Marshal(details)
+	if err != nil {
+		return entities.Secret{}, err
+	}
+
+	updateUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", secretId).String()
+	secretObj.log.Debug(fmt.Sprintf("%v %v", "PUT", updateUrl))
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         updateUrl,
+		HttpMethod:  "PUT",
+		Body:        *bytes.NewBuffer(payload),
+		Method:      constants.SecretUpdateSecret,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  secretObj.authenticationObj.ApiVersion,
+	}
+
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
+	if err != nil {
+		return entities.Secret{}, err
+	}
+
+	var updated entities.Secret
+	if err = json.Unmarshal(response, &updated); err != nil {
+		secretObj.log.Error(err.Error())
+		return entities.Secret{}, err
+	}
+
+	return updated, nil
+}
+
+// GetSecretTotpCode returns the current one-time code of a credential secret
+// (GET secrets-safe/secrets/{secretId}/totp/code). It returns ErrSecretNotCredential
+// for HTTP 400 and ErrSecretTotpNotAvailable for HTTP 404; other failures are returned
+// as usual. The code is never logged.
+func (secretObj *SecretObj) GetSecretTotpCode(secretId string) (entities.SecretTotpCode, error) {
+
+	if _, err := uuid.Parse(secretId); err != nil {
+		return entities.SecretTotpCode{}, fmt.Errorf("invalid secret ID: %w", err)
+	}
+
+	totpUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", secretId, "totp/code").String()
+	secretObj.log.Debug(fmt.Sprintf("%v %v", "GET", totpUrl))
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         totpUrl,
+		HttpMethod:  "GET",
+		Body:        bytes.Buffer{},
+		Method:      constants.SecretGetTotpCode,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  secretObj.authenticationObj.ApiVersion,
+	}
+
+	var body io.ReadCloser
+	var technicalError error
+	var businessError error
+	var scode int
+
+	technicalError = backoff.Retry(func() error {
+		body, scode, technicalError, businessError = secretObj.authenticationObj.HttpClient.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}, secretObj.authenticationObj.ExponentialBackOff)
+
+	if technicalError != nil {
+		return entities.SecretTotpCode{}, technicalError
+	}
+
+	if businessError != nil {
+		switch scode {
+		case 400:
+			return entities.SecretTotpCode{}, fmt.Errorf("%w: %v", ErrSecretNotCredential, businessError)
+		case 404:
+			return entities.SecretTotpCode{}, fmt.Errorf("%w: %v", ErrSecretTotpNotAvailable, businessError)
+		}
+		return entities.SecretTotpCode{}, businessError
+	}
+
+	defer func() { _ = body.Close() }()
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return entities.SecretTotpCode{}, err
+	}
+
+	var totpCode entities.SecretTotpCode
+	if err = json.Unmarshal(bodyBytes, &totpCode); err != nil {
+		secretObj.log.Error("failed to decode TOTP code response")
+		return entities.SecretTotpCode{}, errors.New("failed to decode TOTP code response")
+	}
+
+	return totpCode, nil
 }

@@ -77,6 +77,16 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
   - Invoked for Managed Account or Secrets Safe secrets.
   - Returns the requested secret.
 
+## Secrets Safe TOTP (API version 3.3)
+
+With `apiVersion` set to `3.3`, credential secrets support TOTP (Secrets Safe 26.3+).
+
+- Create: set `TotpEnabled` (`*bool`) and `TotpSecretKey` (Base32 seed or `otpauth://` URI, max 1024 chars) on `entities.SecretCredentialInput` and call `CreateSecretFlow`. Both fields are write-only; the seed is never returned. TOTP fields with an API version below 3.3 are rejected.
+- Update: `UpdateSecret(secretId, entities.SecretCredentialUpdateConfig33{...})` sends a PUT. `TotpEnabled` is tri-state: `nil` leaves TOTP untouched (neither field is sent), `false` disables TOTP, `true` provisions or replaces the seed (`TotpSecretKey` required).
+- Validation mirrors the server: `TotpEnabled=true` requires a seed, and a seed requires `TotpEnabled=true`.
+- Read: responses expose `TotpEnabled` and `TotpParameters` (`Digits`, `PeriodSeconds`) where the API returns them.
+- Current code: `GetSecretTotpCode(secretId)` returns `SecretTotpCode` (`Code`, `ValidFromUtc` inclusive, `ValidToUtc` exclusive). It returns `secrets.ErrSecretNotCredential` for HTTP 400 and `secrets.ErrSecretTotpNotAvailable` for HTTP 404 (check with `errors.Is`). The code is never logged.
+
 ## Example of usage
 
 Before running TestClient.go, make sure you have configured required environment variables:

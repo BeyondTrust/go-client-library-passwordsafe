@@ -4,6 +4,7 @@ package entities
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -45,6 +46,24 @@ type Secret struct {
 	Title      string
 	Password   string
 	SecretType string
+	// TotpEnabled and TotpParameters are returned by API v3.3+ for credential secrets.
+	// The TOTP seed is never returned.
+	TotpEnabled    bool            `json:",omitempty"`
+	TotpParameters *TotpParameters `json:",omitempty"`
+}
+
+// TotpParameters describes the TOTP configuration of a credential secret (API v3.3+).
+type TotpParameters struct {
+	Digits        int
+	PeriodSeconds int
+}
+
+// SecretTotpCode is the current one-time code of a credential secret.
+// ValidFromUtc is inclusive and ValidToUtc is exclusive.
+type SecretTotpCode struct {
+	Code         string
+	ValidFromUtc time.Time
+	ValidToUtc   time.Time
 }
 
 // GetTokenResponse responsible for token response data.
@@ -127,6 +146,9 @@ type CreateSecretResponse struct {
 	FolderId    string
 	// SecretValueModifiedOn is populated by API v3.2+ responses; empty on v3.0/v3.1.
 	SecretValueModifiedOn string `json:",omitempty"`
+	// TotpEnabled and TotpParameters are populated by API v3.3+ responses.
+	TotpEnabled    bool            `json:",omitempty"`
+	TotpParameters *TotpParameters `json:",omitempty"`
 }
 
 type SecretCredentialDetailsConfig30 struct {
@@ -155,6 +177,34 @@ type SecretCredentialDetailsConfig32 struct {
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
 	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
+}
+
+// SecretCredentialDetailsConfig33 is the v3.3 credential request payload.
+// It extends v3.2 with write-only TOTP fields; the seed is never returned by the API.
+type SecretCredentialDetailsConfig33 struct {
+	SecretDetailsBaseConfig
+	Username       string                `json:",omitempty" validate:"required"`
+	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
+	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
+	TotpEnabled    *bool                 `json:",omitempty"`
+	TotpSecretKey  string                `json:",omitempty" validate:"max=1024"`
+}
+
+// SecretCredentialUpdateConfig33 is the v3.3 credential update (PUT) payload.
+// Every field is optional and omitted when empty. TotpEnabled is tri-state:
+// nil leaves the TOTP setting untouched, false disables it, true provisions or
+// replaces the seed (TotpSecretKey required).
+type SecretCredentialUpdateConfig33 struct {
+	Title         string                `json:",omitempty" validate:"omitempty,max=256"`
+	Description   string                `json:",omitempty" validate:"omitempty,max=256"`
+	Notes         string                `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls          []UrlDetails          `json:",omitempty" validate:"omitempty"`
+	Username      string                `json:",omitempty"`
+	Password      string                `json:",omitempty" validate:"max=256"`
+	Owners        []OwnerDetailsGroupId `json:",omitempty" validate:"omitempty"`
+	TotpEnabled   *bool                 `json:",omitempty"`
+	TotpSecretKey string                `json:",omitempty" validate:"max=1024"`
 }
 
 type SecretDetailsBaseConfig struct {
@@ -224,6 +274,9 @@ type SecretCredentialInput struct {
 	OwnerType       string
 	OwnersByOwnerId []OwnerDetailsOwnerId
 	OwnersByGroupId []OwnerDetailsGroupId
+	// TotpEnabled and TotpSecretKey are write-only and only valid with API v3.3.
+	TotpEnabled   *bool
+	TotpSecretKey string
 }
 
 // SecretTextInput is a version-neutral input for creating text secrets.
