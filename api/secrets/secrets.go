@@ -28,6 +28,9 @@ var ErrSecretNotCredential = errors.New("secret is not a credential secret")
 // or TOTP is not enabled for it (HTTP 404).
 var ErrSecretTotpNotAvailable = errors.New("secret not found or TOTP is not enabled for this secret")
 
+// errTotpApiVersionFormat is the error returned when TOTP fields are sent with an API version other than 3.3.
+const errTotpApiVersionFormat = "TOTP fields in create and update secret operations require API version %v, got: %v"
+
 // SecretObj responsible for session requests.
 type SecretObj struct {
 	log                    logging.Logger
@@ -302,10 +305,8 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 		return createResponse, err
 	}
 
-	if cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33); ok {
-		if err = utils.ValidateTotpSettings(cred33.TotpEnabled, cred33.TotpSecretKey); err != nil {
-			return createResponse, err
-		}
+	if err = validateCreateTotp(secretDetails, secretObj.authenticationObj.ApiVersion); err != nil {
+		return createResponse, err
 	}
 
 	folders, err := secretObj.SecretGetFoldersAndSafes("secrets-safe/folders/", constants.SecretGetFolders)
@@ -334,10 +335,37 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 	return createResponse, nil
 }
 
+// validateCreateTotp checks the TOTP settings of a v3.3 credential payload: the API version
+// first, then the server-side TOTP rules.
+func validateCreateTotp(secretDetails interface{}, apiVersion string) error {
+	if err := validateTotpApiVersion(secretDetails, apiVersion); err != nil {
+		return err
+	}
+	cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33)
+	if !ok {
+		return nil
+	}
+	return utils.ValidateTotpSettings(cred33.TotpEnabled, cred33.TotpSecretKey)
+}
+
+// validateTotpApiVersion rejects a v3.3 credential payload carrying TOTP settings when the
+// session uses another API version. Callers may pass the payload directly to CreateSecretFlow
+// or SecretCreateSecret, so both check it before sending anything.
+func validateTotpApiVersion(secretDetails interface{}, apiVersion string) error {
+	cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33)
+	if !ok || apiVersion == constants.ApiVersion33 {
+		return nil
+	}
+	if cred33.TotpEnabled != nil || cred33.TotpSecretKey != "" {
+		return fmt.Errorf(errTotpApiVersionFormat, constants.ApiVersion33, apiVersion)
+	}
+	return nil
+}
+
 // buildCredentialSecretConfig selects the credential secret config struct matching apiVersion.
 func buildCredentialSecretConfig(in entities.SecretCredentialInput, apiVersion string) (interface{}, error) {
 	if apiVersion != constants.ApiVersion33 && (in.TotpEnabled != nil || in.TotpSecretKey != "") {
-		return nil, fmt.Errorf("TOTP fields require API version %v, got: %v", constants.ApiVersion33, apiVersion)
+		return nil, fmt.Errorf(errTotpApiVersionFormat, constants.ApiVersion33, apiVersion)
 	}
 	switch apiVersion {
 	case "3.0":
@@ -497,6 +525,10 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var CreateSecretResponse entities.CreateSecretResponse
 	var secretCredentialDetailsJson string
 	var err error
+
+	if err = validateTotpApiVersion(secretDetails, secretObj.authenticationObj.ApiVersion); err != nil {
+		return CreateSecretResponse, err
+	}
 
 	// Convert object to json string.
 	secretDetailsJson, err := json.Marshal(secretDetails)
@@ -959,6 +991,10 @@ func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.Secre
 // for HTTP 400 and ErrSecretTotpNotAvailable for HTTP 404; other failures are returned
 // as usual. The code is never logged.
 func (secretObj *SecretObj) GetSecretTotpCode(secretId string) (entities.SecretTotpCode, error) {
+
+	if secretObj.authenticationObj.ApiVersion != constants.ApiVersion33 {
+		return entities.SecretTotpCode{}, fmt.Errorf("getting a TOTP code requires API version %v, got: %v", constants.ApiVersion33, secretObj.authenticationObj.ApiVersion)
+	}
 
 	if _, err := uuid.Parse(secretId); err != nil {
 		return entities.SecretTotpCode{}, fmt.Errorf("invalid secret ID: %w", err)

@@ -346,10 +346,10 @@ func FormatErrorMessage(err validator.FieldError) string {
 func ValidateTotpSettings(totpEnabled *bool, totpSecretKey string) error {
 	enabled := totpEnabled != nil && *totpEnabled
 	if enabled && totpSecretKey == "" {
-		return errors.New("The field 'TotpSecretKey' is required when 'TotpEnabled' is true.")
+		return errors.New("the field 'TotpSecretKey' is required when 'TotpEnabled' is true")
 	}
 	if !enabled && totpSecretKey != "" {
-		return errors.New("The field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true.")
+		return errors.New("the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true")
 	}
 	return nil
 }

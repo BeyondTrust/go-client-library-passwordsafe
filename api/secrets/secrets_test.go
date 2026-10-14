@@ -2356,6 +2356,32 @@ func TestCreateCredentialSecretFlowInvalidTotp(t *testing.T) {
 	}
 }
 
+// TestCreateSecretFlowTotpOnlyForVersion33 verifies a v3.3 credential payload passed directly
+// with TOTP settings is rejected before any request when the session uses another API version.
+func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
+	details := entities.SecretCredentialDetailsConfig33{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                "u",
+		Password:                constants.FakePassword,
+		Owners:                  []entities.OwnerDetailsGroupId{{GroupId: 1, UserId: 1}},
+		TotpEnabled:             boolPtr(true),
+		TotpSecretKey:           "JBSWY3DPEHPK3PXP",
+	}
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+		})
+		_, err := secretObj.CreateSecretFlow("folder1", details)
+		if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+			t.Errorf("%s: expected API version error, got %v", version, err)
+		}
+		_, err = secretObj.SecretCreateSecret(uuid.NewString(), details)
+		if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+			t.Errorf("%s: SecretCreateSecret: expected API version error, got %v", version, err)
+		}
+	}
+}
+
 func TestUpdateSecretTotpTriState(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
 	var method string
@@ -2418,6 +2444,19 @@ func TestUpdateSecretRequiresVersion33(t *testing.T) {
 	})
 	if _, err := secretObj.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", entities.SecretCredentialUpdateConfig33{}); err == nil {
 		t.Error("expected version error")
+	}
+}
+
+// TestGetSecretTotpCodeRequiresVersion33 verifies the TOTP endpoint is not called with an older API version.
+func TestGetSecretTotpCodeRequiresVersion33(t *testing.T) {
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+		})
+		_, err := secretObj.GetSecretTotpCode(uuid.NewString())
+		if err == nil || !strings.Contains(err.Error(), "getting a TOTP code requires API version 3.3") {
+			t.Errorf("%s: expected API version error, got %v", version, err)
+		}
 	}
 }
 
