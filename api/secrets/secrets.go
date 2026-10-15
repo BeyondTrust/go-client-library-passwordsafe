@@ -1057,7 +1057,7 @@ func (secretObj *SecretObj) UpdateFileSecret(secretId string, details entities.S
 	updateUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", secretId, "file").String()
 	secretObj.log.Debug(fmt.Sprintf("%v %v", "PUT", updateUrl))
 
-	body, err := secretObj.authenticationObj.HttpClient.SendMultiPartRequest("PUT", updateUrl, details.FileName, metadata, details.FileContent, secretObj.authenticationObj.ApiVersion)
+	body, err := secretObj.authenticationObj.HttpClient.SendMultiPartRequest("PUT", updateUrl, details.FileName, metadata, details.FileContent, secretObj.authenticationObj.ApiVersion, secretObj.authenticationObj.ExponentialBackOff)
 	if body != nil {
 		_ = body.Close()
 	}

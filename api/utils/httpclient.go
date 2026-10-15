@@ -273,12 +273,14 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 // CreateMultipartRequest creates and sends multipart request.
 func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
-	return client.SendMultiPartRequest("POST", url, fileName, metadata, fileContent, apiVersion)
+	return client.SendMultiPartRequest("POST", url, fileName, metadata, fileContent, apiVersion, nil)
 }
 
 // SendMultiPartRequest sends a multipart request (secretmetadata and file parts) with the given HTTP method:
-// POST creates a file secret, PUT updates it.
-func (client *HttpClientObj) SendMultiPartRequest(httpMethod string, url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
+// POST creates a file secret, PUT updates it. With an exponentialBackOff, technical errors (transport
+// failures, HTTP 5xx and 408) are retried and business errors are returned without retrying; with nil,
+// the request is sent once.
+func (client *HttpClientObj) SendMultiPartRequest(httpMethod string, url, fileName string, metadata []byte, fileContent string, apiVersion string, exponentialBackOff *backoff.ExponentialBackOff) (io.ReadCloser, error) {
 
 	var requestBody bytes.Buffer
 
@@ -322,7 +324,19 @@ func (client *HttpClientObj) SendMultiPartRequest(httpMethod string, url, fileNa
 		ContentType: multipartWriter.FormDataContentType(),
 	}
 
-	body, _, technicalError, businessError := client.CallSecretSafeAPI(*callSecretSafeAPIObj)
+	// Each attempt sends its own copy of the request body, so retries resend the whole multipart payload.
+	var body io.ReadCloser
+	var technicalError, businessError error
+	send := func() error {
+		body, _, technicalError, businessError = client.CallSecretSafeAPI(*callSecretSafeAPIObj)
+		return technicalError
+	}
+
+	if exponentialBackOff != nil {
+		technicalError = backoff.Retry(send, exponentialBackOff)
+	} else {
+		technicalError = send()
+	}
 
 	if technicalError != nil {
 		return body, technicalError

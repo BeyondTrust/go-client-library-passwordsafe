@@ -2712,6 +2712,50 @@ func TestUpdateFileSecret(t *testing.T) {
 	}
 }
 
+// TestUpdateFileSecretRetries verifies the file update uses the session retry policy: technical errors
+// (HTTP 503) are retried with the full multipart payload, business errors (HTTP 400) are not.
+func TestUpdateFileSecretRetries(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+
+	requests := 0
+	var lastContent string
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if file, _, err := r.FormFile("file"); err == nil {
+			content, _ := io.ReadAll(file)
+			_ = file.Close()
+			lastContent = string(content)
+		}
+		if requests == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+	if err := secretObj.UpdateFileSecret(id, validFileUpdate()); err != nil {
+		t.Fatalf("expected success after retrying a 503: %v", err)
+	}
+	if requests != 2 {
+		t.Errorf("expected 2 requests, got %d", requests)
+	}
+	if lastContent != "new file content" {
+		t.Errorf("retried request must carry the file part, got %q", lastContent)
+	}
+
+	requests = 0
+	secretObj = newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`"invalid request"`))
+	})
+	if err := secretObj.UpdateFileSecret(id, validFileUpdate()); err == nil {
+		t.Error("expected the 400 error")
+	}
+	if requests != 1 {
+		t.Errorf("a 400 must not be retried, got %d requests", requests)
+	}
+}
+
 // TestUpdateTextAndFileSecretValidation verifies the ID and required fields are checked before any request.
 func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
