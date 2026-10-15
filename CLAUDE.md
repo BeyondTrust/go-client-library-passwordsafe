@@ -14,7 +14,7 @@ API area (`secrets`, `managed_account`, `authentication`, `utils`, `entities`, `
   `managed_account` fail. `gh variable list --env unit_test` shows their values; export them before running
   the tests locally.
 - Lint: `golangci-lint` v2.11.4 with `.golangci.yml`. Build it with the `go.mod` toolchain
-  (e.g. `GOTOOLCHAIN=go1.26.6 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4`);
+  (e.g. `GOTOOLCHAIN=go1.26.9 go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4`);
   a binary built with a newer Go fails with a typecheck error.
 - Cognitive complexity: `gocognit -ignore "_test|testdata" -over 10 .` — functions above 10 fail CI.
   Extract helpers instead of adding branches to long flows such as `CreateSecretFlow`.
