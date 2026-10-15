@@ -2357,6 +2357,56 @@ func TestCreateCredentialSecretFlowInvalidTotp(t *testing.T) {
 	}
 }
 
+// TestCreateTextAndFileSecretsSkipTotpChecks verifies the TOTP checks only apply to credential
+// payloads: text and file secrets are created with any API version.
+func TestCreateTextAndFileSecretsSkipTotpChecks(t *testing.T) {
+	base := entities.SecretDetailsBaseConfig{Title: "T"}
+	owners := []entities.OwnerDetailsGroupId{{UserId: 1}}
+	payloads := map[string]interface{}{
+		"text 3.0": entities.SecretTextDetailsConfig30{SecretDetailsBaseConfig: base, Text: "t", OwnerType: "User", Owners: []entities.OwnerDetailsOwnerId{{OwnerId: 1}}},
+		"text 3.1": entities.SecretTextDetailsConfig31{SecretDetailsBaseConfig: base, Text: "t", Owners: owners},
+		"text 3.2": entities.SecretTextDetailsConfig32{SecretDetailsBaseConfig: base, Text: "t", Owners: owners},
+		"file 3.0": entities.SecretFileDetailsConfig30{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", OwnerType: "User", Owners: []entities.OwnerDetailsOwnerId{{OwnerId: 1}}},
+		"file 3.1": entities.SecretFileDetailsConfig31{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", Owners: owners},
+		"file 3.2": entities.SecretFileDetailsConfig32{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", Owners: owners},
+	}
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		for name, payload := range payloads {
+			if err := validateCreateTotp(payload, version); err != nil {
+				t.Errorf("%s with %s: validateCreateTotp: %v", name, version, err)
+			}
+			if err := validateTotpApiVersion(payload, version); err != nil {
+				t.Errorf("%s with %s: validateTotpApiVersion: %v", name, version, err)
+			}
+		}
+	}
+
+	// v3.3 reuses the v3.2 text and file payloads; both reach the server.
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		requests := 0
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/secrets-safe/folders/" {
+				_, _ = w.Write([]byte(`[{"Id":"folder-id","Name":"folder1"}]`))
+				return
+			}
+			requests++
+			_, _ = w.Write([]byte(`{"Id":"new-secret-id","Title":"T"}`))
+		})
+		if _, err := secretObj.CreateSecretFlow("folder1", entities.SecretTextInput{SecretDetailsBaseConfig: base, Text: "t", OwnersByGroupId: owners}); err != nil {
+			t.Errorf("%s: create text: %v", version, err)
+		}
+		if _, err := secretObj.CreateSecretFlow("folder1", entities.SecretFileInput{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", OwnersByGroupId: owners}); err != nil {
+			t.Errorf("%s: create file: %v", version, err)
+		}
+		if _, err := secretObj.SecretCreateSecret("folder-id", entities.SecretTextDetailsConfig32{SecretDetailsBaseConfig: base, Text: "t", Owners: owners}); err != nil {
+			t.Errorf("%s: SecretCreateSecret text: %v", version, err)
+		}
+		if requests != 3 {
+			t.Errorf("%s: expected 3 create requests, got %d", version, requests)
+		}
+	}
+}
+
 // TestCreateSecretFlowTotpOnlyForVersion33 verifies a v3.3 credential payload passed directly
 // with TOTP settings is rejected before any request when the session uses another API version.
 func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
@@ -2394,7 +2444,7 @@ func validUpdate() entities.SecretCredentialUpdateConfig33 {
 	}
 }
 
-func TestUpdateSecretTotpTriState(t *testing.T) {
+func TestUpdateCredentialSecretTotpTriState(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
 	var method string
 	var received map[string]interface{}
@@ -2409,7 +2459,7 @@ func TestUpdateSecretTotpTriState(t *testing.T) {
 	})
 
 	// nil: neither TOTP field is sent; the required fields are.
-	if _, err := secretObj.UpdateSecret(id, validUpdate()); err != nil {
+	if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
 		t.Fatal(err)
 	}
 	if method != "PUT" {
@@ -2430,7 +2480,7 @@ func TestUpdateSecretTotpTriState(t *testing.T) {
 	// false: explicit disable is sent.
 	details := validUpdate()
 	details.TotpEnabled = boolPtr(false)
-	if _, err := secretObj.UpdateSecret(id, details); err != nil {
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err != nil {
 		t.Fatal(err)
 	}
 	if v, ok := received["TotpEnabled"]; !ok || v != false {
@@ -2441,7 +2491,7 @@ func TestUpdateSecretTotpTriState(t *testing.T) {
 	details = validUpdate()
 	details.TotpEnabled = boolPtr(true)
 	details.TotpSecretKey = "JBSWY3DPEHPK3PXP"
-	if _, err := secretObj.UpdateSecret(id, details); err != nil {
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err != nil {
 		t.Fatal(err)
 	}
 	if received["TotpEnabled"] != true || received["TotpSecretKey"] != "JBSWY3DPEHPK3PXP" {
@@ -2451,21 +2501,21 @@ func TestUpdateSecretTotpTriState(t *testing.T) {
 	// invalid combinations fail locally.
 	details = validUpdate()
 	details.TotpEnabled = boolPtr(true)
-	if _, err := secretObj.UpdateSecret(id, details); err == nil {
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err == nil {
 		t.Error("expected error for enabled without seed")
 	}
 	details = validUpdate()
 	details.TotpSecretKey = "JBSWY3DPEHPK3PXP"
-	if _, err := secretObj.UpdateSecret(id, details); err == nil {
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err == nil {
 		t.Error("expected error for seed without enabled")
 	}
-	if _, err := secretObj.UpdateSecret("not-a-uuid", validUpdate()); err == nil {
+	if _, err := secretObj.UpdateCredentialSecret("not-a-uuid", validUpdate()); err == nil {
 		t.Error("expected error for invalid id")
 	}
 }
 
-// TestUpdateSecretRequiredFields verifies the fields the PUT requires are validated before any request.
-func TestUpdateSecretRequiredFields(t *testing.T) {
+// TestUpdateCredentialSecretRequiredFields verifies the fields the PUT requires are validated before any request.
+func TestUpdateCredentialSecretRequiredFields(t *testing.T) {
 	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("no request expected, got %v", r.URL.Path)
 	})
@@ -2479,7 +2529,7 @@ func TestUpdateSecretRequiredFields(t *testing.T) {
 	for field, mutate := range cases {
 		details := validUpdate()
 		mutate(&details)
-		_, err := secretObj.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", details)
+		_, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", details)
 		if err == nil || !strings.Contains(err.Error(), field) {
 			t.Errorf("%s: expected validation error, got %v", field, err)
 		}
@@ -2492,18 +2542,46 @@ func TestUpdateSecretRequiredFields(t *testing.T) {
 	ok := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"Id":"9152f5b6-07d6-4955-175a-08db047219ce"}`))
 	})
-	if _, err := ok.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", details); err != nil {
+	if _, err := ok.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", details); err != nil {
 		t.Errorf("PasswordRuleID without Password: %v", err)
 	}
 }
 
-func TestUpdateSecretRequiresVersion33(t *testing.T) {
-	secretObj := newTotpTestSecretObj(t, constants.ApiVersion32, func(w http.ResponseWriter, r *http.Request) {
-		t.Errorf("no request expected")
-	})
-	if _, err := secretObj.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", entities.SecretCredentialUpdateConfig33{}); err == nil {
-		t.Error("expected version error")
+// TestUpdateCredentialSecretApiVersions verifies credential secrets can be updated with any API version,
+// while the TOTP fields require v3.3.
+func TestUpdateCredentialSecretApiVersions(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		requests := 0
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			requests++
+			w.WriteHeader(http.StatusNoContent)
+		})
+		if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
+			t.Errorf("%s: update without TOTP fields: %v", version, err)
+		}
+		if requests != 1 {
+			t.Errorf("%s: expected 1 request, got %d", version, requests)
+		}
 	}
+
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+		})
+		withTotp := validUpdate()
+		withTotp.TotpEnabled = boolPtr(true)
+		withTotp.TotpSecretKey = "JBSWY3DPEHPK3PXP"
+		disable := validUpdate()
+		disable.TotpEnabled = boolPtr(false)
+		for name, details := range map[string]entities.SecretCredentialUpdateConfig33{"enable": withTotp, "disable": disable} {
+			_, err := secretObj.UpdateCredentialSecret(id, details)
+			if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+				t.Errorf("%s %s: expected TOTP API version error, got %v", version, name, err)
+			}
+		}
+	}
+
 }
 
 // TestUpdateSecretNoContent verifies a 204 No Content response (as documented by the API spec)
@@ -2513,8 +2591,8 @@ func TestUpdateSecretNoContent(t *testing.T) {
 	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	})
-	if _, err := secretObj.UpdateSecret(id, validUpdate()); err != nil {
-		t.Errorf("UpdateSecret with 204: %v", err)
+	if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
+		t.Errorf("UpdateCredentialSecret with 204: %v", err)
 	}
 	if _, err := secretObj.UpdateTextSecret(id, validTextUpdate()); err != nil {
 		t.Errorf("UpdateTextSecret with 204: %v", err)
@@ -2529,13 +2607,13 @@ func TestCredentialLengthLimits(t *testing.T) {
 
 	update := validUpdate()
 	update.Username = strings.Repeat("u", 257)
-	if _, err := secretObj.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "Username") {
+	if _, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "Username") {
 		t.Errorf("update Username: expected max length error, got %v", err)
 	}
 	update = validUpdate()
 	update.Password = ""
 	update.PasswordRuleID = 32768
-	if _, err := secretObj.UpdateSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "PasswordRuleID") {
+	if _, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "PasswordRuleID") {
 		t.Errorf("update PasswordRuleID: expected max error, got %v", err)
 	}
 
@@ -2571,7 +2649,7 @@ func validFileUpdate() entities.SecretFileUpdateConfig {
 
 func TestUpdateTextSecret(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
-	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
 		var received map[string]interface{}
 		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
 			if r.Method != "PUT" || r.URL.Path != "/secrets-safe/secrets/"+id+"/text" {
@@ -2634,19 +2712,11 @@ func TestUpdateFileSecret(t *testing.T) {
 	}
 }
 
-// TestUpdateTextAndFileSecretValidation verifies version, ID and required fields are checked before any request.
+// TestUpdateTextAndFileSecretValidation verifies the ID and required fields are checked before any request.
 func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
 	noRequest := func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("no request expected, got %v", r.URL.Path)
-	}
-
-	v30 := newTotpTestSecretObj(t, "3.0", noRequest)
-	if _, err := v30.UpdateTextSecret(id, validTextUpdate()); err == nil || !strings.Contains(err.Error(), "requires API version 3.1 or later") {
-		t.Errorf("text with 3.0: expected API version error, got %v", err)
-	}
-	if err := v30.UpdateFileSecret(id, validFileUpdate()); err == nil || !strings.Contains(err.Error(), "requires API version 3.1 or later") {
-		t.Errorf("file with 3.0: expected API version error, got %v", err)
 	}
 
 	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, noRequest)
@@ -2687,15 +2757,16 @@ func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 	}
 }
 
-// TestGetSecretTotpCodeRequiresVersion33 verifies the TOTP endpoint is not called with an older API version.
-func TestGetSecretTotpCodeRequiresVersion33(t *testing.T) {
-	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+// TestGetSecretTotpCodeAnyApiVersion verifies the TOTP code endpoint is called with any API version;
+// the server returns the code regardless of the requested version.
+func TestGetSecretTotpCodeAnyApiVersion(t *testing.T) {
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
 		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
-			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+			_, _ = w.Write([]byte(`{"Code":"123456","ValidFromUtc":"2026-10-13T10:00:00Z","ValidToUtc":"2026-10-13T10:00:30Z"}`))
 		})
-		_, err := secretObj.GetSecretTotpCode(uuid.NewString())
-		if err == nil || !strings.Contains(err.Error(), "getting a TOTP code requires API version 3.3") {
-			t.Errorf("%s: expected API version error, got %v", version, err)
+		code, err := secretObj.GetSecretTotpCode(uuid.NewString())
+		if err != nil || code.Code != "123456" {
+			t.Errorf("%s: expected the code, got %+v, %v", version, code, err)
 		}
 	}
 }

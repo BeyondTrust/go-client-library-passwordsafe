@@ -932,15 +932,11 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 	return secretResponse, nil
 }
 
-// UpdateSecret updates a credential secret (PUT secrets-safe/secrets/{secretId}) using API v3.3.
+// UpdateCredentialSecret updates a credential secret (PUT secrets-safe/secrets/{secretId}).
 // The PUT replaces the secret, so details must carry every field to keep (see SecretCredentialUpdateConfig33).
-// TotpEnabled is tri-state: nil leaves TOTP untouched (neither TOTP field is sent),
-// false disables TOTP, true provisions or replaces the seed (TotpSecretKey required).
-func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.SecretCredentialUpdateConfig33) (entities.Secret, error) {
-
-	if secretObj.authenticationObj.ApiVersion != constants.ApiVersion33 {
-		return entities.Secret{}, fmt.Errorf("updating a secret requires API version %v, got: %v", constants.ApiVersion33, secretObj.authenticationObj.ApiVersion)
-	}
+// The TOTP fields require API v3.3. TotpEnabled is tri-state: nil leaves TOTP untouched (neither TOTP
+// field is sent), false disables TOTP, true provisions or replaces the seed (TotpSecretKey required).
+func (secretObj *SecretObj) UpdateCredentialSecret(secretId string, details entities.SecretCredentialUpdateConfig33) (entities.Secret, error) {
 
 	if _, err := uuid.Parse(secretId); err != nil {
 		return entities.Secret{}, fmt.Errorf("invalid secret ID: %w", err)
@@ -948,6 +944,11 @@ func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.Secre
 
 	if err := utils.ValidateData(details); err != nil {
 		return entities.Secret{}, err
+	}
+
+	apiVersion := secretObj.authenticationObj.ApiVersion
+	if apiVersion != constants.ApiVersion33 && (details.TotpEnabled != nil || details.TotpSecretKey != "") {
+		return entities.Secret{}, fmt.Errorf(errTotpApiVersionFormat, constants.ApiVersion33, apiVersion)
 	}
 
 	if err := utils.ValidateTotpSettings(details.TotpEnabled, details.TotpSecretKey); err != nil {
@@ -966,7 +967,7 @@ func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.Secre
 		Url:         updateUrl,
 		HttpMethod:  "PUT",
 		Body:        *bytes.NewBuffer(payload),
-		Method:      constants.SecretUpdateSecret,
+		Method:      constants.SecretUpdateCredentialSecret,
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: "application/json",
@@ -996,27 +997,15 @@ func (secretObj *SecretObj) decodeUpdatedSecret(response []byte) (entities.Secre
 	return updated, nil
 }
 
-// validateTextOrFileUpdate checks the API version, secret ID and payload of a text or file secret update.
-// API v3.0 uses a different owners model (OwnerId/OwnerType), so v3.1 or later is required.
-func (secretObj *SecretObj) validateTextOrFileUpdate(secretId string, details interface{}) error {
-	switch secretObj.authenticationObj.ApiVersion {
-	case constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33:
-	default:
-		return fmt.Errorf("updating a text or file secret requires API version %v or later, got: %v", constants.ApiVersion31, secretObj.authenticationObj.ApiVersion)
-	}
-
-	if _, err := uuid.Parse(secretId); err != nil {
-		return fmt.Errorf("invalid secret ID: %w", err)
-	}
-
-	return utils.ValidateData(details)
-}
-
-// UpdateTextSecret updates a text secret (PUT secrets-safe/secrets/{secretId}/text) using API v3.1+.
+// UpdateTextSecret updates a text secret (PUT secrets-safe/secrets/{secretId}/text).
 // The PUT replaces the secret, so details must carry every field to keep (see SecretTextUpdateConfig).
 func (secretObj *SecretObj) UpdateTextSecret(secretId string, details entities.SecretTextUpdateConfig) (entities.Secret, error) {
 
-	if err := secretObj.validateTextOrFileUpdate(secretId, details); err != nil {
+	if _, err := uuid.Parse(secretId); err != nil {
+		return entities.Secret{}, fmt.Errorf("invalid secret ID: %w", err)
+	}
+
+	if err := utils.ValidateData(details); err != nil {
 		return entities.Secret{}, err
 	}
 
@@ -1047,12 +1036,16 @@ func (secretObj *SecretObj) UpdateTextSecret(secretId string, details entities.S
 	return secretObj.decodeUpdatedSecret(response)
 }
 
-// UpdateFileSecret updates a file secret (PUT secrets-safe/secrets/{secretId}/file) using API v3.1+.
+// UpdateFileSecret updates a file secret (PUT secrets-safe/secrets/{secretId}/file).
 // It sends a multipart request (metadata and file content) and the API returns no content on success.
 // The PUT replaces the secret, so details must carry every field to keep (see SecretFileUpdateConfig).
 func (secretObj *SecretObj) UpdateFileSecret(secretId string, details entities.SecretFileUpdateConfig) error {
 
-	if err := secretObj.validateTextOrFileUpdate(secretId, details); err != nil {
+	if _, err := uuid.Parse(secretId); err != nil {
+		return fmt.Errorf("invalid secret ID: %w", err)
+	}
+
+	if err := utils.ValidateData(details); err != nil {
 		return err
 	}
 
@@ -1077,10 +1070,6 @@ func (secretObj *SecretObj) UpdateFileSecret(secretId string, details entities.S
 // for HTTP 400 and ErrSecretTotpNotAvailable for HTTP 404; other failures are returned
 // as usual. The code is never logged.
 func (secretObj *SecretObj) GetSecretTotpCode(secretId string) (entities.SecretTotpCode, error) {
-
-	if secretObj.authenticationObj.ApiVersion != constants.ApiVersion33 {
-		return entities.SecretTotpCode{}, fmt.Errorf("getting a TOTP code requires API version %v, got: %v", constants.ApiVersion33, secretObj.authenticationObj.ApiVersion)
-	}
 
 	if _, err := uuid.Parse(secretId); err != nil {
 		return entities.SecretTotpCode{}, fmt.Errorf("invalid secret ID: %w", err)

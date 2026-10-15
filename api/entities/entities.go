@@ -210,7 +210,8 @@ type SecretCredentialUpdateConfig33 struct {
 	TotpSecretKey  string                `json:",omitempty" validate:"max=1024"`
 }
 
-// SecretTextUpdateConfig is the text secret update (PUT secrets-safe/secrets/{secretId}/text) payload, API v3.1+.
+// SecretTextUpdateConfig is the text secret update (PUT secrets-safe/secrets/{secretId}/text) payload.
+// Owners uses the API v3.1+ owners model.
 // The PUT replaces the secret: FolderId, Title, Text and Owners are required, and Description,
 // Notes and Urls that are not sent are cleared.
 type SecretTextUpdateConfig struct {
@@ -223,7 +224,8 @@ type SecretTextUpdateConfig struct {
 	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required,min=1"`
 }
 
-// SecretFileUpdateConfig is the file secret update (PUT secrets-safe/secrets/{secretId}/file) payload, API v3.1+.
+// SecretFileUpdateConfig is the file secret update (PUT secrets-safe/secrets/{secretId}/file) payload.
+// Owners uses the API v3.1+ owners model.
 // It is sent as a multipart request: the metadata as JSON and FileContent as the file part.
 // The PUT replaces the secret: FolderId, Title, Owners, FileName and FileContent are required,
 // and Description, Notes and Urls that are not sent are cleared.
