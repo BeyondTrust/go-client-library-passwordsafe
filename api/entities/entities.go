@@ -183,28 +183,59 @@ type SecretCredentialDetailsConfig32 struct {
 // It extends v3.2 with write-only TOTP fields; the seed is never returned by the API.
 type SecretCredentialDetailsConfig33 struct {
 	SecretDetailsBaseConfig
-	Username       string                `json:",omitempty" validate:"required"`
+	Username       string                `json:",omitempty" validate:"required,max=256"`
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
 	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
-	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
+	PasswordRuleID int                   `json:",omitempty" validate:"omitempty,max=32767"`
 	TotpEnabled    *bool                 `json:",omitempty"`
 	TotpSecretKey  string                `json:",omitempty" validate:"max=1024"`
 }
 
 // SecretCredentialUpdateConfig33 is the v3.3 credential update (PUT) payload.
-// Every field is optional and omitted when empty. TotpEnabled is tri-state:
-// nil leaves the TOTP setting untouched, false disables it, true provisions or
-// replaces the seed (TotpSecretKey required).
+// The PUT replaces the secret: FolderId, Title, Username, Owners and Password (or
+// PasswordRuleID) are required, and Description, Notes and Urls that are not sent are cleared.
+// TotpEnabled is tri-state: nil leaves the TOTP setting untouched (neither TOTP field is sent),
+// false disables it, true provisions or replaces the seed (TotpSecretKey required).
 type SecretCredentialUpdateConfig33 struct {
-	Title         string                `json:",omitempty" validate:"omitempty,max=256"`
-	Description   string                `json:",omitempty" validate:"omitempty,max=256"`
-	Notes         string                `json:",omitempty" validate:"omitempty,max=4000"`
-	Urls          []UrlDetails          `json:",omitempty" validate:"omitempty"`
-	Username      string                `json:",omitempty"`
-	Password      string                `json:",omitempty" validate:"max=256"`
-	Owners        []OwnerDetailsGroupId `json:",omitempty" validate:"omitempty"`
-	TotpEnabled   *bool                 `json:",omitempty"`
-	TotpSecretKey string                `json:",omitempty" validate:"max=1024"`
+	FolderId       uuid.UUID             `validate:"required"`
+	Title          string                `json:",omitempty" validate:"required,max=256"`
+	Description    string                `json:",omitempty" validate:"omitempty,max=256"`
+	Notes          string                `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls           []UrlDetails          `json:",omitempty" validate:"omitempty"`
+	Username       string                `json:",omitempty" validate:"required,max=256"`
+	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	PasswordRuleID int                   `json:",omitempty" validate:"omitempty,max=32767"`
+	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required,min=1"`
+	TotpEnabled    *bool                 `json:",omitempty"`
+	TotpSecretKey  string                `json:",omitempty" validate:"max=1024"`
+}
+
+// SecretTextUpdateConfig is the text secret update (PUT secrets-safe/secrets/{secretId}/text) payload, API v3.1+.
+// The PUT replaces the secret: FolderId, Title, Text and Owners are required, and Description,
+// Notes and Urls that are not sent are cleared.
+type SecretTextUpdateConfig struct {
+	FolderId    uuid.UUID             `validate:"required"`
+	Title       string                `json:",omitempty" validate:"required,max=256"`
+	Description string                `json:",omitempty" validate:"omitempty,max=256"`
+	Notes       string                `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls        []UrlDetails          `json:",omitempty" validate:"omitempty"`
+	Text        string                `json:",omitempty" validate:"required,max=4096"`
+	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required,min=1"`
+}
+
+// SecretFileUpdateConfig is the file secret update (PUT secrets-safe/secrets/{secretId}/file) payload, API v3.1+.
+// It is sent as a multipart request: the metadata as JSON and FileContent as the file part.
+// The PUT replaces the secret: FolderId, Title, Owners, FileName and FileContent are required,
+// and Description, Notes and Urls that are not sent are cleared.
+type SecretFileUpdateConfig struct {
+	FolderId    uuid.UUID             `validate:"required"`
+	Title       string                `json:",omitempty" validate:"required,max=256"`
+	Description string                `json:",omitempty" validate:"omitempty,max=256"`
+	Notes       string                `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls        []UrlDetails          `json:",omitempty" validate:"omitempty"`
+	Owners      []OwnerDetailsGroupId `json:",omitempty" validate:"required,min=1"`
+	FileName    string                `json:",omitempty" validate:"required,max=256"`
+	FileContent string                `json:"-" validate:"required,max=5000000"`
 }
 
 type SecretDetailsBaseConfig struct {

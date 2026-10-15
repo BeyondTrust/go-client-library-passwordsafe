@@ -933,6 +933,7 @@ func (secretObj *SecretObj) SearchSecretByTitle(endpointPath string, title strin
 }
 
 // UpdateSecret updates a credential secret (PUT secrets-safe/secrets/{secretId}) using API v3.3.
+// The PUT replaces the secret, so details must carry every field to keep (see SecretCredentialUpdateConfig33).
 // TotpEnabled is tri-state: nil leaves TOTP untouched (neither TOTP field is sent),
 // false disables TOTP, true provisions or replaces the seed (TotpSecretKey required).
 func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.SecretCredentialUpdateConfig33) (entities.Secret, error) {
@@ -977,13 +978,98 @@ func (secretObj *SecretObj) UpdateSecret(secretId string, details entities.Secre
 		return entities.Secret{}, err
 	}
 
+	return secretObj.decodeUpdatedSecret(response)
+}
+
+// decodeUpdatedSecret decodes the response of a credential or text secret update. The API spec
+// documents 204 No Content, while some servers return the updated secret; an empty body
+// returns an empty Secret.
+func (secretObj *SecretObj) decodeUpdatedSecret(response []byte) (entities.Secret, error) {
 	var updated entities.Secret
-	if err = json.Unmarshal(response, &updated); err != nil {
+	if len(bytes.TrimSpace(response)) == 0 {
+		return updated, nil
+	}
+	if err := json.Unmarshal(response, &updated); err != nil {
 		secretObj.log.Error(err.Error())
 		return entities.Secret{}, err
 	}
-
 	return updated, nil
+}
+
+// validateTextOrFileUpdate checks the API version, secret ID and payload of a text or file secret update.
+// API v3.0 uses a different owners model (OwnerId/OwnerType), so v3.1 or later is required.
+func (secretObj *SecretObj) validateTextOrFileUpdate(secretId string, details interface{}) error {
+	switch secretObj.authenticationObj.ApiVersion {
+	case constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33:
+	default:
+		return fmt.Errorf("updating a text or file secret requires API version %v or later, got: %v", constants.ApiVersion31, secretObj.authenticationObj.ApiVersion)
+	}
+
+	if _, err := uuid.Parse(secretId); err != nil {
+		return fmt.Errorf("invalid secret ID: %w", err)
+	}
+
+	return utils.ValidateData(details)
+}
+
+// UpdateTextSecret updates a text secret (PUT secrets-safe/secrets/{secretId}/text) using API v3.1+.
+// The PUT replaces the secret, so details must carry every field to keep (see SecretTextUpdateConfig).
+func (secretObj *SecretObj) UpdateTextSecret(secretId string, details entities.SecretTextUpdateConfig) (entities.Secret, error) {
+
+	if err := secretObj.validateTextOrFileUpdate(secretId, details); err != nil {
+		return entities.Secret{}, err
+	}
+
+	payload, err := json.Marshal(details)
+	if err != nil {
+		return entities.Secret{}, err
+	}
+
+	updateUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", secretId, "text").String()
+	secretObj.log.Debug(fmt.Sprintf("%v %v", "PUT", updateUrl))
+
+	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
+		Url:         updateUrl,
+		HttpMethod:  "PUT",
+		Body:        *bytes.NewBuffer(payload),
+		Method:      constants.SecretUpdateTextSecret,
+		AccessToken: "",
+		ApiKey:      "",
+		ContentType: "application/json",
+		ApiVersion:  secretObj.authenticationObj.ApiVersion,
+	}
+
+	response, err := secretObj.authenticationObj.HttpClient.MakeRequest(callSecretSafeAPIObj, secretObj.authenticationObj.ExponentialBackOff)
+	if err != nil {
+		return entities.Secret{}, err
+	}
+
+	return secretObj.decodeUpdatedSecret(response)
+}
+
+// UpdateFileSecret updates a file secret (PUT secrets-safe/secrets/{secretId}/file) using API v3.1+.
+// It sends a multipart request (metadata and file content) and the API returns no content on success.
+// The PUT replaces the secret, so details must carry every field to keep (see SecretFileUpdateConfig).
+func (secretObj *SecretObj) UpdateFileSecret(secretId string, details entities.SecretFileUpdateConfig) error {
+
+	if err := secretObj.validateTextOrFileUpdate(secretId, details); err != nil {
+		return err
+	}
+
+	metadata, err := json.Marshal(details)
+	if err != nil {
+		return err
+	}
+
+	updateUrl := secretObj.authenticationObj.ApiUrl.JoinPath("secrets-safe/secrets", secretId, "file").String()
+	secretObj.log.Debug(fmt.Sprintf("%v %v", "PUT", updateUrl))
+
+	body, err := secretObj.authenticationObj.HttpClient.SendMultiPartRequest("PUT", updateUrl, details.FileName, metadata, details.FileContent, secretObj.authenticationObj.ApiVersion)
+	if body != nil {
+		_ = body.Close()
+	}
+
+	return err
 }
 
 // GetSecretTotpCode returns the current one-time code of a credential secret

@@ -273,6 +273,12 @@ func (client *HttpClientObj) HttpRequest(url string, method string, body bytes.B
 
 // CreateMultipartRequest creates and sends multipart request.
 func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
+	return client.SendMultiPartRequest("POST", url, fileName, metadata, fileContent, apiVersion)
+}
+
+// SendMultiPartRequest sends a multipart request (secretmetadata and file parts) with the given HTTP method:
+// POST creates a file secret, PUT updates it.
+func (client *HttpClientObj) SendMultiPartRequest(httpMethod string, url, fileName string, metadata []byte, fileContent string, apiVersion string) (io.ReadCloser, error) {
 
 	var requestBody bytes.Buffer
 
@@ -300,12 +306,17 @@ func (client *HttpClientObj) CreateMultiPartRequest(url, fileName string, metada
 		return nil, err
 	}
 
+	method := constants.CreateMultiPartRequest
+	if httpMethod == "PUT" {
+		method = constants.UpdateMultiPartRequest
+	}
+
 	callSecretSafeAPIObj := &entities.CallSecretSafeAPIObj{
 		ApiVersion:  apiVersion,
 		Url:         url,
-		HttpMethod:  "POST",
+		HttpMethod:  httpMethod,
 		Body:        requestBody,
-		Method:      constants.CreateMultiPartRequest,
+		Method:      method,
 		AccessToken: "",
 		ApiKey:      "",
 		ContentType: multipartWriter.FormDataContentType(),

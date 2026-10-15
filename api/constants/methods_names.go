@@ -15,6 +15,7 @@ const (
 	SecretDeleteSafe       = "SecretDeleteSafe"
 	SecretGetSecretByTitle = "SecretGetSecretByTitle"
 	SecretUpdateSecret     = "SecretUpdateSecret"
+	SecretUpdateTextSecret = "SecretUpdateTextSecret"
 	SecretGetTotpCode      = "SecretGetTotpCode"
 
 	ManagedAccountGet    = "ManagedAccountGet"
@@ -28,6 +29,7 @@ const (
 	ManagedSystemGetSystems            = "ManagedSystemGetSystems"
 
 	CreateMultiPartRequest = "CreateMultiPartRequest"
+	UpdateMultiPartRequest = "UpdateMultiPartRequest"
 
 	SignOut   = "SignOut"
 	GetToken  = "GetToken"
