@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.4...v1.3.5) (2026-10-16)
+
+
+### Bug Fixes
+
+* bump Go to 1.26.9 for standard library vulnerabilities ([#359](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/359)) ([5c68794](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/5c68794ffe8be22d90b5dee1bd016d41d85623ac))
+
 ## [1.3.4](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.3...v1.3.4) (2026-09-15)
 
 
