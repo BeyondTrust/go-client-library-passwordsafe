@@ -350,7 +350,7 @@ func validateCreateTotp(secretDetails interface{}, apiVersion string) error {
 
 // validateTotpApiVersion rejects a v3.3 credential payload carrying TOTP settings when the
 // session uses another API version. Callers may pass the payload directly to CreateSecretFlow
-// or SecretCreateSecret, so both check it before sending anything.
+// or SecretCreateSecret, so both check it (through validateCreateTotp) before sending anything.
 func validateTotpApiVersion(secretDetails interface{}, apiVersion string) error {
 	cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33)
 	if !ok || apiVersion == constants.ApiVersion33 {
@@ -526,7 +526,7 @@ func (secretObj *SecretObj) SecretCreateSecret(folderId string, secretDetails in
 	var secretCredentialDetailsJson string
 	var err error
 
-	if err = validateTotpApiVersion(secretDetails, secretObj.authenticationObj.ApiVersion); err != nil {
+	if err = validateCreateTotp(secretDetails, secretObj.authenticationObj.ApiVersion); err != nil {
 		return CreateSecretResponse, err
 	}
 

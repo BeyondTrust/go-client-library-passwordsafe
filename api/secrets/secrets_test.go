@@ -2433,6 +2433,38 @@ func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
 	}
 }
 
+// TestSecretCreateSecretTotpSettingsValidated verifies a v3.3 credential payload passed directly
+// to SecretCreateSecret with an invalid TotpEnabled / TotpSecretKey combination is rejected
+// before any request, as CreateSecretFlow does.
+func TestSecretCreateSecretTotpSettingsValidated(t *testing.T) {
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	})
+	cases := map[string]struct {
+		totpEnabled   *bool
+		totpSecretKey string
+		expected      string
+	}{
+		"enabled without seed": {boolPtr(true), "", "the field 'TotpSecretKey' is required when 'TotpEnabled' is true"},
+		"seed without enabled": {nil, "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
+		"seed with disabled":   {boolPtr(false), "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
+	}
+	for name, tc := range cases {
+		details := entities.SecretCredentialDetailsConfig33{
+			SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+			Username:                "u",
+			Password:                constants.FakePassword,
+			Owners:                  []entities.OwnerDetailsGroupId{{UserId: 1}},
+			TotpEnabled:             tc.totpEnabled,
+			TotpSecretKey:           tc.totpSecretKey,
+		}
+		_, err := secretObj.SecretCreateSecret(uuid.NewString(), details)
+		if err == nil || err.Error() != tc.expected {
+			t.Errorf("%s: expected %q, got %v", name, tc.expected, err)
+		}
+	}
+}
+
 // validUpdate returns a complete v3.3 update payload; the PUT replaces the secret.
 func validUpdate() entities.SecretCredentialUpdateConfig33 {
 	return entities.SecretCredentialUpdateConfig33{
