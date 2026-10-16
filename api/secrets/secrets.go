@@ -336,7 +336,8 @@ func (secretObj *SecretObj) CreateSecretFlow(folderTarget string, secretDetails 
 }
 
 // validateCreateTotp checks the TOTP settings of a v3.3 credential payload: the API version
-// first, then the server-side TOTP rules.
+// first, then the payload's field rules (SecretCreateSecret does not run ValidateData), then
+// the server-side TOTP rules.
 func validateCreateTotp(secretDetails interface{}, apiVersion string) error {
 	if err := validateTotpApiVersion(secretDetails, apiVersion); err != nil {
 		return err
@@ -344,6 +345,9 @@ func validateCreateTotp(secretDetails interface{}, apiVersion string) error {
 	cred33, ok := secretDetails.(entities.SecretCredentialDetailsConfig33)
 	if !ok {
 		return nil
+	}
+	if err := utils.ValidateData(cred33); err != nil {
+		return err
 	}
 	return utils.ValidateTotpSettings(cred33.TotpEnabled, cred33.TotpSecretKey)
 }

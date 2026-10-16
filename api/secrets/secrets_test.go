@@ -2434,8 +2434,8 @@ func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
 }
 
 // TestSecretCreateSecretTotpSettingsValidated verifies a v3.3 credential payload passed directly
-// to SecretCreateSecret with an invalid TotpEnabled / TotpSecretKey combination is rejected
-// before any request, as CreateSecretFlow does.
+// to SecretCreateSecret with an invalid TotpEnabled / TotpSecretKey combination or an oversized
+// seed is rejected before any request, as CreateSecretFlow does.
 func TestSecretCreateSecretTotpSettingsValidated(t *testing.T) {
 	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("no request expected, got %v", r.URL.Path)
@@ -2448,6 +2448,7 @@ func TestSecretCreateSecretTotpSettingsValidated(t *testing.T) {
 		"enabled without seed": {boolPtr(true), "", "the field 'TotpSecretKey' is required when 'TotpEnabled' is true"},
 		"seed without enabled": {nil, "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
 		"seed with disabled":   {boolPtr(false), "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
+		"oversized seed":       {boolPtr(true), strings.Repeat("A", 1025), "Max length '1024' for 'TotpSecretKey' field."},
 	}
 	for name, tc := range cases {
 		details := entities.SecretCredentialDetailsConfig33{
