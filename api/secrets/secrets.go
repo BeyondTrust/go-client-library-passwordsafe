@@ -955,7 +955,7 @@ func (secretObj *SecretObj) UpdateCredentialSecret(secretId string, details enti
 		return entities.Secret{}, err
 	}
 
-	payload, err := json.Marshal(details)
+	payload, err := buildUpdatePayload(details, details.SecretUpdateOwners, apiVersion)
 	if err != nil {
 		return entities.Secret{}, err
 	}
@@ -980,6 +980,71 @@ func (secretObj *SecretObj) UpdateCredentialSecret(secretId string, details enti
 	}
 
 	return secretObj.decodeUpdatedSecret(response)
+}
+
+// isApiVersion30 reports whether the session uses API v3.0, which is also the server default when no
+// version is set.
+func isApiVersion30(apiVersion string) bool {
+	return apiVersion == "" || apiVersion == "3.0"
+}
+
+// validateUpdateOwners checks that the owners of an update use the model of the session API version.
+func validateUpdateOwners(owners entities.SecretUpdateOwners, apiVersion string) error {
+	if !isApiVersion30(apiVersion) {
+		if len(owners.OwnersByGroupId) == 0 {
+			return fmt.Errorf("the field 'OwnersByGroupId' is required with API version %v", apiVersion)
+		}
+		return nil
+	}
+
+	switch owners.OwnerType {
+	case "User":
+		if len(owners.OwnersByOwnerId) == 0 {
+			return errors.New("the field 'OwnersByOwnerId' is required when 'OwnerType' is User (API version 3.0)")
+		}
+	case "Group":
+		if owners.OwnerId == 0 {
+			return errors.New("the field 'OwnerId' is required when 'OwnerType' is Group (API version 3.0)")
+		}
+	default:
+		return fmt.Errorf("the field 'OwnerType' must be User or Group with API version 3.0, got: %q", owners.OwnerType)
+	}
+	return nil
+}
+
+// buildUpdatePayload marshals an update payload with the owners model of the session API version:
+// v3.0 sends OwnerType, OwnerId and Owners[].OwnerId; v3.1+ sends Owners[].UserId or GroupId.
+func buildUpdatePayload(details interface{}, owners entities.SecretUpdateOwners, apiVersion string) ([]byte, error) {
+	if err := validateUpdateOwners(owners, apiVersion); err != nil {
+		return nil, err
+	}
+
+	raw, err := json.Marshal(details)
+	if err != nil {
+		return nil, err
+	}
+
+	// UseNumber keeps numeric fields such as PasswordRuleID exactly as marshaled.
+	var payload map[string]interface{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err = decoder.Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	if isApiVersion30(apiVersion) {
+		payload["OwnerType"] = owners.OwnerType
+		if owners.OwnerId != 0 {
+			payload["OwnerId"] = owners.OwnerId
+		}
+		if len(owners.OwnersByOwnerId) > 0 {
+			payload["Owners"] = owners.OwnersByOwnerId
+		}
+	} else {
+		payload["Owners"] = owners.OwnersByGroupId
+	}
+
+	return json.Marshal(payload)
 }
 
 // decodeUpdatedSecret decodes the response of a credential or text secret update. The API spec
@@ -1009,7 +1074,7 @@ func (secretObj *SecretObj) UpdateTextSecret(secretId string, details entities.S
 		return entities.Secret{}, err
 	}
 
-	payload, err := json.Marshal(details)
+	payload, err := buildUpdatePayload(details, details.SecretUpdateOwners, secretObj.authenticationObj.ApiVersion)
 	if err != nil {
 		return entities.Secret{}, err
 	}
@@ -1049,7 +1114,7 @@ func (secretObj *SecretObj) UpdateFileSecret(secretId string, details entities.S
 		return err
 	}
 
-	metadata, err := json.Marshal(details)
+	metadata, err := buildUpdatePayload(details, details.SecretUpdateOwners, secretObj.authenticationObj.ApiVersion)
 	if err != nil {
 		return err
 	}

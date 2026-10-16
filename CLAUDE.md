@@ -34,14 +34,16 @@ API area (`secrets`, `managed_account`, `authentication`, `utils`, `entities`, `
   file `Config30` .. `Config32`). `CreateSecretFlow` accepts version-neutral inputs (`SecretCredentialInput`,
   `SecretTextInput`, `SecretFileInput`) and builds the matching struct; versioned structs passed directly
   are sent as is. v3.3 text and file reuse the v3.2 structs.
-- Owners: v3.0 uses `OwnerType` + `OwnerId` / `OwnersByOwnerId`; v3.1+ uses `Owners` where each entry has
-  `UserId` **or** `GroupId`, not both (sending both returns "Duplicate values in Owners").
+- Owners: v3.0 (also the server default when no version is set) uses `OwnerType` + `OwnerId` /
+  `OwnersByOwnerId`; v3.1+ uses `Owners` where each entry has `UserId` **or** `GroupId`, not both (sending
+  both returns "Duplicate values in Owners"). Create inputs and updates (`SecretUpdateOwners`) carry both
+  models and send the one for the session version; sending the v3.1+ model on v3.0 returns "Invalid OwnerType".
   Owner entries are not validated locally (no `dive` tag).
 - TOTP is only for credential secrets and only with API v3.3: `TotpEnabled` / `TotpSecretKey` with another
   version are rejected before any request. `TotpSecretKey` is write-only and never logged; TOTP codes
   must never be logged either.
 - Updates (`UpdateCredentialSecret`, `UpdateTextSecret`, `UpdateFileSecret`) are PUTs that replace the
-  secret: `FolderId`, `Title` and `Owners` are required (the server requires `FolderId` even though the API
+  secret: `FolderId`, `Title` and the owners are required (the server requires `FolderId` even though the API
   spec marks it read-only), and unsent `Description`, `Notes` and `Urls` are cleared. Credential and text
   updates may answer 204 or 200; file secrets use multipart (`secretmetadata` + `file`) and answer 204.
 - Prefer typed sentinel errors checked with `errors.Is` for documented status codes (see

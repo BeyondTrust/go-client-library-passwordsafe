@@ -2436,11 +2436,11 @@ func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
 // validUpdate returns a complete v3.3 update payload; the PUT replaces the secret.
 func validUpdate() entities.SecretCredentialUpdateConfig33 {
 	return entities.SecretCredentialUpdateConfig33{
-		FolderId: uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
-		Title:    "T",
-		Username: "u",
-		Password: constants.FakePassword,
-		Owners:   []entities.OwnerDetailsGroupId{{UserId: 1}},
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		Username:           "u",
+		Password:           constants.FakePassword,
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
 	}
 }
 
@@ -2524,7 +2524,7 @@ func TestUpdateCredentialSecretRequiredFields(t *testing.T) {
 		"Title":    func(d *entities.SecretCredentialUpdateConfig33) { d.Title = "" },
 		"Username": func(d *entities.SecretCredentialUpdateConfig33) { d.Username = "" },
 		"Password": func(d *entities.SecretCredentialUpdateConfig33) { d.Password = "" },
-		"Owners":   func(d *entities.SecretCredentialUpdateConfig33) { d.Owners = []entities.OwnerDetailsGroupId{} },
+		"Owners":   func(d *entities.SecretCredentialUpdateConfig33) { d.OwnersByGroupId = nil },
 	}
 	for field, mutate := range cases {
 		details := validUpdate()
@@ -2547,11 +2547,11 @@ func TestUpdateCredentialSecretRequiredFields(t *testing.T) {
 	}
 }
 
-// TestUpdateCredentialSecretApiVersions verifies credential secrets can be updated with any API version,
-// while the TOTP fields require v3.3.
+// TestUpdateCredentialSecretApiVersions verifies credential secrets can be updated without TOTP fields on
+// API v3.1+, while the TOTP fields require v3.3 (v3.0 owners are covered by TestUpdateSecretsOwnershipSchema).
 func TestUpdateCredentialSecretApiVersions(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
-	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
 		requests := 0
 		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
 			requests++
@@ -2630,26 +2630,26 @@ func TestCredentialLengthLimits(t *testing.T) {
 
 func validTextUpdate() entities.SecretTextUpdateConfig {
 	return entities.SecretTextUpdateConfig{
-		FolderId: uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
-		Title:    "T",
-		Text:     "new text",
-		Owners:   []entities.OwnerDetailsGroupId{{UserId: 1}},
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		Text:               "new text",
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
 	}
 }
 
 func validFileUpdate() entities.SecretFileUpdateConfig {
 	return entities.SecretFileUpdateConfig{
-		FolderId:    uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
-		Title:       "T",
-		Owners:      []entities.OwnerDetailsGroupId{{UserId: 1}},
-		FileName:    "new.txt",
-		FileContent: "new file content",
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
+		FileName:           "new.txt",
+		FileContent:        "new file content",
 	}
 }
 
 func TestUpdateTextSecret(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
-	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
 		var received map[string]interface{}
 		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
 			if r.Method != "PUT" || r.URL.Path != "/secrets-safe/secrets/"+id+"/text" {
@@ -2756,6 +2756,127 @@ func TestUpdateFileSecretRetries(t *testing.T) {
 	}
 }
 
+// updateOwnersForTest sets both owner models, so each test checks that only the session version's model is sent.
+var updateOwnersForTest = entities.SecretUpdateOwners{
+	OwnerType:       "User",
+	OwnersByOwnerId: []entities.OwnerDetailsOwnerId{{OwnerId: 5}},
+	OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}},
+}
+
+// sendUpdateWithOwners calls one of the update methods with the given owners against a server that records
+// the payload: the JSON body for credential and text, the secretmetadata part for file.
+func sendUpdateWithOwners(t *testing.T, method, version string, owners entities.SecretUpdateOwners) (map[string]interface{}, error) {
+	t.Helper()
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	var payload map[string]interface{}
+	secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+		if method == "file" {
+			_ = r.ParseMultipartForm(1 << 20)
+			_ = json.Unmarshal([]byte(r.FormValue("secretmetadata")), &payload)
+		} else {
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	var err error
+	switch method {
+	case "credential":
+		details := validUpdate()
+		details.SecretUpdateOwners = owners
+		_, err = secretObj.UpdateCredentialSecret(id, details)
+	case "text":
+		details := validTextUpdate()
+		details.SecretUpdateOwners = owners
+		_, err = secretObj.UpdateTextSecret(id, details)
+	case "file":
+		details := validFileUpdate()
+		details.SecretUpdateOwners = owners
+		err = secretObj.UpdateFileSecret(id, details)
+	}
+	return payload, err
+}
+
+// TestUpdateSecretsOwnershipSchema verifies the three update methods send the owners model of the session
+// API version: v3.0 and an unset version (the server default, v3.0) send OwnerType, OwnerId and
+// Owners[].OwnerId; v3.1+ send Owners[].UserId or GroupId only.
+func TestUpdateSecretsOwnershipSchema(t *testing.T) {
+	for _, method := range []string{"credential", "text", "file"} {
+		for _, version := range []string{"", "3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+			name := method + " version=" + version
+			payload, err := sendUpdateWithOwners(t, method, version, updateOwnersForTest)
+			if err != nil {
+				t.Fatalf("%s: %v", name, err)
+			}
+			owners, _ := payload["Owners"].([]interface{})
+			if len(owners) != 1 {
+				t.Fatalf("%s: expected one owner, got %v", name, payload["Owners"])
+			}
+			owner := owners[0].(map[string]interface{})
+
+			if version == "" || version == "3.0" {
+				if payload["OwnerType"] != "User" {
+					t.Errorf("%s: expected OwnerType=User, got %v", name, payload["OwnerType"])
+				}
+				if owner["OwnerId"] != float64(5) || owner["UserId"] != nil || owner["GroupId"] != nil {
+					t.Errorf("%s: expected a v3.0 owner {OwnerId:5}, got %v", name, owner)
+				}
+				continue
+			}
+			if _, ok := payload["OwnerType"]; ok {
+				t.Errorf("%s: OwnerType must not be sent: %v", name, payload)
+			}
+			if _, ok := payload["OwnerId"]; ok {
+				t.Errorf("%s: OwnerId must not be sent: %v", name, payload)
+			}
+			if owner["UserId"] != float64(7) || owner["OwnerId"] != nil {
+				t.Errorf("%s: expected a v3.1+ owner {UserId:7}, got %v", name, owner)
+			}
+		}
+
+		// v3.0 group owner: OwnerId is the group ID and no Owners list is sent.
+		group := entities.SecretUpdateOwners{OwnerType: "Group", OwnerId: 3}
+		payload, err := sendUpdateWithOwners(t, method, "3.0", group)
+		if err != nil {
+			t.Fatalf("%s group: %v", method, err)
+		}
+		if payload["OwnerType"] != "Group" || payload["OwnerId"] != float64(3) {
+			t.Errorf("%s group: expected OwnerType=Group and OwnerId=3, got %v", method, payload)
+		}
+		if _, ok := payload["Owners"]; ok {
+			t.Errorf("%s group: Owners must not be sent: %v", method, payload)
+		}
+	}
+}
+
+// TestUpdateSecretsOwnersValidation verifies owners that do not match the session API version are
+// rejected before any request.
+func TestUpdateSecretsOwnersValidation(t *testing.T) {
+	cases := []struct {
+		name    string
+		version string
+		owners  entities.SecretUpdateOwners
+		want    string
+	}{
+		{"v3.0 without OwnerType", "3.0", entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}}}, "'OwnerType' must be User or Group"},
+		{"unset version without OwnerType", "", entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}}}, "'OwnerType' must be User or Group"},
+		{"v3.0 User without OwnersByOwnerId", "3.0", entities.SecretUpdateOwners{OwnerType: "User"}, "'OwnersByOwnerId' is required"},
+		{"v3.0 Group without OwnerId", "3.0", entities.SecretUpdateOwners{OwnerType: "Group"}, "'OwnerId' is required"},
+		{"v3.1 without OwnersByGroupId", constants.ApiVersion31, entities.SecretUpdateOwners{OwnerType: "User", OwnersByOwnerId: []entities.OwnerDetailsOwnerId{{OwnerId: 5}}}, "'OwnersByGroupId' is required"},
+	}
+	for _, method := range []string{"credential", "text", "file"} {
+		for _, tc := range cases {
+			payload, err := sendUpdateWithOwners(t, method, tc.version, tc.owners)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("%s %s: expected %q, got %v", method, tc.name, tc.want, err)
+			}
+			if payload != nil {
+				t.Errorf("%s %s: no request expected, got %v", method, tc.name, payload)
+			}
+		}
+	}
+}
+
 // TestUpdateTextAndFileSecretValidation verifies the ID and required fields are checked before any request.
 func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
@@ -2775,7 +2896,7 @@ func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 		"FolderId": func(d *entities.SecretTextUpdateConfig) { d.FolderId = uuid.Nil },
 		"Title":    func(d *entities.SecretTextUpdateConfig) { d.Title = "" },
 		"Text":     func(d *entities.SecretTextUpdateConfig) { d.Text = "" },
-		"Owners":   func(d *entities.SecretTextUpdateConfig) { d.Owners = []entities.OwnerDetailsGroupId{} },
+		"Owners":   func(d *entities.SecretTextUpdateConfig) { d.OwnersByGroupId = nil },
 	}
 	for field, mutate := range textCases {
 		details := validTextUpdate()
@@ -2788,7 +2909,7 @@ func TestUpdateTextAndFileSecretValidation(t *testing.T) {
 	fileCases := map[string]func(*entities.SecretFileUpdateConfig){
 		"FolderId":    func(d *entities.SecretFileUpdateConfig) { d.FolderId = uuid.Nil },
 		"Title":       func(d *entities.SecretFileUpdateConfig) { d.Title = "" },
-		"Owners":      func(d *entities.SecretFileUpdateConfig) { d.Owners = []entities.OwnerDetailsGroupId{} },
+		"Owners":      func(d *entities.SecretFileUpdateConfig) { d.OwnersByGroupId = nil },
 		"FileName":    func(d *entities.SecretFileUpdateConfig) { d.FileName = "" },
 		"FileContent": func(d *entities.SecretFileUpdateConfig) { d.FileContent = "" },
 	}
