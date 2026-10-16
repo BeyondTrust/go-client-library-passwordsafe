@@ -193,6 +193,42 @@ func TestCallSecretSafeAPIError400(t *testing.T) {
 
 }
 
+// TestSendMultiPartRequestRetryPolicy verifies a nil retry policy sends the request once, and a policy
+// retries technical errors until the request succeeds.
+func TestSendMultiPartRequestRetryPolicy(t *testing.T) {
+	requests := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if requests == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	logger, _ := zap.NewDevelopment()
+	httpClientObj, _ := GetHttpClient(30, false, "", "", logging.NewZapLogger(logger))
+
+	if _, err := httpClientObj.SendMultiPartRequest("PUT", server.URL+"/secrets/file", "f.txt", []byte("{}"), "content", constants.ApiVersion33, nil); err == nil {
+		t.Error("nil policy: expected the 503 error")
+	}
+	if requests != 1 {
+		t.Errorf("nil policy: expected 1 request, got %d", requests)
+	}
+
+	requests = 0
+	retry := backoff.NewExponentialBackOff()
+	retry.InitialInterval = 10 * time.Millisecond
+	retry.MaxElapsedTime = time.Second
+	if _, err := httpClientObj.SendMultiPartRequest("PUT", server.URL+"/secrets/file", "f.txt", []byte("{}"), "content", constants.ApiVersion33, retry); err != nil {
+		t.Errorf("with policy: expected success after retrying, got %v", err)
+	}
+	if requests != 2 {
+		t.Errorf("with policy: expected 2 requests, got %d", requests)
+	}
+}
+
 func TestCreateMultiPartRequest(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

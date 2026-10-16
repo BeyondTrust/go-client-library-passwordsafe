@@ -4,6 +4,9 @@
 package secrets
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -2231,5 +2234,786 @@ func TestSecretGetSecretByPathWithV32WrappedResponse(t *testing.T) {
 	}
 	if response.Id != "id-1" || response.Title != "fake_title" {
 		t.Errorf("Test case Failed: got %+v", response)
+	}
+}
+
+func newTotpTestSecretObj(t *testing.T, version string, handler http.HandlerFunc) *SecretObj {
+	t.Helper()
+	InitializeGlobalConfig()
+	authenticate, _ := authentication.Authenticate(*authParams)
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+	apiUrl, _ := url.Parse(server.URL + "/")
+	authenticate.ApiUrl = *apiUrl
+	authenticate.ApiVersion = version
+	secretObj, _ := NewSecretObj(*authenticate, zapLogger, 4000, true)
+	return secretObj
+}
+
+func boolPtr(b bool) *bool { return &b }
+
+func TestBuildSecretConfigsVersion33(t *testing.T) {
+	owners := []entities.OwnerDetailsGroupId{{GroupId: 1, UserId: 1}}
+	credIn := entities.SecretCredentialInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "t"},
+		Username:                "u", Password: "p", OwnersByGroupId: owners,
+		TotpEnabled: boolPtr(true), TotpSecretKey: "JBSWY3DPEHPK3PXP",
+	}
+	cfg, err := buildCredentialSecretConfig(credIn, "3.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c33, ok := cfg.(entities.SecretCredentialDetailsConfig33)
+	if !ok || c33.TotpEnabled == nil || !*c33.TotpEnabled || c33.TotpSecretKey != "JBSWY3DPEHPK3PXP" {
+		t.Errorf("unexpected 3.3 credential config: %#v", cfg)
+	}
+
+	if cfg, err = buildTextSecretConfig(entities.SecretTextInput{Text: "x", OwnersByGroupId: owners}, "3.3"); err != nil {
+		t.Fatal(err)
+	} else if _, ok := cfg.(entities.SecretTextDetailsConfig32); !ok {
+		t.Errorf("text 3.3 should reuse 3.2 shape, got %T", cfg)
+	}
+	if cfg, err = buildFileSecretConfig(entities.SecretFileInput{FileName: "f", FileContent: "c", OwnersByGroupId: owners}, "3.3"); err != nil {
+		t.Fatal(err)
+	} else if _, ok := cfg.(entities.SecretFileDetailsConfig32); !ok {
+		t.Errorf("file 3.3 should reuse 3.2 shape, got %T", cfg)
+	}
+
+	// Older versions keep their shape and reject TOTP fields instead of dropping them silently.
+	for _, v := range []string{"3.0", "3.1", "3.2"} {
+		if _, err = buildCredentialSecretConfig(credIn, v); err == nil {
+			t.Errorf("expected TOTP to be rejected for version %v", v)
+		}
+		plain := credIn
+		plain.TotpEnabled, plain.TotpSecretKey = nil, ""
+		if _, err = buildCredentialSecretConfig(plain, v); err != nil {
+			t.Errorf("version %v without TOTP should work: %v", v, err)
+		}
+	}
+}
+
+func TestCreateCredentialSecretFlowVersion33SendsTotp(t *testing.T) {
+	var received map[string]interface{}
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/secrets-safe/folders/":
+			_, _ = w.Write([]byte(`[{"Id": "cb871861-8b40-4556-820c-1ca6d522adfa","Name": "folder1"}]`))
+		case "/secrets-safe/folders/cb871861-8b40-4556-820c-1ca6d522adfa/secrets":
+			if r.URL.Query().Get("version") != "3.3" {
+				t.Errorf("expected version=3.3, got %q", r.URL.RawQuery)
+			}
+			_ = json.NewDecoder(r.Body).Decode(&received)
+			_, _ = w.Write([]byte(`{"Id": "01ca9cf3-0751-4a90-4856-08dcf22d7472","Title": "T","TotpEnabled": true,"TotpParameters":{"Digits":6,"PeriodSeconds":30}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	})
+
+	in := entities.SecretCredentialInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                "u", Password: constants.FakePassword,
+		OwnersByGroupId: []entities.OwnerDetailsGroupId{{GroupId: 1, UserId: 1}},
+		TotpEnabled:     boolPtr(true), TotpSecretKey: "JBSWY3DPEHPK3PXP",
+	}
+	resp, err := secretObj.CreateSecretFlow("folder1", in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if received["TotpEnabled"] != true || received["TotpSecretKey"] != "JBSWY3DPEHPK3PXP" {
+		t.Errorf("TOTP fields not sent: %v", received)
+	}
+	if !resp.TotpEnabled || resp.TotpParameters == nil || resp.TotpParameters.Digits != 6 || resp.TotpParameters.PeriodSeconds != 30 {
+		t.Errorf("TOTP response not surfaced: %#v", resp)
+	}
+}
+
+func TestCreateCredentialSecretFlowInvalidTotp(t *testing.T) {
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	})
+	base := entities.SecretCredentialInput{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                "u", Password: constants.FakePassword,
+		OwnersByGroupId: []entities.OwnerDetailsGroupId{{GroupId: 1, UserId: 1}},
+	}
+	cases := map[string]func(*entities.SecretCredentialInput){
+		"enabled without seed": func(i *entities.SecretCredentialInput) { i.TotpEnabled = boolPtr(true) },
+		"seed without enabled": func(i *entities.SecretCredentialInput) { i.TotpSecretKey = "JBSWY3DPEHPK3PXP" },
+		"seed with false": func(i *entities.SecretCredentialInput) {
+			i.TotpEnabled = boolPtr(false)
+			i.TotpSecretKey = "JBSWY3DPEHPK3PXP"
+		},
+		"seed too long": func(i *entities.SecretCredentialInput) {
+			i.TotpEnabled = boolPtr(true)
+			i.TotpSecretKey = strings.Repeat("A", 1025)
+		},
+	}
+	for name, mutate := range cases {
+		in := base
+		mutate(&in)
+		if _, err := secretObj.CreateSecretFlow("folder1", in); err == nil {
+			t.Errorf("%s: expected validation error", name)
+		}
+	}
+}
+
+// TestCreateTextAndFileSecretsSkipTotpChecks verifies the TOTP checks only apply to credential
+// payloads: text and file secrets are created with any API version.
+func TestCreateTextAndFileSecretsSkipTotpChecks(t *testing.T) {
+	base := entities.SecretDetailsBaseConfig{Title: "T"}
+	owners := []entities.OwnerDetailsGroupId{{UserId: 1}}
+	payloads := map[string]interface{}{
+		"text 3.0": entities.SecretTextDetailsConfig30{SecretDetailsBaseConfig: base, Text: "t", OwnerType: "User", Owners: []entities.OwnerDetailsOwnerId{{OwnerId: 1}}},
+		"text 3.1": entities.SecretTextDetailsConfig31{SecretDetailsBaseConfig: base, Text: "t", Owners: owners},
+		"text 3.2": entities.SecretTextDetailsConfig32{SecretDetailsBaseConfig: base, Text: "t", Owners: owners},
+		"file 3.0": entities.SecretFileDetailsConfig30{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", OwnerType: "User", Owners: []entities.OwnerDetailsOwnerId{{OwnerId: 1}}},
+		"file 3.1": entities.SecretFileDetailsConfig31{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", Owners: owners},
+		"file 3.2": entities.SecretFileDetailsConfig32{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", Owners: owners},
+	}
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		for name, payload := range payloads {
+			if err := validateCreateTotp(payload, version); err != nil {
+				t.Errorf("%s with %s: validateCreateTotp: %v", name, version, err)
+			}
+			if err := validateTotpApiVersion(payload, version); err != nil {
+				t.Errorf("%s with %s: validateTotpApiVersion: %v", name, version, err)
+			}
+		}
+	}
+
+	// v3.3 reuses the v3.2 text and file payloads; both reach the server.
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		requests := 0
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/secrets-safe/folders/" {
+				_, _ = w.Write([]byte(`[{"Id":"folder-id","Name":"folder1"}]`))
+				return
+			}
+			requests++
+			_, _ = w.Write([]byte(`{"Id":"new-secret-id","Title":"T"}`))
+		})
+		if _, err := secretObj.CreateSecretFlow("folder1", entities.SecretTextInput{SecretDetailsBaseConfig: base, Text: "t", OwnersByGroupId: owners}); err != nil {
+			t.Errorf("%s: create text: %v", version, err)
+		}
+		if _, err := secretObj.CreateSecretFlow("folder1", entities.SecretFileInput{SecretDetailsBaseConfig: base, FileName: "f", FileContent: "c", OwnersByGroupId: owners}); err != nil {
+			t.Errorf("%s: create file: %v", version, err)
+		}
+		if _, err := secretObj.SecretCreateSecret("folder-id", entities.SecretTextDetailsConfig32{SecretDetailsBaseConfig: base, Text: "t", Owners: owners}); err != nil {
+			t.Errorf("%s: SecretCreateSecret text: %v", version, err)
+		}
+		if requests != 3 {
+			t.Errorf("%s: expected 3 create requests, got %d", version, requests)
+		}
+	}
+}
+
+// TestCreateSecretFlowTotpOnlyForVersion33 verifies a v3.3 credential payload passed directly
+// with TOTP settings is rejected before any request when the session uses another API version.
+func TestCreateSecretFlowTotpOnlyForVersion33(t *testing.T) {
+	details := entities.SecretCredentialDetailsConfig33{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                "u",
+		Password:                constants.FakePassword,
+		Owners:                  []entities.OwnerDetailsGroupId{{GroupId: 1, UserId: 1}},
+		TotpEnabled:             boolPtr(true),
+		TotpSecretKey:           "JBSWY3DPEHPK3PXP",
+	}
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+		})
+		_, err := secretObj.CreateSecretFlow("folder1", details)
+		if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+			t.Errorf("%s: expected API version error, got %v", version, err)
+		}
+		_, err = secretObj.SecretCreateSecret(uuid.NewString(), details)
+		if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+			t.Errorf("%s: SecretCreateSecret: expected API version error, got %v", version, err)
+		}
+	}
+}
+
+// TestSecretCreateSecretTotpSettingsValidated verifies a v3.3 credential payload passed directly
+// to SecretCreateSecret with an invalid TotpEnabled / TotpSecretKey combination or an oversized
+// seed is rejected before any request, as CreateSecretFlow does.
+func TestSecretCreateSecretTotpSettingsValidated(t *testing.T) {
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	})
+	cases := map[string]struct {
+		totpEnabled   *bool
+		totpSecretKey string
+		expected      string
+	}{
+		"enabled without seed": {boolPtr(true), "", "the field 'TotpSecretKey' is required when 'TotpEnabled' is true"},
+		"seed without enabled": {nil, "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
+		"seed with disabled":   {boolPtr(false), "JBSWY3DPEHPK3PXP", "the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true"},
+		"oversized seed":       {boolPtr(true), strings.Repeat("A", 1025), "Max length '1024' for 'TotpSecretKey' field."},
+	}
+	for name, tc := range cases {
+		details := entities.SecretCredentialDetailsConfig33{
+			SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+			Username:                "u",
+			Password:                constants.FakePassword,
+			Owners:                  []entities.OwnerDetailsGroupId{{UserId: 1}},
+			TotpEnabled:             tc.totpEnabled,
+			TotpSecretKey:           tc.totpSecretKey,
+		}
+		_, err := secretObj.SecretCreateSecret(uuid.NewString(), details)
+		if err == nil || err.Error() != tc.expected {
+			t.Errorf("%s: expected %q, got %v", name, tc.expected, err)
+		}
+	}
+}
+
+// validUpdate returns a complete v3.3 update payload; the PUT replaces the secret.
+func validUpdate() entities.SecretCredentialUpdateConfig33 {
+	return entities.SecretCredentialUpdateConfig33{
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		Username:           "u",
+		Password:           constants.FakePassword,
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
+	}
+}
+
+func TestUpdateCredentialSecretTotpTriState(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	var method string
+	var received map[string]interface{}
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		method = r.Method
+		received = nil
+		if r.URL.Path != "/secrets-safe/secrets/"+id {
+			t.Errorf("unexpected path %v", r.URL.Path)
+		}
+		_ = json.NewDecoder(r.Body).Decode(&received)
+		_, _ = w.Write([]byte(`{"Id":"` + id + `","Title":"T","TotpEnabled":false}`))
+	})
+
+	// nil: neither TOTP field is sent; the required fields are.
+	if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
+		t.Fatal(err)
+	}
+	if method != "PUT" {
+		t.Errorf("expected PUT, got %v", method)
+	}
+	for _, field := range []string{"FolderId", "Title", "Username", "Password", "Owners"} {
+		if _, ok := received[field]; !ok {
+			t.Errorf("%s must be sent: %v", field, received)
+		}
+	}
+	if _, ok := received["TotpEnabled"]; ok {
+		t.Errorf("TotpEnabled must not be sent: %v", received)
+	}
+	if _, ok := received["TotpSecretKey"]; ok {
+		t.Errorf("TotpSecretKey must not be sent: %v", received)
+	}
+
+	// false: explicit disable is sent.
+	details := validUpdate()
+	details.TotpEnabled = boolPtr(false)
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err != nil {
+		t.Fatal(err)
+	}
+	if v, ok := received["TotpEnabled"]; !ok || v != false {
+		t.Errorf("TotpEnabled=false must be sent: %v", received)
+	}
+
+	// true with seed.
+	details = validUpdate()
+	details.TotpEnabled = boolPtr(true)
+	details.TotpSecretKey = "JBSWY3DPEHPK3PXP"
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err != nil {
+		t.Fatal(err)
+	}
+	if received["TotpEnabled"] != true || received["TotpSecretKey"] != "JBSWY3DPEHPK3PXP" {
+		t.Errorf("TOTP fields not sent: %v", received)
+	}
+
+	// invalid combinations fail locally.
+	details = validUpdate()
+	details.TotpEnabled = boolPtr(true)
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err == nil {
+		t.Error("expected error for enabled without seed")
+	}
+	details = validUpdate()
+	details.TotpSecretKey = "JBSWY3DPEHPK3PXP"
+	if _, err := secretObj.UpdateCredentialSecret(id, details); err == nil {
+		t.Error("expected error for seed without enabled")
+	}
+	if _, err := secretObj.UpdateCredentialSecret("not-a-uuid", validUpdate()); err == nil {
+		t.Error("expected error for invalid id")
+	}
+}
+
+// TestUpdateCredentialSecretRequiredFields verifies the fields the PUT requires are validated before any request.
+func TestUpdateCredentialSecretRequiredFields(t *testing.T) {
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	})
+	cases := map[string]func(*entities.SecretCredentialUpdateConfig33){
+		"FolderId": func(d *entities.SecretCredentialUpdateConfig33) { d.FolderId = uuid.Nil },
+		"Title":    func(d *entities.SecretCredentialUpdateConfig33) { d.Title = "" },
+		"Username": func(d *entities.SecretCredentialUpdateConfig33) { d.Username = "" },
+		"Password": func(d *entities.SecretCredentialUpdateConfig33) { d.Password = "" },
+		"Owners":   func(d *entities.SecretCredentialUpdateConfig33) { d.OwnersByGroupId = nil },
+	}
+	for field, mutate := range cases {
+		details := validUpdate()
+		mutate(&details)
+		_, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", details)
+		if err == nil || !strings.Contains(err.Error(), field) {
+			t.Errorf("%s: expected validation error, got %v", field, err)
+		}
+	}
+
+	// PasswordRuleID replaces Password.
+	details := validUpdate()
+	details.Password = ""
+	details.PasswordRuleID = 1
+	ok := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"Id":"9152f5b6-07d6-4955-175a-08db047219ce"}`))
+	})
+	if _, err := ok.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", details); err != nil {
+		t.Errorf("PasswordRuleID without Password: %v", err)
+	}
+}
+
+// TestUpdateCredentialSecretApiVersions verifies credential secrets can be updated without TOTP fields on
+// API v3.1+, while the TOTP fields require v3.3 (v3.0 owners are covered by TestUpdateSecretsOwnershipSchema).
+func TestUpdateCredentialSecretApiVersions(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		requests := 0
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			requests++
+			w.WriteHeader(http.StatusNoContent)
+		})
+		if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
+			t.Errorf("%s: update without TOTP fields: %v", version, err)
+		}
+		if requests != 1 {
+			t.Errorf("%s: expected 1 request, got %d", version, requests)
+		}
+	}
+
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			t.Errorf("%s: no request expected, got %v", version, r.URL.Path)
+		})
+		withTotp := validUpdate()
+		withTotp.TotpEnabled = boolPtr(true)
+		withTotp.TotpSecretKey = "JBSWY3DPEHPK3PXP"
+		disable := validUpdate()
+		disable.TotpEnabled = boolPtr(false)
+		for name, details := range map[string]entities.SecretCredentialUpdateConfig33{"enable": withTotp, "disable": disable} {
+			_, err := secretObj.UpdateCredentialSecret(id, details)
+			if err == nil || !strings.Contains(err.Error(), "TOTP fields in create and update secret operations require API version 3.3") {
+				t.Errorf("%s %s: expected TOTP API version error, got %v", version, name, err)
+			}
+		}
+	}
+
+}
+
+// TestUpdateSecretNoContent verifies a 204 No Content response (as documented by the API spec)
+// is a successful update for credential and text secrets.
+func TestUpdateSecretNoContent(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	if _, err := secretObj.UpdateCredentialSecret(id, validUpdate()); err != nil {
+		t.Errorf("UpdateCredentialSecret with 204: %v", err)
+	}
+	if _, err := secretObj.UpdateTextSecret(id, validTextUpdate()); err != nil {
+		t.Errorf("UpdateTextSecret with 204: %v", err)
+	}
+}
+
+// TestCredentialLengthLimits verifies the API spec limits for Username and PasswordRuleID.
+func TestCredentialLengthLimits(t *testing.T) {
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	})
+
+	update := validUpdate()
+	update.Username = strings.Repeat("u", 257)
+	if _, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "Username") {
+		t.Errorf("update Username: expected max length error, got %v", err)
+	}
+	update = validUpdate()
+	update.Password = ""
+	update.PasswordRuleID = 32768
+	if _, err := secretObj.UpdateCredentialSecret("9152f5b6-07d6-4955-175a-08db047219ce", update); err == nil || !strings.Contains(err.Error(), "PasswordRuleID") {
+		t.Errorf("update PasswordRuleID: expected max error, got %v", err)
+	}
+
+	create := entities.SecretCredentialDetailsConfig33{
+		SecretDetailsBaseConfig: entities.SecretDetailsBaseConfig{Title: "T"},
+		Username:                strings.Repeat("u", 257),
+		Password:                constants.FakePassword,
+		Owners:                  []entities.OwnerDetailsGroupId{{UserId: 1}},
+	}
+	if _, err := secretObj.CreateSecretFlow("folder1", create); err == nil || !strings.Contains(err.Error(), "Username") {
+		t.Errorf("create Username: expected max length error, got %v", err)
+	}
+}
+
+func validTextUpdate() entities.SecretTextUpdateConfig {
+	return entities.SecretTextUpdateConfig{
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		Text:               "new text",
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
+	}
+}
+
+func validFileUpdate() entities.SecretFileUpdateConfig {
+	return entities.SecretFileUpdateConfig{
+		FolderId:           uuid.MustParse("cb871861-8b40-4556-820c-1ca6d522adfa"),
+		Title:              "T",
+		SecretUpdateOwners: entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 1}}},
+		FileName:           "new.txt",
+		FileContent:        "new file content",
+	}
+}
+
+func TestUpdateTextSecret(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	for _, version := range []string{constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		var received map[string]interface{}
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != "PUT" || r.URL.Path != "/secrets-safe/secrets/"+id+"/text" {
+				t.Errorf("%s: unexpected request %v %v", version, r.Method, r.URL.Path)
+			}
+			_ = json.NewDecoder(r.Body).Decode(&received)
+			_, _ = w.Write([]byte(`{"Id":"` + id + `","Title":"T","SecretType":"Text"}`))
+		})
+
+		updated, err := secretObj.UpdateTextSecret(id, validTextUpdate())
+		if err != nil {
+			t.Fatalf("%s: %v", version, err)
+		}
+		if updated.Id != id || updated.SecretType != "Text" {
+			t.Errorf("%s: unexpected response %+v", version, updated)
+		}
+		for _, field := range []string{"FolderId", "Title", "Text", "Owners"} {
+			if _, ok := received[field]; !ok {
+				t.Errorf("%s: %s must be sent: %v", version, field, received)
+			}
+		}
+	}
+}
+
+func TestUpdateFileSecret(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	var metadata map[string]interface{}
+	var fileName, fileContent string
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" || r.URL.Path != "/secrets-safe/secrets/"+id+"/file" {
+			t.Errorf("unexpected request %v %v", r.Method, r.URL.Path)
+		}
+		if err := r.ParseMultipartForm(1 << 20); err != nil {
+			t.Fatalf("expected a multipart request: %v", err)
+		}
+		_ = json.Unmarshal([]byte(r.FormValue("secretmetadata")), &metadata)
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			t.Fatalf("expected a file part: %v", err)
+		}
+		defer func() { _ = file.Close() }()
+		content, _ := io.ReadAll(file)
+		fileName, fileContent = header.Filename, string(content)
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	if err := secretObj.UpdateFileSecret(id, validFileUpdate()); err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"FolderId", "Title", "Owners", "FileName"} {
+		if _, ok := metadata[field]; !ok {
+			t.Errorf("%s must be sent in secretmetadata: %v", field, metadata)
+		}
+	}
+	if _, ok := metadata["FileContent"]; ok {
+		t.Errorf("FileContent must only be sent as the file part: %v", metadata)
+	}
+	if fileName != "new.txt" || fileContent != "new file content" {
+		t.Errorf("unexpected file part %q: %q", fileName, fileContent)
+	}
+}
+
+// TestUpdateFileSecretRetries verifies the file update uses the session retry policy: technical errors
+// (HTTP 503) are retried with the full multipart payload, business errors (HTTP 400) are not.
+func TestUpdateFileSecretRetries(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+
+	requests := 0
+	var lastContent string
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		if file, _, err := r.FormFile("file"); err == nil {
+			content, _ := io.ReadAll(file)
+			_ = file.Close()
+			lastContent = string(content)
+		}
+		if requests == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+	if err := secretObj.UpdateFileSecret(id, validFileUpdate()); err != nil {
+		t.Fatalf("expected success after retrying a 503: %v", err)
+	}
+	if requests != 2 {
+		t.Errorf("expected 2 requests, got %d", requests)
+	}
+	if lastContent != "new file content" {
+		t.Errorf("retried request must carry the file part, got %q", lastContent)
+	}
+
+	requests = 0
+	secretObj = newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`"invalid request"`))
+	})
+	if err := secretObj.UpdateFileSecret(id, validFileUpdate()); err == nil {
+		t.Error("expected the 400 error")
+	}
+	if requests != 1 {
+		t.Errorf("a 400 must not be retried, got %d requests", requests)
+	}
+}
+
+// updateOwnersForTest sets both owner models, so each test checks that only the session version's model is sent.
+var updateOwnersForTest = entities.SecretUpdateOwners{
+	OwnerType:       "User",
+	OwnersByOwnerId: []entities.OwnerDetailsOwnerId{{OwnerId: 5}},
+	OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}},
+}
+
+// sendUpdateWithOwners calls one of the update methods with the given owners against a server that records
+// the payload: the JSON body for credential and text, the secretmetadata part for file.
+func sendUpdateWithOwners(t *testing.T, method, version string, owners entities.SecretUpdateOwners) (map[string]interface{}, error) {
+	t.Helper()
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	var payload map[string]interface{}
+	secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+		if method == "file" {
+			_ = r.ParseMultipartForm(1 << 20)
+			_ = json.Unmarshal([]byte(r.FormValue("secretmetadata")), &payload)
+		} else {
+			_ = json.NewDecoder(r.Body).Decode(&payload)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	var err error
+	switch method {
+	case "credential":
+		details := validUpdate()
+		details.SecretUpdateOwners = owners
+		_, err = secretObj.UpdateCredentialSecret(id, details)
+	case "text":
+		details := validTextUpdate()
+		details.SecretUpdateOwners = owners
+		_, err = secretObj.UpdateTextSecret(id, details)
+	case "file":
+		details := validFileUpdate()
+		details.SecretUpdateOwners = owners
+		err = secretObj.UpdateFileSecret(id, details)
+	}
+	return payload, err
+}
+
+// TestUpdateSecretsOwnershipSchema verifies the three update methods send the owners model of the session
+// API version: v3.0 and an unset version (the server default, v3.0) send OwnerType, OwnerId and
+// Owners[].OwnerId; v3.1+ send Owners[].UserId or GroupId only.
+func TestUpdateSecretsOwnershipSchema(t *testing.T) {
+	for _, method := range []string{"credential", "text", "file"} {
+		for _, version := range []string{"", "3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+			name := method + " version=" + version
+			payload, err := sendUpdateWithOwners(t, method, version, updateOwnersForTest)
+			if err != nil {
+				t.Fatalf("%s: %v", name, err)
+			}
+			owners, _ := payload["Owners"].([]interface{})
+			if len(owners) != 1 {
+				t.Fatalf("%s: expected one owner, got %v", name, payload["Owners"])
+			}
+			owner := owners[0].(map[string]interface{})
+
+			if version == "" || version == "3.0" {
+				if payload["OwnerType"] != "User" {
+					t.Errorf("%s: expected OwnerType=User, got %v", name, payload["OwnerType"])
+				}
+				if owner["OwnerId"] != float64(5) || owner["UserId"] != nil || owner["GroupId"] != nil {
+					t.Errorf("%s: expected a v3.0 owner {OwnerId:5}, got %v", name, owner)
+				}
+				continue
+			}
+			if _, ok := payload["OwnerType"]; ok {
+				t.Errorf("%s: OwnerType must not be sent: %v", name, payload)
+			}
+			if _, ok := payload["OwnerId"]; ok {
+				t.Errorf("%s: OwnerId must not be sent: %v", name, payload)
+			}
+			if owner["UserId"] != float64(7) || owner["OwnerId"] != nil {
+				t.Errorf("%s: expected a v3.1+ owner {UserId:7}, got %v", name, owner)
+			}
+		}
+
+		// v3.0 group owner: OwnerId is the group ID and no Owners list is sent.
+		group := entities.SecretUpdateOwners{OwnerType: "Group", OwnerId: 3}
+		payload, err := sendUpdateWithOwners(t, method, "3.0", group)
+		if err != nil {
+			t.Fatalf("%s group: %v", method, err)
+		}
+		if payload["OwnerType"] != "Group" || payload["OwnerId"] != float64(3) {
+			t.Errorf("%s group: expected OwnerType=Group and OwnerId=3, got %v", method, payload)
+		}
+		if _, ok := payload["Owners"]; ok {
+			t.Errorf("%s group: Owners must not be sent: %v", method, payload)
+		}
+	}
+}
+
+// TestUpdateSecretsOwnersValidation verifies owners that do not match the session API version are
+// rejected before any request.
+func TestUpdateSecretsOwnersValidation(t *testing.T) {
+	cases := []struct {
+		name    string
+		version string
+		owners  entities.SecretUpdateOwners
+		want    string
+	}{
+		{"v3.0 without OwnerType", "3.0", entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}}}, "'OwnerType' must be User or Group"},
+		{"unset version without OwnerType", "", entities.SecretUpdateOwners{OwnersByGroupId: []entities.OwnerDetailsGroupId{{UserId: 7}}}, "'OwnerType' must be User or Group"},
+		{"v3.0 User without OwnersByOwnerId", "3.0", entities.SecretUpdateOwners{OwnerType: "User"}, "'OwnersByOwnerId' is required"},
+		{"v3.0 Group without OwnerId", "3.0", entities.SecretUpdateOwners{OwnerType: "Group"}, "'OwnerId' is required"},
+		{"v3.1 without OwnersByGroupId", constants.ApiVersion31, entities.SecretUpdateOwners{OwnerType: "User", OwnersByOwnerId: []entities.OwnerDetailsOwnerId{{OwnerId: 5}}}, "'OwnersByGroupId' is required"},
+	}
+	for _, method := range []string{"credential", "text", "file"} {
+		for _, tc := range cases {
+			payload, err := sendUpdateWithOwners(t, method, tc.version, tc.owners)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Errorf("%s %s: expected %q, got %v", method, tc.name, tc.want, err)
+			}
+			if payload != nil {
+				t.Errorf("%s %s: no request expected, got %v", method, tc.name, payload)
+			}
+		}
+	}
+}
+
+// TestUpdateTextAndFileSecretValidation verifies the ID and required fields are checked before any request.
+func TestUpdateTextAndFileSecretValidation(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	noRequest := func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("no request expected, got %v", r.URL.Path)
+	}
+
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, noRequest)
+	if _, err := secretObj.UpdateTextSecret("not-a-uuid", validTextUpdate()); err == nil || !strings.Contains(err.Error(), "invalid secret ID") {
+		t.Errorf("text: expected invalid ID error, got %v", err)
+	}
+	if err := secretObj.UpdateFileSecret("not-a-uuid", validFileUpdate()); err == nil || !strings.Contains(err.Error(), "invalid secret ID") {
+		t.Errorf("file: expected invalid ID error, got %v", err)
+	}
+
+	textCases := map[string]func(*entities.SecretTextUpdateConfig){
+		"FolderId": func(d *entities.SecretTextUpdateConfig) { d.FolderId = uuid.Nil },
+		"Title":    func(d *entities.SecretTextUpdateConfig) { d.Title = "" },
+		"Text":     func(d *entities.SecretTextUpdateConfig) { d.Text = "" },
+		"Owners":   func(d *entities.SecretTextUpdateConfig) { d.OwnersByGroupId = nil },
+	}
+	for field, mutate := range textCases {
+		details := validTextUpdate()
+		mutate(&details)
+		if _, err := secretObj.UpdateTextSecret(id, details); err == nil || !strings.Contains(err.Error(), field) {
+			t.Errorf("text %s: expected validation error, got %v", field, err)
+		}
+	}
+
+	fileCases := map[string]func(*entities.SecretFileUpdateConfig){
+		"FolderId":    func(d *entities.SecretFileUpdateConfig) { d.FolderId = uuid.Nil },
+		"Title":       func(d *entities.SecretFileUpdateConfig) { d.Title = "" },
+		"Owners":      func(d *entities.SecretFileUpdateConfig) { d.OwnersByGroupId = nil },
+		"FileName":    func(d *entities.SecretFileUpdateConfig) { d.FileName = "" },
+		"FileContent": func(d *entities.SecretFileUpdateConfig) { d.FileContent = "" },
+	}
+	for field, mutate := range fileCases {
+		details := validFileUpdate()
+		mutate(&details)
+		if err := secretObj.UpdateFileSecret(id, details); err == nil || !strings.Contains(err.Error(), field) {
+			t.Errorf("file %s: expected validation error, got %v", field, err)
+		}
+	}
+}
+
+// TestGetSecretTotpCodeAnyApiVersion verifies the TOTP code endpoint is called with any API version;
+// the server returns the code regardless of the requested version.
+func TestGetSecretTotpCodeAnyApiVersion(t *testing.T) {
+	for _, version := range []string{"3.0", constants.ApiVersion31, constants.ApiVersion32, constants.ApiVersion33} {
+		secretObj := newTotpTestSecretObj(t, version, func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(`{"Code":"123456","ValidFromUtc":"2026-10-13T10:00:00Z","ValidToUtc":"2026-10-13T10:00:30Z"}`))
+		})
+		code, err := secretObj.GetSecretTotpCode(uuid.NewString())
+		if err != nil || code.Code != "123456" {
+			t.Errorf("%s: expected the code, got %+v, %v", version, code, err)
+		}
+	}
+}
+
+func TestGetSecretTotpCode(t *testing.T) {
+	const id = "9152f5b6-07d6-4955-175a-08db047219ce"
+	tests := []struct {
+		name    string
+		status  int
+		body    string
+		wantErr error
+		anyErr  bool
+	}{
+		{name: "200", status: 200, body: `{"Code":"123456","ValidFromUtc":"2026-10-13T10:00:00Z","ValidToUtc":"2026-10-13T10:00:30Z"}`},
+		{name: "400", status: 400, body: `"not a credential secret"`, wantErr: ErrSecretNotCredential},
+		{name: "404", status: 404, body: `"totp not enabled"`, wantErr: ErrSecretTotpNotAvailable},
+		{name: "403", status: 403, body: `"forbidden"`, anyErr: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/secrets-safe/secrets/"+id+"/totp/code" || r.Method != "GET" {
+					t.Errorf("unexpected request %v %v", r.Method, r.URL.Path)
+				}
+				w.WriteHeader(tc.status)
+				_, _ = w.Write([]byte(tc.body))
+			})
+			code, err := secretObj.GetSecretTotpCode(id)
+			switch {
+			case tc.wantErr != nil:
+				if !errors.Is(err, tc.wantErr) {
+					t.Errorf("expected %v, got %v", tc.wantErr, err)
+				}
+			case tc.anyErr:
+				if err == nil || errors.Is(err, ErrSecretNotCredential) || errors.Is(err, ErrSecretTotpNotAvailable) || !strings.Contains(err.Error(), "403") {
+					t.Errorf("expected generic 403 error, got %v", err)
+				}
+			default:
+				if err != nil {
+					t.Fatal(err)
+				}
+				if code.Code != "123456" || !code.ValidToUtc.After(code.ValidFromUtc) {
+					t.Errorf("unexpected code %#v", code)
+				}
+			}
+		})
+	}
+	secretObj := newTotpTestSecretObj(t, constants.ApiVersion33, func(w http.ResponseWriter, r *http.Request) {})
+	if _, err := secretObj.GetSecretTotpCode("bad"); err == nil {
+		t.Error("expected invalid id error")
 	}
 }

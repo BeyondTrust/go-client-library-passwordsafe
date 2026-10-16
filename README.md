@@ -77,6 +77,23 @@ The library supports retrieval of secrets from BeyondInsight/Password Safe versi
   - Invoked for Managed Account or Secrets Safe secrets.
   - Returns the requested secret.
 
+## Secrets Safe TOTP (API version 3.3)
+
+With `apiVersion` set to `3.3`, credential secrets support TOTP (Secrets Safe 26.3+).
+
+- Create: set `TotpEnabled` (`*bool`) and `TotpSecretKey` (Base32 seed or `otpauth://` URI, max 1024 chars) on `entities.SecretCredentialInput` and call `CreateSecretFlow`. Both fields are write-only; the seed is never returned. TOTP fields with an API version below 3.3 are rejected.
+- Update: `UpdateCredentialSecret(secretId, entities.SecretCredentialUpdateConfig33{...})` (the TOTP fields require API version 3.3) sends a PUT that replaces the secret: `FolderId`, `Title`, `Username`, the owners and `Password` (or `PasswordRuleID`) are required, and `Description`, `Notes` and `Urls` that are not sent are cleared. `TotpEnabled` is tri-state: `nil` leaves TOTP untouched (neither field is sent), `false` disables TOTP, `true` provisions or replaces the seed (`TotpSecretKey` required).
+- Validation mirrors the server: `TotpEnabled=true` requires a seed, and a seed requires `TotpEnabled=true`.
+- Read: responses expose `TotpEnabled` and `TotpParameters` (`Digits`, `PeriodSeconds`) where the API returns them.
+- Current code: `GetSecretTotpCode(secretId)` returns `SecretTotpCode` (`Code`, `ValidFromUtc` inclusive, `ValidToUtc` exclusive). It returns `secrets.ErrSecretNotCredential` for HTTP 400 and `secrets.ErrSecretTotpNotAvailable` for HTTP 404 (check with `errors.Is`). The code is never logged.
+
+## Updating text and file secrets
+
+- Text: `UpdateTextSecret(secretId, entities.SecretTextUpdateConfig{...})` sends a PUT to `secrets-safe/secrets/{secretId}/text` and returns the updated secret. `FolderId`, `Title`, `Text` and the owners are required.
+- File: `UpdateFileSecret(secretId, entities.SecretFileUpdateConfig{...})` sends a multipart PUT to `secrets-safe/secrets/{secretId}/file` (metadata plus the file content); the API returns no content. `FolderId`, `Title`, the owners, `FileName` and `FileContent` are required.
+- Owners (`SecretUpdateOwners`, for all three updates) use the model of the session API version: with v3.0, or no version set (the server default), `OwnerType` "User" with `OwnersByOwnerId`, or "Group" with `OwnerId`; with v3.1+, `OwnersByGroupId` (each entry with `UserId` or `GroupId`).
+- Both PUTs replace the secret: `Description`, `Notes` and `Urls` that are not sent are cleared.
+
 ## Example of usage
 
 Before running TestClient.go, make sure you have configured required environment variables:
