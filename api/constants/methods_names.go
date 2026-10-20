@@ -3,17 +3,20 @@
 package constants
 
 const (
-	SecretGetSecretByPath  = "SecretGetSecretByPath"
-	SecretGetFileSecret    = "SecretGetFileSecret"
-	SecretCreateSecret     = "SecretCreateSecret"
-	SecretGetFolders       = "SecretGetFolders"
-	SecretGetSafes         = "SecretGetSafes"
-	SecretCreateFolder     = "SecretCreateFolder"
-	SecretCreateSafes      = "SecretCreateSafes"
-	SecretDeleteSecret     = "SecretDeleteSecret"
-	SecretDeleteFolder     = "SecretDeleteFolder"
-	SecretDeleteSafe       = "SecretDeleteSafe"
-	SecretGetSecretByTitle = "SecretGetSecretByTitle"
+	SecretGetSecretByPath        = "SecretGetSecretByPath"
+	SecretGetFileSecret          = "SecretGetFileSecret"
+	SecretCreateSecret           = "SecretCreateSecret"
+	SecretGetFolders             = "SecretGetFolders"
+	SecretGetSafes               = "SecretGetSafes"
+	SecretCreateFolder           = "SecretCreateFolder"
+	SecretCreateSafes            = "SecretCreateSafes"
+	SecretDeleteSecret           = "SecretDeleteSecret"
+	SecretDeleteFolder           = "SecretDeleteFolder"
+	SecretDeleteSafe             = "SecretDeleteSafe"
+	SecretGetSecretByTitle       = "SecretGetSecretByTitle"
+	SecretUpdateCredentialSecret = "SecretUpdateCredentialSecret"
+	SecretUpdateTextSecret       = "SecretUpdateTextSecret"
+	SecretGetTotpCode            = "SecretGetTotpCode"
 
 	ManagedAccountGet    = "ManagedAccountGet"
 	ManagedAccountCreate = "ManagedAccountCreate"
@@ -26,6 +29,7 @@ const (
 	ManagedSystemGetSystems            = "ManagedSystemGetSystems"
 
 	CreateMultiPartRequest = "CreateMultiPartRequest"
+	UpdateMultiPartRequest = "UpdateMultiPartRequest"
 
 	SignOut   = "SignOut"
 	GetToken  = "GetToken"

@@ -4,6 +4,7 @@ package entities
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -45,6 +46,24 @@ type Secret struct {
 	Title      string
 	Password   string
 	SecretType string
+	// TotpEnabled and TotpParameters are returned by API v3.3+ for credential secrets.
+	// The TOTP seed is never returned.
+	TotpEnabled    bool            `json:",omitempty"`
+	TotpParameters *TotpParameters `json:",omitempty"`
+}
+
+// TotpParameters describes the TOTP configuration of a credential secret (API v3.3+).
+type TotpParameters struct {
+	Digits        int
+	PeriodSeconds int
+}
+
+// SecretTotpCode is the current one-time code of a credential secret.
+// ValidFromUtc is inclusive and ValidToUtc is exclusive.
+type SecretTotpCode struct {
+	Code         string
+	ValidFromUtc time.Time
+	ValidToUtc   time.Time
 }
 
 // GetTokenResponse responsible for token response data.
@@ -127,6 +146,9 @@ type CreateSecretResponse struct {
 	FolderId    string
 	// SecretValueModifiedOn is populated by API v3.2+ responses; empty on v3.0/v3.1.
 	SecretValueModifiedOn string `json:",omitempty"`
+	// TotpEnabled and TotpParameters are populated by API v3.3+ responses.
+	TotpEnabled    bool            `json:",omitempty"`
+	TotpParameters *TotpParameters `json:",omitempty"`
 }
 
 type SecretCredentialDetailsConfig30 struct {
@@ -155,6 +177,78 @@ type SecretCredentialDetailsConfig32 struct {
 	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
 	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
 	PasswordRuleID int                   `json:",omitempty" validate:"omitempty"`
+}
+
+// SecretCredentialDetailsConfig33 is the v3.3 credential request payload.
+// It extends v3.2 with write-only TOTP fields; the seed is never returned by the API.
+type SecretCredentialDetailsConfig33 struct {
+	SecretDetailsBaseConfig
+	Username       string                `json:",omitempty" validate:"required,max=256"`
+	Password       string                `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	Owners         []OwnerDetailsGroupId `json:",omitempty" validate:"required"`
+	PasswordRuleID int                   `json:",omitempty" validate:"omitempty,max=32767"`
+	TotpEnabled    *bool                 `json:",omitempty"`
+	TotpSecretKey  string                `json:",omitempty" validate:"max=1024"`
+}
+
+// SecretUpdateOwners holds the owners of a secret update. Only the fields of the session API version
+// are sent, and they are required:
+//   - API v3.0 (also the server default when no version is set): OwnerType "User" with OwnersByOwnerId,
+//     or OwnerType "Group" with OwnerId as the group ID.
+//   - API v3.1+: OwnersByGroupId, each entry with UserId or GroupId.
+type SecretUpdateOwners struct {
+	OwnerId         int                   `json:"-"`
+	OwnerType       string                `json:"-"`
+	OwnersByOwnerId []OwnerDetailsOwnerId `json:"-"`
+	OwnersByGroupId []OwnerDetailsGroupId `json:"-"`
+}
+
+// SecretCredentialUpdateConfig33 is the credential update (PUT secrets-safe/secrets/{secretId}) payload.
+// The PUT replaces the secret: FolderId, Title, Username, the owners (see SecretUpdateOwners) and Password
+// (or PasswordRuleID) are required, and Description, Notes and Urls that are not sent are cleared.
+// The TOTP fields require API v3.3.
+// TotpEnabled is tri-state: nil leaves the TOTP setting untouched (neither TOTP field is sent),
+// false disables it, true provisions or replaces the seed (TotpSecretKey required).
+type SecretCredentialUpdateConfig33 struct {
+	FolderId       uuid.UUID    `validate:"required"`
+	Title          string       `json:",omitempty" validate:"required,max=256"`
+	Description    string       `json:",omitempty" validate:"omitempty,max=256"`
+	Notes          string       `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls           []UrlDetails `json:",omitempty" validate:"omitempty"`
+	Username       string       `json:",omitempty" validate:"required,max=256"`
+	Password       string       `json:",omitempty" validate:"max=256,required_without=PasswordRuleID"`
+	PasswordRuleID int          `json:",omitempty" validate:"omitempty,max=32767"`
+	SecretUpdateOwners
+	TotpEnabled   *bool  `json:",omitempty"`
+	TotpSecretKey string `json:",omitempty" validate:"max=1024"`
+}
+
+// SecretTextUpdateConfig is the text secret update (PUT secrets-safe/secrets/{secretId}/text) payload.
+// The PUT replaces the secret: FolderId, Title, Text and the owners (see SecretUpdateOwners) are required,
+// and Description, Notes and Urls that are not sent are cleared.
+type SecretTextUpdateConfig struct {
+	FolderId    uuid.UUID    `validate:"required"`
+	Title       string       `json:",omitempty" validate:"required,max=256"`
+	Description string       `json:",omitempty" validate:"omitempty,max=256"`
+	Notes       string       `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls        []UrlDetails `json:",omitempty" validate:"omitempty"`
+	Text        string       `json:",omitempty" validate:"required,max=4096"`
+	SecretUpdateOwners
+}
+
+// SecretFileUpdateConfig is the file secret update (PUT secrets-safe/secrets/{secretId}/file) payload.
+// It is sent as a multipart request: the metadata as JSON and FileContent as the file part.
+// The PUT replaces the secret: FolderId, Title, the owners (see SecretUpdateOwners), FileName and
+// FileContent are required, and Description, Notes and Urls that are not sent are cleared.
+type SecretFileUpdateConfig struct {
+	FolderId    uuid.UUID    `validate:"required"`
+	Title       string       `json:",omitempty" validate:"required,max=256"`
+	Description string       `json:",omitempty" validate:"omitempty,max=256"`
+	Notes       string       `json:",omitempty" validate:"omitempty,max=4000"`
+	Urls        []UrlDetails `json:",omitempty" validate:"omitempty"`
+	SecretUpdateOwners
+	FileName    string `json:",omitempty" validate:"required,max=256"`
+	FileContent string `json:"-" validate:"required,max=5000000"`
 }
 
 type SecretDetailsBaseConfig struct {
@@ -224,6 +318,9 @@ type SecretCredentialInput struct {
 	OwnerType       string
 	OwnersByOwnerId []OwnerDetailsOwnerId
 	OwnersByGroupId []OwnerDetailsGroupId
+	// TotpEnabled and TotpSecretKey are write-only and only valid with API v3.3.
+	TotpEnabled   *bool
+	TotpSecretKey string
 }
 
 // SecretTextInput is a version-neutral input for creating text secrets.

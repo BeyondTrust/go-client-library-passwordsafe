@@ -339,3 +339,17 @@ func FormatErrorMessage(err validator.FieldError) string {
 		return fmt.Sprintf("Error in field %s : %s / %s.", err.Field(), err.Tag(), err.Param())
 	}
 }
+
+// ValidateTotpSettings mirrors the server-side TOTP rules for credential secrets:
+// TotpEnabled=true requires a seed, and a seed is only accepted with TotpEnabled=true.
+// A nil TotpEnabled means the setting is not sent (left untouched on update).
+func ValidateTotpSettings(totpEnabled *bool, totpSecretKey string) error {
+	enabled := totpEnabled != nil && *totpEnabled
+	if enabled && totpSecretKey == "" {
+		return errors.New("the field 'TotpSecretKey' is required when 'TotpEnabled' is true")
+	}
+	if !enabled && totpSecretKey != "" {
+		return errors.New("the field 'TotpSecretKey' can only be provided when 'TotpEnabled' is true")
+	}
+	return nil
+}
