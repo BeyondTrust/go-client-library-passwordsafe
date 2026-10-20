@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.4...v1.4.0) (2026-10-20)
+
+
+### Features
+
+* add PAPI 3.3 secret model, TOTP fields, update and TOTP code methods BIPS-43270 ([#358](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/358)) ([5f3cf42](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/5f3cf4234060d16606188ae8114945764c2c8f86))
+
+
+### Bug Fixes
+
+* bump Go to 1.26.9 for standard library vulnerabilities ([#359](https://github.com/BeyondTrust/go-client-library-passwordsafe/issues/359)) ([5c68794](https://github.com/BeyondTrust/go-client-library-passwordsafe/commit/5c68794ffe8be22d90b5dee1bd016d41d85623ac))
+
 ## [1.3.4](https://github.com/BeyondTrust/go-client-library-passwordsafe/compare/v1.3.3...v1.3.4) (2026-09-15)
 
 
